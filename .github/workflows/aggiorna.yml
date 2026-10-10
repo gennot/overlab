@@ -1,0 +1,50 @@
+# Aggiorna i dati e pubblica l'app su GitHub Pages.
+# Gira da solo ogni 3 ore; si può avviare a mano da "Actions" > "Aggiorna OverLab" > "Run workflow".
+name: Aggiorna OverLab
+on:
+  schedule:
+    - cron: '23 */3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['app/**', 'pipeline/**', '.github/workflows/**']
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: overlab
+  cancel-in-progress: false
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Scarica i dati da API-Football
+        env:
+          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+          MAX_CALLS: '40'
+        run: node pipeline/collect.js
+      - name: Prepara i file dell'app
+        run: |
+          node pipeline/export.js
+          python3 pipeline/build_site.py
+      - name: Salva lo storico scaricato
+        run: |
+          git config user.name "overlab-bot"
+          git config user.email "overlab-bot@users.noreply.github.com"
+          git add store
+          git diff --cached --quiet || git commit -m "Dati aggiornati" && git push || true
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,34 @@
+// Campionati dell'app -> codici API-Football.
+// type: 'eu' = stagione a cavallo d'anno (2026 = 2026/27), 'cal' = stagione nell'anno solare, 'int' = nazionali
+// L'ordine conta: lo storico si scarica prima per i primi della lista.
+module.exports = [
+  { lg: 'ita.1', id: 135, type: 'eu' },
+  { lg: 'eng.1', id: 39, type: 'eu' },
+  { lg: 'esp.1', id: 140, type: 'eu' },
+  { lg: 'ger.1', id: 78, type: 'eu' },
+  { lg: 'fra.1', id: 61, type: 'eu' },
+  { lg: 'ita.2', id: 136, type: 'eu' },
+  { lg: 'uefa.nations', id: 5, type: 'int' },
+  { lg: 'fifa.worldq.uefa', id: 32, type: 'int' },
+  { lg: 'eng.2', id: 40, type: 'eu' },
+  { lg: 'ned.1', id: 88, type: 'eu' },
+  { lg: 'por.1', id: 94, type: 'eu' },
+  { lg: 'esp.2', id: 141, type: 'eu' },
+  { lg: 'ger.2', id: 79, type: 'eu' },
+  { lg: 'fra.2', id: 62, type: 'eu' },
+  { lg: 'bel.1', id: 144, type: 'eu' },
+  { lg: 'tur.1', id: 203, type: 'eu' },
+  { lg: 'sco.1', id: 179, type: 'eu' },
+  { lg: 'gre.1', id: 197, type: 'eu' },
+  { lg: 'aut.1', id: 218, type: 'eu' },
+  { lg: 'den.1', id: 119, type: 'eu' },
+  { lg: 'eng.3', id: 41, type: 'eu' },
+  { lg: 'eng.4', id: 42, type: 'eu' },
+  { lg: 'nor.1', id: 103, type: 'cal' },
+  { lg: 'swe.1', id: 113, type: 'cal' },
+  { lg: 'bra.1', id: 71, type: 'cal' },
+  { lg: 'arg.1', id: 128, type: 'cal' },
+  { lg: 'usa.1', id: 253, type: 'cal' },
+  { lg: 'fifa.friendly', id: 10, type: 'int' },
+  { lg: 'fifa.world', id: 1, type: 'int' }
+];
