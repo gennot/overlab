@@ -56,9 +56,23 @@ window.OverLabReload = function () {
     .then(function (d) { Core.store.preload(d.mem); window.OVERLAB_T = d.t; window.OVERLAB_LOGOS = d.logos || {}; Core.setBook(null); CL = {}; });
 };
 var CL = {};
+function getJ(f) { return fetch(f, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
+// campionati in forma compatta (solo partite giocate) usati dalle coppe: non sostituiscono i dati completi già caricati
+function expandX(mem) {
+  var out = {};
+  Object.keys(mem).forEach(function (k) {
+    if (k.indexOf('sx:') !== 0) { out[k] = mem[k]; return; }
+    var lg = k.split(':')[1], key = 'sb:' + k.slice(3), x = mem[k];
+    if (Core.store.get(key)) return;
+    out[key] = { t: x.t, tm: x.tm, m: x.r.map(function (r) { return { id: r[0], d: r[1] * 6e4, lg: lg, h: r[2], a: r[3], st: 'post', done: true, nm: 'FT', sc: [r[4], r[5]], H: { sh: r[6], sot: r[7], co: r[8], fo: r[9], yc: r[10] }, A: { sh: r[11], sot: r[12], co: r[13], fo: r[14], yc: r[15] } }; }) };
+  });
+  return out;
+}
 Core.setCompLoader(function (id) {
-  return CL[id] || (CL[id] = fetch('c-' + id + '.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function (d) { Core.store.preload(d.mem); }).catch(function (e) { delete CL[id]; throw e; }));
+  var c = Core.comp(id), files = c && c.cup ? ['c-coppe.json', 'c-' + id + '.json'] : ['c-' + id + '.json'];
+  return Promise.all(files.map(function (f) {
+    return CL[f] || (CL[f] = getJ(f).then(function (d) { Core.store.preload(expandX(d.mem)); }).catch(function (e) { delete CL[f]; throw e; }));
+  }));
 });
 '''
 boot3 = '''window.OverLabReload().then(window.OverLabStart, function () {

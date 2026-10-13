@@ -138,7 +138,8 @@ var Core = (function () {
     var c = comp(id), Y = new Date().getFullYear(), jobs = [];
     c.pool.concat(c.xpool || []).forEach(function (lg) {
       jobs.push(loadBoard(lg, '' + (Y - 1), Infinity).catch(function () { return []; }));
-      jobs.push(loadBoard(lg, '' + Y, force ? 0 : 2 * 36e5));
+      var cur = loadBoard(lg, '' + Y, force ? 0 : 2 * 36e5);
+      jobs.push(lg === id ? cur : cur.catch(function () { return []; }));   // tornei del gruppo senza dati (es. preliminari) non bloccano la competizione
     });
     return Promise.all(jobs).then(function (res) {
       var seen = {}, played = [], all = [];

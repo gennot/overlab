@@ -7,9 +7,9 @@ const fs = require('fs'), path = require('path');
 const LEAGUES = require('./leagues');
 const KEY = process.env.APISPORTS_KEY || '';
 const BASE = process.env.API_BASE || 'https://v3.football.api-sports.io';
-const MAX_CALLS = +process.env.MAX_CALLS || 60;
+let MAX_CALLS = +process.env.MAX_CALLS || 60;
 const RESERVE = +process.env.RESERVE || 4;
-const GAP = process.env.API_BASE ? 0 : 6500;            // 10 richieste al minuto sul piano gratis
+let GAP = process.env.API_BASE ? 0 : 6500;              // 10 richieste al minuto sul piano gratis; col piano a pagamento si accelera da solo
 const ROOT = path.join(__dirname, '..', 'store');
 const DAY = 864e5;
 const BYID = {}; LEAGUES.forEach(l => { BYID[l.id] = l; });
@@ -23,7 +23,7 @@ const teams = readJ('teams.json', {});
 const fx = {};                                          // lg -> { id -> partita }
 LEAGUES.forEach(l => { fx[l.lg] = readJ('fx/' + l.lg + '.json', {}); });
 
-let calls = 0, remaining = null, stop = '';
+let calls = 0, remaining = null, stop = '', paid = false;
 function note(s) { console.log(s); state.log = (state.log || []).concat(new Date().toISOString().slice(0, 16) + ' ' + s).slice(-60); }
 
 async function api(q) {
@@ -36,6 +36,10 @@ async function api(q) {
   try { r = await fetch(BASE + q, { headers: { 'x-apisports-key': KEY } }); j = await r.json(); }
   catch (e) { note('errore di rete su ' + q + ': ' + e.message); return null; }
   const rem = r.headers.get('x-ratelimit-requests-remaining'); if (rem != null && rem !== '') remaining = +rem;
+  // piano a pagamento (es. Pro: 7.500 al giorno): più richieste per giro e meno attesa, restando sotto il limite giornaliero (8 giri al giorno)
+  const lim = +(r.headers.get('x-ratelimit-requests-limit') || 0);
+  if (lim >= 1000) paid = true;
+  if (lim >= 1000 && !process.env.API_BASE && GAP > 300) { GAP = 300; MAX_CALLS = Math.max(MAX_CALLS, Math.floor(lim / 8) - 40); note('piano con ' + lim + ' richieste al giorno: fino a ' + MAX_CALLS + ' per giro'); }
   const err = j && j.errors && (Array.isArray(j.errors) ? j.errors.length : Object.keys(j.errors).length) ? j.errors : null;
   if (err) {
     const t = JSON.stringify(err); note('API: ' + q + ' -> ' + t);
@@ -121,10 +125,10 @@ async function byIds(ids) {
   for (const l of LEAGUES) {
     if (stop) break;
     for (const s of seasonsOf(l, now)) {
-      const k = l.lg + ':' + s; if (state.seasons[k] || state.blocked[k]) continue;
+      const k = l.lg + ':' + s, b = state.blocked[k]; if (state.seasons[k] || (b && b.d === ymd(now) && !paid)) continue;   // se il piano non la copriva si riprova il giorno dopo
       const r = await api('/fixtures?league=' + l.id + '&season=' + s); if (!r) break;
-      if (r.err) { if (/season|plan/i.test(r.err)) { state.blocked[k] = r.err.slice(0, 200); note('stagione non disponibile col piano attuale: ' + k); } continue; }
-      r.res.forEach(base); state.seasons[k] = ymd(now);
+      if (r.err) { if (/season|plan/i.test(r.err)) { state.blocked[k] = { d: ymd(now), e: r.err.slice(0, 200) }; note('stagione non disponibile col piano attuale: ' + k); } continue; }
+      r.res.forEach(base); state.seasons[k] = ymd(now); delete state.blocked[k];
     }
   }
   if (!stop) await byIds(need().map(m => m.id));

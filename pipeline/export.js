@@ -30,15 +30,17 @@ LEAGUES.forEach(l => [Y - 1, Y].forEach(y => {
 }));
 // prossime partite per competizione (le chiavi mensili lette all'avvio)
 const months = [0, 1, 2].map(k => { const d = new Date(Date.UTC(Y, new Date(now).getUTCMonth() + k, 1)); return d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, '0'); });
-const sumIds = {}, upSoon = [];
+const sumIds = {}, upSoon = [], cupSum = {};
 Core.COMPS.forEach(c => {
   const up = (fxBy[c.id] || []).filter(m => !DONE[m.s] && m.d > now - 3 * 36e5 && m.d < now + 45 * DAY).map(toApp);
   months.forEach(k => { mem['sb:' + c.id + ':' + k] = { t: now, m: up, tm: tmOf(up) }; });
   // per le partite dei prossimi 9 giorni: dati dei giocatori delle ultime 12 di ogni squadra (tutto il gruppo della competizione)
-  const played = [].concat(...c.pool.map(lg => fxBy[lg] || [])).filter(m => DONE[m.s] && m.det === 1).sort((a, b) => a.d - b.d);
+  // coppe: le ultime partite di ogni squadra contano anche quelle di campionato
+  const played = [].concat(...c.pool.concat(c.xpool || []).map(lg => fxBy[lg] || [])).filter(m => DONE[m.s] && m.det === 1).sort((a, b) => a.d - b.d);
+  const mine = c.cup ? (cupSum[c.id] = {}) : null;
   up.filter(m => m.d < now + 9 * DAY).forEach(m => {
-    upSoon.push(m.id);
-    [m.h, m.a].forEach(t => { let n = 0; for (let i = played.length - 1; i >= 0 && n < 12; i--) { const p = played[i]; if (p.h === t || p.a === t) { sumIds[p.id] = p; n++; } } });
+    upSoon.push(m.id); if (mine) mine[m.id] = 1;
+    [m.h, m.a].forEach(t => { let n = 0; for (let i = played.length - 1; i >= 0 && n < 12; i--) { const p = played[i]; if (p.h === t || p.a === t) { sumIds[p.id] = p; if (mine) mine[p.id] = 1; n++; } } });
   });
 });
 Object.values(sumIds).forEach(p => {
@@ -54,7 +56,8 @@ upSoon.forEach(id => {
   if (P.length) mem['sm:' + id] = { id: id, d: m.d, T: {}, P: P, off: true };
 });
 // divisione in file: base (prossime partite) + uno per competizione
-const pools = {}; Core.COMPS.forEach(c => { pools[c.id] = c.pool; });
+const pools = {}; Core.COMPS.forEach(c => { if (!c.cup) pools[c.id] = c.pool; });
+const CUPS = Core.COMPS.filter(c => c.cup), CUPL = CUPS.length ? CUPS[0].pool : [], DOML = CUPS.length ? CUPS[0].xpool : [];
 const lg2c = {}; Object.keys(pools).forEach(c => pools[c].forEach(lg => { lg2c[lg] = c; }));
 const base = {}, comp = {}, id2c = {};
 Object.keys(mem).forEach(k => {
@@ -63,6 +66,17 @@ Object.keys(mem).forEach(k => {
   const c = lg2c[lg]; if (!c) return; (comp[c] = comp[c] || {})[k] = mem[k]; mem[k].m.forEach(m => { id2c[m.id] = c; });
 });
 Object.keys(mem).forEach(k => { if (!k.startsWith('sm:')) return; const c = id2c[k.slice(3)]; if (c) (comp[c] = comp[c] || {})[k] = mem[k]; });
+// coppe europee: un file comune (coppe complete + campionati in forma compatta) e uno per coppa con i giocatori
+if (CUPS.length) {
+  const shared = {}, ok = m => m.done && m.H && m.A && m.sc && m.H.fo + m.A.fo >= 6 && m.H.sh + m.A.sh >= 5 && m.H.sot <= m.H.sh && m.A.sot <= m.A.sh;
+  Object.keys(mem).forEach(k => {
+    if (!k.startsWith('sb:')) return; const [, lg, when] = k.split(':'); if (when.length !== 4) return;
+    if (CUPL.indexOf(lg) >= 0) shared[k] = mem[k];
+    else if (DOML.indexOf(lg) >= 0) { const v = mem[k]; shared['sx:' + lg + ':' + when] = { t: v.t, tm: v.tm, r: v.m.filter(ok).map(m => [m.id, Math.round(m.d / 6e4), m.h, m.a, m.sc[0], m.sc[1], m.H.sh, m.H.sot, m.H.co, m.H.fo, m.H.yc, m.A.sh, m.A.sot, m.A.co, m.A.fo, m.A.yc]) }; }
+  });
+  comp.coppe = shared;
+  CUPS.forEach(c => { const o = comp[c.id] = {}; Object.keys(cupSum[c.id] || {}).forEach(id => { if (mem['sm:' + id]) o['sm:' + id] = mem['sm:' + id]; }); });
+}
 fs.mkdirSync(OUT, { recursive: true });
 fs.readdirSync(OUT).filter(f => /^c-.*\.json$/.test(f)).forEach(f => fs.unlinkSync(path.join(OUT, f)));
 fs.writeFileSync(path.join(OUT, 'data.json'), JSON.stringify({ t: state.t || now, mem: base, logos: logos }));
