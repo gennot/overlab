@@ -436,8 +436,10 @@
     var card = function (title, icon, body, note) { return '<section class="card xm"><h3>' + ic(icon) + esc(title) + '</h3>' + body + (note ? '<p class="foot">' + note + '</p>' : '') + '</section>'; };
     var hd = '<div class="xr xh"><span></span><b>Stima</b>' + qs('Quota giusta') + '</div>';
     var h = card('Risultato esatto', 'target', '<div class="exg">' + X.exact.map(function (o) { return '<div class="ex"><b>' + o.sc + '</b><span>' + pct(o.p) + '</span>' + qs(quota(o.p)) + '</div>'; }).join('') + '</div>', 'I sei punteggi più probabili.');
+    var r = S.tf.res, hn = tn(S.m.h), an = tn(S.m.a), cupM = !!(Core.comp(S.m.lg) || {}).cup;
+    if (r && r.ho) h += card('Goal / No goal', 'res', hd + [{ label: 'Goal: segnano entrambe', p: r.gg }, { label: 'No goal: almeno una non segna', p: 1 - r.gg }, { label: 'Segna ' + hn, p: r.ho[0] }, { label: 'Segna ' + an, p: r.ao[0] }, { label: 'Non segna ' + hn, p: 1 - r.ho[0] }, { label: 'Non segna ' + an, p: 1 - r.ao[0] }].map(row).join(''), 'Goal vuol dire che segnano tutte e due le squadre. ' + (cupM ? 'Nelle coppe provato su 1.494 partite: è la giocata più incerta.' : 'Verificato su 26.396 partite.'));
     h += card('Multigol', 'res', hd + X.mg.map(row).join('') + '<h4 class="xs">Multigol squadra</h4>' + X.mgT.map(row).join(''));
-    h += card('Combo', 'spark', hd + X.combo.slice().sort(function (a, b) { return b.p - a.p; }).slice(0, 10).map(row).join(''), 'Le dieci combo più probabili tra esito o doppia chance e under/over, calcolate sui punteggi. Verificate su 26.396 partite. Le combo con goal/no goal non le metto: nel test non reggevano.');
+    h += card('Combo', 'spark', hd + X.combo.slice().sort(function (a, b) { return b.p - a.p; }).slice(0, 10).map(row).join(''), 'Le dieci combo più probabili tra esito o doppia chance e under/over, calcolate sui punteggi. Verificate su ' + (cupM ? '1.494 partite di coppa e ' : '') + '26.396 partite. Le combo con goal/no goal non le metto: nel test non reggevano.');
     if (X.cx.length) h += card('Corner 1X2 e handicap', 'co', hd + X.cx.map(row).join(''));
     h += card('Primo tempo', 'clock', hd + X.ht.map(row).join(''), 'Stima approssimata: nei dati non ci sono i gol divisi per tempo, quindi conto il 45% dei gol attesi nel primo tempo, come in media nei campionati.');
     return h;

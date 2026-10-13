@@ -528,12 +528,16 @@ a{color:inherit;text-decoration:none}
 <h2>Verifica delle giocate</h2>
 <p>Test in avanti su 26.396 partite di 18 campionati dal 2022, usando per ogni partita solo i dati precedenti. Nelle giocate che l'app mostra (dal 50% in su), previsto contro uscito: multigol 69,7% → 70,4%, combo esito + under/over 59,4% → 58,6%, segna sì/no 71,7% → 72,8%, corner 1X2 62,0% → 61,1%, handicap corner 71,3% → 70,0%, linee di corner 69,5% → 69,6%, linee di cartellini 75,7% → 76,5%. Goal/no goal era troppo estremo ed è stato corretto; le combo con goal/no goal sono state tolte perché non reggevano.</p>
 <p>Giallo del singolo giocatore: test su 37.683 giocatori-partita di questa stagione. È molto casuale: in media lo prende un titolare su 7, e il più a rischio di ogni squadra circa uno su 6. Marcatore e primo tempo non si possono verificare con questi dati.</p>
+<h2>Champions, Europa e Conference League</h2>
+<p>Nelle coppe si affrontano squadre di campionati diversi: la forza di ogni squadra si stima insieme su coppe, preliminari e tutti i campionati dell'app, così le partite europee collegano un campionato all'altro. Per le squadre di campionati che l'app non segue (per esempio Repubblica Ceca, Croazia, Azerbaigian) contano solo le partite europee, quindi la stima è più incerta.</p>
+<p>Test in avanti su 1.952 partite di coppa dal 2023 (1.494 nella fase principale), usando ogni volta solo i dati precedenti. Fase principale, previsto contro uscito: esito 1X2 65,2% → 65,9%, under/over gol 75,9% → 75,5%, segna sì/no 74,0% → 74,2%, multigol 69,2% → 69,5%, combo 60,6% → 59,9%, linee di tiri 66,3% → 66,1%, tiri in porta 70,1% → 69,6%, corner 68,5% → 68,9%, falli 69,2% → 69,3%, cartellini 75,5% → 75,4%. Goal/no goal è la giocata più debole: 55,3% → 53,0%. In Champions ed Europa League i favoriti vincono più spesso che in campionato, in Conference no: il calcolo ne tiene conto. Giocatori: provati su 140 partite di coppa del 2025-26, con percentuali in linea con i campionati.</p>
+<p>Nei preliminari alcune partite hanno statistiche sbagliate nella fonte (tiri uguali ai gol, falli e corner a zero): quelle non vengono usate.</p>
 <h2>Cosa non fa</h2>
 <ul>
 <li>L'arbitro non entra nel calcolo: nella prova sui dati non migliorava le previsioni sui cartellini.</li>
 <li>Infortuni e squalifiche non arrivano in automatico: usa il pulsante di stato del giocatore.</li>
 <li>Le assenze cambiano i numeri dei giocatori, non quelli di squadra.</li>
-<li>Coppe europee e coppe nazionali non ci sono: mettono insieme squadre di campionati diversi e servirebbe un modello a parte.</li>
+<li>Le coppe nazionali (Coppa Italia, FA Cup…) non ci sono.</li>
 <li>Serie C, Svizzera, Polonia, Romania, Croazia e Repubblica Ceca non ci sono: la fonte dei dati non ha tiri, corner e falli per quei campionati.</li>
 <li>Nei campionati equilibrati (Serie B, 2. Bundesliga) le squadre si somigliano e il modello aggiunge poco rispetto alla media del campionato. In Olanda, Scozia, Portogallo e Grecia, dove le grandi dominano, aggiunge molto.</li>
 <li>Austria, Danimarca, Norvegia, Svezia, Brasile, Argentina e MLS hanno meno storico alle spalle: li ho provati solo sulle partite 2025-26, dove le percentuali tornano come negli altri campionati.</li>

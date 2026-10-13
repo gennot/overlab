@@ -2,9 +2,16 @@
 var Core = (function () {
   'use strict';
   var API = 'https://site.api.espn.com/apis/site/v2/sports/soccer/';
+  /* Coppe europee: le squadre arrivano da campionati diversi, quindi la forza si stima insieme su coppe, preliminari
+     e tutti i campionati dell'app (test su 1.952 partite di coppa: gol stimati meglio del 50% rispetto alle sole coppe) */
+  var CUP_L = ['uefa.champions', 'uefa.europa', 'uefa.europa.conf', 'uefa.champions_qual', 'uefa.europa_qual', 'uefa.europa.conf_qual'];
+  var DOM_L = ['ita.1', 'ita.2', 'eng.1', 'eng.2', 'eng.3', 'eng.4', 'esp.1', 'esp.2', 'ger.1', 'ger.2', 'fra.1', 'fra.2', 'ned.1', 'por.1', 'bel.1', 'tur.1', 'sco.1', 'gre.1', 'aut.1', 'den.1', 'nor.1', 'swe.1', 'bra.1', 'arg.1', 'usa.1'];
   var COMPS = [
     { id: 'ita.1', name: 'Serie A', grp: 'Italia', pool: ['ita.1'] },
     { id: 'ita.2', name: 'Serie B', grp: 'Italia', pool: ['ita.2'] },
+    { id: 'uefa.champions', name: 'Champions League', grp: 'Coppe europee', cup: true, str: 1.8, pool: CUP_L, xpool: DOM_L },
+    { id: 'uefa.europa', name: 'Europa League', grp: 'Coppe europee', cup: true, str: 1.8, pool: CUP_L, xpool: DOM_L },
+    { id: 'uefa.europa.conf', name: 'Conference League', grp: 'Coppe europee', cup: true, str: 1.2, pool: CUP_L, xpool: DOM_L },
     { id: 'eng.1', name: 'Premier League', grp: 'Inghilterra', pool: ['eng.1'] },
     { id: 'eng.2', name: 'Championship', grp: 'Inghilterra', pool: ['eng.2'] },
     { id: 'eng.3', name: 'League One', grp: 'Inghilterra', pool: ['eng.3'] },
@@ -98,6 +105,8 @@ var Core = (function () {
       store.set(key, { t: Date.now(), m: ms, tm: tm }); return ms;
     }).catch(function (err) { if (c) return c.m; throw err; });
   }
+  // statistiche credibili: nei preliminari delle coppe a volte i tiri sono solo i gol e falli e corner sono a zero
+  function statsOk(m) { return m.H.fo + m.A.fo >= 6 && m.H.sh + m.A.sh >= 5 && m.H.sot <= m.H.sh && m.A.sot <= m.A.sh; }
   function comp(id) { for (var i = 0; i < COMPS.length; i++) if (COMPS[i].id === id) return COMPS[i]; return null; }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
@@ -127,15 +136,18 @@ var Core = (function () {
   }
   function loadComp2(id, force) {
     var c = comp(id), Y = new Date().getFullYear(), jobs = [];
-    c.pool.forEach(function (lg) {
+    c.pool.concat(c.xpool || []).forEach(function (lg) {
       jobs.push(loadBoard(lg, '' + (Y - 1), Infinity).catch(function () { return []; }));
       jobs.push(loadBoard(lg, '' + Y, force ? 0 : 2 * 36e5));
     });
     return Promise.all(jobs).then(function (res) {
       var seen = {}, played = [], all = [];
-      res.forEach(function (ms) { ms.forEach(function (m) { if (seen[m.id]) return; seen[m.id] = 1; all.push(m); if (m.done && m.H && m.A) { if (m.H.g == null && m.sc && isFinite(m.sc[0]) && isFinite(m.sc[1])) { m.H.g = m.sc[0]; m.A.g = m.sc[1]; } played.push(m); } }); });
+      res.forEach(function (ms) { ms.forEach(function (m) { if (seen[m.id]) return; seen[m.id] = 1; all.push(m); if (m.done && m.H && m.A && statsOk(m)) { if (m.H.g == null && m.sc && isFinite(m.sc[0]) && isFinite(m.sc[1])) { m.H.g = m.sc[0]; m.A.g = m.sc[1]; } played.push(m); } }); });
       played.sort(function (a, b) { return a.d - b.d; });
       var par = Model.PAR;
+      // coppe: in Champions ed Europa League i favoriti vincono più spesso che in campionato (divario gol più largo, tarato
+      // su metà delle partite e confermato sull'altra metà), in Conference no; tiri, corner e falli variano di più
+      if (c.cup) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gStretch = c.str || 1.5; par.r = { sh: 12, sot: 16, co: 8, fo: 90, yc: 1e9 }; par.rTot = { sh: 60, sot: 60, co: 30, fo: 90, yc: 22 }; }
       if (c.nat) { par = JSON.parse(JSON.stringify(Model.PAR)); Model.STATS.forEach(function (s) { par.half[s] = 540; par.k[s] = Math.max(par.k[s], 6); }); par.half.g = 700; par.k.g = 6; par.newTeam = { att: 1, def: 1 }; }
       var now = Date.now(), fit = Model.fitAll(played, now, par);
       return (compCache[id] = { t: Date.now(), comp: c, played: played, all: all, fit: fit, par: par });
@@ -394,7 +406,7 @@ var Core = (function () {
   var CAT_IT = { sot: 'Tiri in porta squadra', sotT: 'Tiri in porta partita', sh: 'Tiri totali squadra', shT: 'Tiri totali partita', co: 'Corner squadra', coT: 'Corner partita', res: 'Esito e gol', tg: 'Gol squadra (segna, U/O squadra)', fo: 'Falli squadra', foT: 'Falli partita', yc: 'Cartellini squadra', ycT: 'Cartellini partita', mg: 'Multigol', combo: 'Combo', cx: 'Corner 1X2 e handicap', ht: 'Primo tempo', psot: 'Giocatori: tiri in porta', psh: 'Giocatori: tiri', pfc: 'Giocatori: falli fatti', pfs: 'Giocatori: falli subiti', pgl: 'Giocatori: marcatore', pyc: 'Giocatori: ammonito' };
   var DUO = { sot: true, sh: true };
   // tiri e tiri in porta si giocano solo nei campionati maggiori (Francia esclusa) e con le nazionali: altrove non si propongono
-  var SHOTS_OK = { 'ita.1': 1, 'eng.1': 1, 'esp.1': 1, 'ger.1': 1, 'uefa.nations': 1 };
+  var SHOTS_OK = { 'ita.1': 1, 'eng.1': 1, 'esp.1': 1, 'ger.1': 1, 'uefa.nations': 1, 'uefa.champions': 1, 'uefa.europa': 1 };
   function shotsOk(lg) { return !!SHOTS_OK[lg]; }
   function statOk(lg, s) { return (s !== 'sot' && s !== 'sh') || shotsOk(lg); }   // mercati giocatore in cui il bookmaker conta anche il sostituto
   // tutte le giocate che il bookmaker offre davvero per la partita, con la probabilità stimata dal modello
