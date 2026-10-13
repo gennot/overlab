@@ -12,7 +12,9 @@ const DONE = { FT: 1, AET: 1, PEN: 1 }, LIVE = { '1H': 1, HT: 1, '2H': 1, ET: 1,
 
 const teamsRaw = readJ('teams.json', {}), state = readJ('state.json', {});
 const T = {}; Object.keys(teamsRaw).forEach(id => { const n = Core.itName(teamsRaw[id].n); T[id] = { n: n, s: n, l: '' }; });
-const logos = {}; Object.keys(teamsRaw).forEach(id => { if (teamsRaw[id].l) logos[id] = teamsRaw[id].l; });
+// stemmi serviti dal sito stesso (scaricati da collect.js): il browser non contatta altri server
+const logos = {}; fs.mkdirSync(path.join(OUT, 'logos'), { recursive: true });
+Object.keys(teamsRaw).forEach(id => { const f = path.join(STORE, 'logos', id + '.png'); if (fs.existsSync(f)) { fs.copyFileSync(f, path.join(OUT, 'logos', id + '.png')); logos[id] = 'logos/' + id + '.png'; } });
 
 // partita nel formato dell'app
 function toApp(m) {

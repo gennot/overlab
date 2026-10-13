@@ -141,6 +141,13 @@ async function byIds(ids) {
   });
   LEAGUES.forEach(l => writeJ('fx/' + l.lg + '.json', fx[l.lg]));
   writeJ('teams.json', teams);
+  // stemmi: una copia sul sito, così chi apre OverLab non si collega ad altri server (le immagini non contano nel limite di richieste)
+  const LOGOS = path.join(ROOT, 'logos'); fs.mkdirSync(LOGOS, { recursive: true }); let nl = 0;
+  for (const id of Object.keys(teams)) {
+    if (nl >= 400) break; const f = path.join(LOGOS, id + '.png'); if (fs.existsSync(f) || !teams[id].l || process.env.API_BASE) continue;
+    try { const r = await fetch(teams[id].l); if (r.ok) { fs.writeFileSync(f, Buffer.from(await r.arrayBuffer())); nl++; } } catch (e) { }
+  }
+  if (nl) note('stemmi scaricati: ' + nl);
   const left = need().length;
   note('giro finito: ' + calls + ' richieste' + (remaining != null ? ', ne restano oggi ' + remaining : '') + (stop ? ' (stop: ' + stop + ')' : '') + ', partite senza dettagli ancora: ' + left);
   state.pending = left; state.t = now;

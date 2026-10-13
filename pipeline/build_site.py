@@ -12,6 +12,8 @@ def rep(s, a, b):
 
 head = src[src.index('<head>') + 6:src.index('<style>')]
 head = re.sub(r'<link rel="(apple-touch-icon|icon)"[^>]*>\n?', '', head)
+head = re.sub(r'<link rel="(preconnect|stylesheet)" href="https://fonts\.(googleapis|gstatic)\.com[^>]*>\n?', '', head)
+head += '<link rel="stylesheet" href="fonts/fonts.css">\n'
 head += '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" href="icon-192.png">\n<link rel="apple-touch-icon" href="icon-192.png">\n'
 css = src[src.index('<style>'):src.index('</style>') + 8]
 css = css.replace('.bnav-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}', '.bnav-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(2,1fr)}')
@@ -42,7 +44,7 @@ INFO = '''<template id="info-tpl">
 </ul>
 <h2>Avvertenze</h2>
 <p>OverLab offre statistiche e probabilità a scopo informativo. Non è un bookmaker, non accetta scommesse e non ha legami con operatori di gioco. Vietato ai minori di 18 anni. Se giochi, fallo in modo responsabile: per aiuto c'è il Telefono Verde nazionale per i problemi legati al gioco d'azzardo, 800 558 822.</p>
-<p>Dati delle partite: API-Football. <a href="privacy.html">Privacy</a></p>
+<p>Dati delle partite: API-Football. <a href="privacy.html">Privacy</a> · <a href="termini.html">Termini d'uso</a></p>
 </div>
 </template>
 '''
@@ -101,14 +103,68 @@ self.addEventListener('fetch', function (e) {
 '''
 open(os.path.join(OUT, 'sw.js'), 'w').write(SW)
 
-PRIV = '''<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OverLab: privacy</title>
-<style>body{margin:0;background:#111214;color:#f2f4f5;font:16px/1.6 system-ui,sans-serif}main{max-width:680px;margin:0 auto;padding:24px 16px}h1{font-size:24px}a{color:#52e3a0}</style></head>
-<body><main><h1>Privacy di OverLab</h1>
-<p>OverLab non chiede registrazioni, non raccoglie dati personali, non usa pubblicità e non traccia chi la usa.</p>
-<p>L'app scarica solo i file con le statistiche delle partite. Le preferenze (per esempio i campionati scelti) restano sul telefono e non vengono inviate a nessuno.</p>
-<p>I dati delle partite provengono da API-Football. Per contatti usa l'indirizzo email indicato nella pagina dell'app sul Google Play Store.</p>
-<p><a href="./">Torna all'app</a></p></main></body></html>
-'''
+# ---------- pagine legali ----------
+TITOLARE = 'Gennaro Notaro'
+EMAIL = os.environ.get('OVERLAB_EMAIL', '')            # indirizzo di contatto pubblico
+AGG = '14 ottobre 2026'
+def page(title, body):
+    return ('<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + ' · OverLab</title>'
+            '<link rel="stylesheet" href="fonts/fonts.css"><style>body{margin:0;background:#111214;color:#e9ecee;font:16px/1.65 "Public Sans",system-ui,sans-serif}'
+            'main{max-width:720px;margin:0 auto;padding:28px 16px 48px}h1{font:800 30px/1.1 "Saira Condensed",sans-serif;letter-spacing:.02em;text-transform:uppercase;margin:0 0 6px}'
+            'h2{font:700 20px/1.2 "Saira Condensed",sans-serif;letter-spacing:.03em;text-transform:uppercase;margin:28px 0 6px;color:#fff}p,li{color:#c9cdd1}a{color:#52e3a0}small{color:#8a9096}'
+            'nav{display:flex;gap:16px;margin-bottom:22px;font-weight:600}</style></head><body><main><nav><a href="./">← OverLab</a><a href="privacy.html">Privacy</a><a href="termini.html">Termini</a></nav>'
+            + body + '<p><small>Ultimo aggiornamento: ' + AGG + '</small></p></main></body></html>\n')
+MAIL = ('<a href="mailto:' + EMAIL + '">' + EMAIL + '</a>') if EMAIL else 'indirizzo in pubblicazione a breve'
+PRIV = page('Privacy', f"""<h1>Informativa privacy</h1>
+<p>Questa pagina spiega quali dati vengono trattati quando usi OverLab (sito e app), come previsto dal Regolamento UE 2016/679 (GDPR).</p>
+<h2>Titolare del trattamento</h2>
+<p>{TITOLARE} – email: {MAIL}</p>
+<h2>In breve</h2>
+<ul><li>Non serve registrarsi e non ci sono account.</li><li>Nessuna pubblicità, nessuno strumento di statistica sui visitatori, nessuna profilazione.</li><li>Nessun cookie di terze parti. Caratteri e stemmi delle squadre sono ospitati sul sito stesso: il tuo browser non contatta altri servizi.</li></ul>
+<h2>Dati di navigazione (hosting)</h2>
+<p>Il sito è ospitato su GitHub Pages, servizio di GitHub, Inc. (Stati Uniti). Quando apri una pagina, il server riceve i dati tecnici che ogni browser invia, come indirizzo IP, tipo di browser, data e ora della richiesta. Servono solo a consegnarti le pagine e a proteggere il servizio da abusi; il titolare non li riceve e non li usa. Base giuridica: legittimo interesse a far funzionare il sito in modo sicuro (art. 6.1.f GDPR). GitHub tratta questi dati come fornitore di hosting e li trasferisce negli Stati Uniti con le garanzie previste dal GDPR (Data Privacy Framework UE-USA e clausole contrattuali standard): vedi l'<a href="https://docs.github.com/it/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">informativa di GitHub</a>.</p>
+<h2>Dati salvati sul tuo dispositivo</h2>
+<p>OverLab salva sul tuo telefono o computer, nella memoria del browser, solo le tue preferenze (per esempio le squadre che segui) e una copia dei file dell'app per aprirla anche senza rete. Questi dati restano sul tuo dispositivo, non vengono inviati a nessuno e puoi cancellarli in qualsiasi momento dalle impostazioni del browser. Sono strumenti tecnici necessari al funzionamento e non richiedono consenso (art. 122 del Codice privacy e Linee guida del Garante sui cookie).</p>
+<h2>Se ci scrivi</h2>
+<p>Se mandi un'email, il tuo indirizzo e il messaggio vengono usati solo per risponderti e conservati per il tempo necessario, al massimo 12 mesi. Base giuridica: la tua richiesta (art. 6.1.b GDPR).</p>
+<h2>I tuoi diritti</h2>
+<p>Puoi chiedere in ogni momento di accedere ai tuoi dati, correggerli, cancellarli, limitarne l'uso, opporti al trattamento o riceverli in un formato leggibile (artt. 15-22 GDPR), scrivendo a {MAIL}. Puoi anche presentare reclamo al <a href="https://www.garanteprivacy.it" rel="noopener">Garante per la protezione dei dati personali</a>.</p>
+<h2>Minori</h2>
+<p>OverLab è vietato ai minori di 18 anni e non raccoglie consapevolmente dati di minori.</p>
+<h2>Modifiche</h2>
+<p>Se questa informativa cambia, la nuova versione viene pubblicata qui con la data di aggiornamento.</p>""")
+TERM = page('Termini', f"""<h1>Termini d'uso e note legali</h1>
+<h2>Chi gestisce OverLab</h2>
+<p>OverLab è gestito da {TITOLARE}, persona fisica. Contatti: {MAIL}</p>
+<h2>Cosa offre</h2>
+<p>OverLab mostra statistiche e stime di probabilità sulle partite di calcio, calcolate in automatico da un modello statistico, a scopo informativo e di intrattenimento. L'uso è gratuito.</p>
+<h2>Non è un servizio di scommesse</h2>
+<p>OverLab non è un bookmaker, non accetta scommesse, non ha legami commerciali con operatori di gioco e non promuove il gioco con vincite in denaro. Le percentuali non sono consigli né inviti a giocare.</p>
+<h2>Nessuna garanzia</h2>
+<p>Le stime sono probabilità, non certezze: un evento stimato al 70% non succede circa 3 volte su 10. I dati provengono da fonti esterne e possono contenere errori, ritardi o mancanze. Nei limiti consentiti dalla legge, il gestore non risponde di decisioni prese sulla base delle informazioni del sito o di danni derivanti dal suo uso o dalla sua interruzione.</p>
+<h2>Vietato ai minori di 18 anni</h2>
+<p>Il servizio è riservato ai maggiorenni.</p>
+<h2>Gioco responsabile</h2>
+<p>Il gioco può causare dipendenza. Se scegli di giocare, fallo solo con operatori autorizzati dall'Agenzia delle Dogane e dei Monopoli e con somme che puoi permetterti di perdere. Per aiuto: Telefono Verde Nazionale per le problematiche legate al gioco d'azzardo dell'Istituto Superiore di Sanità, <a href="tel:800558822">800 558 822</a>, gratuito e anonimo.</p>
+<h2>Dati, nomi e marchi</h2>
+<p>Dati delle partite forniti da API-Football (API-Sports). Nomi, loghi e marchi di squadre, campionati e competizioni appartengono ai rispettivi titolari e sono usati solo per identificare le partite. OverLab non è affiliato, sponsorizzato o approvato da UEFA, leghe, federazioni o club.</p>
+<h2>Contenuti di OverLab</h2>
+<p>Testi, grafica, codice e modello di OverLab appartengono al gestore. I caratteri Public Sans e Saira sono usati secondo la licenza SIL Open Font License 1.1.</p>
+<h2>Modifiche e disponibilità</h2>
+<p>Il servizio e questi termini possono cambiare o essere sospesi in qualsiasi momento; la versione aggiornata è sempre su questa pagina.</p>
+<h2>Legge applicabile</h2>
+<p>Si applica la legge italiana. Restano salvi i diritti che la legge riconosce ai consumatori, compreso il foro del luogo di residenza.</p>""")
+open(os.path.join(OUT, 'termini.html'), 'w', encoding='utf-8').write(TERM)
+# font locali
+import shutil
+FD = os.path.join(ROOT, 'pipeline', 'fonts'); os.makedirs(os.path.join(OUT, 'fonts'), exist_ok=True)
+css = []
+for fam, name, ws in [('public-sans', 'Public Sans', (400, 500, 600, 700)), ('saira-condensed', 'Saira Condensed', (600, 700, 800)), ('saira-semi-condensed', 'Saira Semi Condensed', (600, 700))]:
+    for w in ws:
+        for sub, rng in (('latin', 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'), ('latin-ext', 'U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF')):
+            fn = '%s-%s-%d-normal.woff2' % (fam, sub, w); shutil.copy(os.path.join(FD, fn), os.path.join(OUT, 'fonts', fn))
+            css.append("@font-face{font-family:'%s';font-style:normal;font-display:swap;font-weight:%d;src:url(%s) format('woff2');unicode-range:%s}" % (name, w, fn, rng))
+open(os.path.join(OUT, 'fonts', 'fonts.css'), 'w').write('\n'.join(css) + '\n')
 open(os.path.join(OUT, 'privacy.html'), 'w', encoding='utf-8').write(PRIV)
 open(os.path.join(OUT, '.nojekyll'), 'w').write('')
 
