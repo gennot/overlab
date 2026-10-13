@@ -105,7 +105,7 @@ open(os.path.join(OUT, 'sw.js'), 'w').write(SW)
 
 # ---------- pagine legali ----------
 TITOLARE = 'Gennaro Notaro'
-EMAIL = os.environ.get('OVERLAB_EMAIL', '')            # indirizzo di contatto pubblico
+EMAIL = os.environ.get('OVERLAB_EMAIL', 'offesia@gmail.com')   # indirizzo di contatto pubblico
 AGG = '14 ottobre 2026'
 def page(title, body):
     return ('<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + ' · OverLab</title>'
