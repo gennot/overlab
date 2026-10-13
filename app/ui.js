@@ -119,7 +119,7 @@
       });
     });
     var when = SNAP && window.OVERLAB_T ? 'Dati aggiornati ' + new Date(window.OVERLAB_T).toLocaleString('it-IT', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) + '.' : 'Dati in diretta.';
-    return h + '<p class="foot">' + when + (PLAY ? ' Statistiche e probabilità a scopo informativo. Vietato ai minori di 18 anni. OverLab non è un bookmaker e non accetta scommesse. <a href="privacy.html">Privacy</a> · <a href="termini.html">Termini d\'uso</a>' : '') + '</p>';
+    return h + '<p class="foot">' + when + '' + '</p>';
   }
   // le giocate più probabili delle prossime partite (finestra di 36 ore dalla prima in programma)
   // occasioni: giocate con quota da 1,40 in su che secondo la stima pagano bene rispetto al rischio

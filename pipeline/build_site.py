@@ -21,7 +21,21 @@ body = src[src.index('<body>') + 6:src.index('<script>')]
 # niente quote e niente schedina: restano Partite e Info
 body = re.sub(r'<button data-hv="sure">.*?</button>\n', '', body, flags=re.S)
 body = re.sub(r'<button data-hv="slip">.*?</button>\n', '', body, flags=re.S)
-body = rep(body, '<main class="wrap" id="app"></main>', '<main class="wrap" id="app"><div class="note">Carico i dati…</div></main>')
+# avvertenze sempre visibili in fondo a ogni pagina (gioco responsabile, ADM, nessuna scommessa)
+LEGAL = ('\n<footer class="legal" role="contentinfo">'
+  '<div class="legal-b"><span class="l18">18+</span><b>Gioca responsabile</b><a href="tel:800558822">Telefono Verde 800 558 822</a></div>'
+  '<p class="legal-w"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.8 19.5h18.4z"/><path d="M12 10v4.2"/><circle cx="12" cy="16.8" r=".6" fill="currentColor" stroke="none"/></svg>'
+  '<span>OverLab non è un bookmaker e non accetta scommesse. Statistiche e probabilità a solo scopo informativo. Consulta le probabilità di vincita sul sito <a href="https://www.adm.gov.it" rel="noopener">www.adm.gov.it</a>. Vietato ai minori di 18 anni.</span></p>'
+  '<p class="legal-l"><a href="privacy.html">Privacy</a> · <a href="termini.html">Termini d&#39;uso</a> · Dati: API-Football</p></footer>\n')
+CSS_LEGAL = ('.wrap{padding-bottom:18px}'
+  '.legal{max-width:680px;margin:0 auto;padding:6px 16px calc(100px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}'
+  '.legal-b{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);font-size:14px}'
+  '.legal-b b{font-weight:600}.legal-b a{color:var(--muted);text-decoration:none;flex-basis:100%}'
+  '.l18{display:inline-grid;place-items:center;min-width:30px;height:24px;padding:0 6px;border-radius:999px;background:#c62828;color:#fff;font:800 12px/1 var(--num)}'
+  '.legal-w{display:flex;gap:8px;margin:0;font-size:13px;line-height:1.5;color:var(--muted)}.legal-w .ic{flex:none;width:18px;height:18px;color:var(--gold);margin-top:1px}'
+  '.legal-w a,.legal-l a{color:var(--accent-ink)}.legal-l{margin:0;font-size:13px;color:var(--muted)}')
+css = css.replace('</style>', CSS_LEGAL + '</style>')
+body = rep(body, '<main class="wrap" id="app"></main>', '<main class="wrap" id="app"><div class="note">Carico i dati…</div></main>' + LEGAL)
 INFO = '''<template id="info-tpl">
 <div class="info">
 <p>Dati aggiornati in automatico più volte al giorno: la data dell'ultimo aggiornamento è in fondo alla lista delle partite.</p>
