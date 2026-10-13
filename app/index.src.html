@@ -25,11 +25,12 @@
   --hi:#3ccf8a;--ok:#a6d66e;--mid:#f1b648;--lo:#858d98;--err:#ff8a78;
   --hi-bg:rgba(60,207,138,.13);--ok-bg:rgba(166,214,110,.11);--mid-bg:rgba(241,182,72,.11);--lo-bg:rgba(133,141,152,.10);
   --pitch:rgba(82,227,160,.07);--shadow:0 10px 30px rgba(0,0,0,.45);--glow:0 8px 24px rgba(37,197,132,.28);
+  --pro1:#ffd77f;--pro2:#f5a524;--home:#16b5c6;--home-ink:#4fd8e6;--away:#ff6a3d;--away-ink:#ff8f63;
   --disp:"Saira Condensed","Arial Narrow",system-ui,sans-serif;--num:"Saira Semi Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   color-scheme:dark;
 }
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--pro1:#c47a00;--pro2:#9a5a00;--home-ink:#0b8796;--away-ink:#d4461e;
   --bg:#f3f4f5;--surface:#ffffff;--surface2:#eef0f2;--line:#dfe2e6;--fg:#121417;--muted:#5d646d;
   --g1:#14b46b;--g2:#0e9fb3;--on-grad:#ffffff;
   --accent:#0f9e66;--accent-fg:#ffffff;--accent-ink:#0a8454;--accent-bg:rgba(15,158,102,.10);--gold:#b7791f;
@@ -38,7 +39,7 @@
   --pitch:rgba(15,158,102,.07);--shadow:0 8px 24px rgba(18,20,23,.10);--glow:0 8px 22px rgba(15,158,102,.25);
   color-scheme:light;
 }}
-:root[data-theme="light"]{
+:root[data-theme="light"]{--pro1:#c47a00;--pro2:#9a5a00;--home-ink:#0b8796;--away-ink:#d4461e;
   --bg:#f3f4f5;--surface:#ffffff;--surface2:#eef0f2;--line:#dfe2e6;--fg:#121417;--muted:#5d646d;
   --g1:#14b46b;--g2:#0e9fb3;--on-grad:#ffffff;
   --accent:#0f9e66;--accent-fg:#ffffff;--accent-ink:#0a8454;--accent-bg:rgba(15,158,102,.10);--gold:#b7791f;
@@ -284,7 +285,7 @@ a{color:inherit;text-decoration:none}
 @keyframes spUp{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
 @keyframes spLoad{0%{transform:translateX(-110%)}100%{transform:translateX(260%)}}
 @media (prefers-reduced-motion:reduce){.sp-logo,.sp-logo *,.sp-name,.sp-tag,.sp-load i{animation:none!important}}
-.play .qm{display:none}
+.play .qm{display:none} .play .xr{grid-template-columns:1fr 60px}
 .msel{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--fg)}
 .msel.on{border-color:var(--accent)}
 .msel .ck{flex:none;width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line);display:grid;place-items:center;font:700 14px/1 var(--body);color:var(--accent-fg)}
@@ -314,6 +315,168 @@ a{color:inherit;text-decoration:none}
 .info td,.info th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}
 .info th{font:600 12px/1.2 var(--disp);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .info td:first-child,.info th:first-child{text-align:left}
+
+/* ---- pagina partita stile pro ---- */
+.kob{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 auto 12px;width:max-content;max-width:100%;padding:9px 16px;border-radius:999px;border:1px solid rgba(243,182,63,.45);background:rgba(243,182,63,.08);font-size:14px}
+.kob .ic{color:var(--gold)}
+.kob b{font:700 16px/1 var(--num);color:var(--gold);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.mh-t .lg{width:64px;height:64px}
+.vs{font:800 34px/1 var(--disp);font-style:normal;color:var(--muted);letter-spacing:.04em}
+.sec-h{display:flex;align-items:center;gap:10px;margin:22px 2px 12px;font:800 22px/1 var(--disp);letter-spacing:.03em;text-transform:uppercase}
+.sec-h .ic{color:var(--gold)}
+.hero-p{background:radial-gradient(120% 90% at 50% 0%,rgba(243,182,63,.16),transparent 70%),var(--surface2);border-color:rgba(243,182,63,.35)}
+.hero-p small{color:var(--gold)}
+.hero-p b{font:900 40px/1.02 var(--disp);background:linear-gradient(180deg,var(--pro1),var(--pro2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px rgba(245,165,36,.35))}
+.hero-p b.lng{font-size:30px}
+.hero-a .story{margin:0;font-size:15px;line-height:1.6}
+.lu{margin-top:16px;border:1px solid rgba(82,227,160,.25);border-radius:22px;padding:16px 14px;background:linear-gradient(180deg,rgba(22,181,198,.07),transparent 45%),var(--surface)}
+.lu-h{display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:8px;margin:2px 4px 12px}
+.lu-srcw{display:flex;justify-content:center;margin:0 0 14px}
+.lu-t{display:flex;flex-direction:column;gap:4px;min-width:0}
+.lu-t.away{align-items:flex-end;text-align:right}
+.lu-t b{display:flex;align-items:center;gap:9px;font:700 19px/1.1 var(--disp);letter-spacing:.08em;text-transform:uppercase;min-width:0}
+.lu-t.home b{color:var(--home-ink)} .lu-t.away b{color:var(--away-ink)}
+.lu-t i{width:12px;height:12px;border-radius:50%;flex:none}
+.lu-t.home i{background:var(--home)} .lu-t.away i{background:var(--away)}
+.lu-t small{color:var(--muted);font:600 14px/1 var(--num)}
+.lu-src{padding:7px 16px;border-radius:999px;border:1px solid rgba(243,182,63,.5);color:var(--gold);font:700 11.5px/1 var(--body);letter-spacing:.14em;text-transform:uppercase}
+.lu-src.off{border-color:rgba(82,227,160,.5);color:var(--accent-ink)}
+.pitch{position:relative;aspect-ratio:10/18;border-radius:16px;overflow:hidden;border:2px solid rgba(255,255,255,.1);background:repeating-linear-gradient(180deg,#1c7a3d 0 8.333%,#22884a 8.333% 16.666%)}
+.pl-lines{position:absolute;inset:3% 3.5%;border:2px solid rgba(255,255,255,.7);pointer-events:none}
+.pl-lines i{position:absolute;border:2px solid rgba(255,255,255,.7)}
+.pl-lines .pc1{left:0;right:0;top:50%;border-width:2px 0 0}
+.pl-lines .pc2{left:50%;top:50%;width:28%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%}
+.pl-lines .bx{left:22%;right:22%;height:12%} .pl-lines .bx.t{top:-2px} .pl-lines .bx.b{bottom:-2px}
+.pl-lines .sb{left:37%;right:37%;height:5%} .pl-lines .sb.t{top:-2px} .pl-lines .sb.b{bottom:-2px}
+.pn{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;width:max-content;padding:0;border:0;background:none;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pn i{position:relative;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;font:800 15px/1 var(--num);font-style:normal;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.4),inset 0 -3px 0 rgba(0,0,0,.18)}
+.pn.home i{background:radial-gradient(circle at 35% 30%,#5be3f0,#0f9fb0)}
+.pn.away i{background:radial-gradient(circle at 35% 30%,#ff8c5f,#df4325)}
+.pn b{max-width:118px;padding:3px 7px;border-radius:7px;background:rgba(6,12,16,.84);color:#fff;font:600 11px/1.15 var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pn:focus-visible i{outline:2px solid #fff;outline-offset:2px}
+.pbr{position:absolute;top:-7px;right:-9px;display:flex;gap:2px}
+.pbl{position:absolute;top:-6px;right:calc(100% - 9px);display:flex;flex-direction:row-reverse;gap:2px}
+.foul{display:inline-block;flex:none;width:15px;height:15px;border-radius:50%;background:#e5383b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5.5v8.5' stroke='%23fff' stroke-width='3.2' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='18.5' r='1.9' fill='%23fff'/%3E%3C/svg%3E") center/100% no-repeat;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.fouled{display:inline-block;flex:none;width:15px;height:15px;border-radius:50%;background:#7c5cff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v12M6.5 12l5.5 5.5 5.5-5.5' stroke='%23fff' stroke-width='2.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.shot{display:inline-block;flex:none;width:15px;height:15px;border-radius:50%;background:#ff9f1c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12h11M12 7l5 5-5 5' stroke='%23fff' stroke-width='2.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.ycard{display:inline-block;flex:none;width:10px;height:14px;border-radius:2px;background:#ffd400;box-shadow:0 0 0 1.5px rgba(0,0,0,.3)}
+.ball{display:inline-block;flex:none;width:15px;height:15px;border-radius:50%;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10.5' fill='%23fff' stroke='%23111' stroke-width='1.6'/%3E%3Cpath d='M12 7.2l4.2 3-1.6 4.9H9.4L7.8 10.2z' fill='%23111'/%3E%3Cpath d='M12 7.2V3M16.2 10.2l3.9-1.4M14.6 15.1l2.4 3.5M9.4 15.1L7 18.6M7.8 10.2L3.9 8.8' stroke='%23111' stroke-width='1.3'/%3E%3C/svg%3E") center/100% no-repeat;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.tgt{display:inline-block;flex:none;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle,#ff4b4b 0 22%,#fff 23% 45%,#ff4b4b 46% 70%,#fff 71%);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.lu-leg{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin:10px 0 0;color:var(--muted);font-size:12.5px}
+.lu-leg span{display:inline-flex;align-items:center;gap:6px}
+.tp{display:flex;flex-direction:column;margin-top:18px}
+.tp-pill{align-self:center;display:inline-flex;align-items:center;gap:8px;padding:10px 18px;margin-bottom:8px;border-radius:999px;border:1px solid rgba(243,182,63,.55);background:rgba(243,182,63,.10);color:var(--gold);font:800 14px/1 var(--disp);letter-spacing:.14em;text-transform:uppercase}
+.tp-pill .ic{fill:currentColor}
+.tp-r{padding:14px 2px;border-top:1px solid var(--line)}
+.tp-r h4{display:flex;align-items:center;gap:9px;margin:0 0 8px;font:800 14px/1 var(--disp);letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.tp-n{margin:0;font:600 18px/1.3 var(--body)}
+.tp-n .home{color:var(--home-ink)} .tp-n .away{color:var(--away-ink)}
+.tp-n small{font-size:16px;color:var(--muted)}
+.tp-w{margin:5px 0 0;color:var(--muted);font-size:14px;line-height:1.5}
+
+/* barra 1X2 */
+.x12{margin:14px 0 4px}
+.x12-b{display:flex;height:12px;border-radius:999px;overflow:hidden;gap:3px}
+.x12-b i{display:block;min-width:6px}
+.x12-b .h{background:var(--home)} .x12-b .d{background:var(--lo)} .x12-b .a{background:var(--away)}
+.x12-l{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
+.x12-l .d{text-align:center} .x12-l .a{text-align:right}
+.x12-l b{color:var(--fg);font:700 13px/1 var(--num);margin-right:3px}
+.x12-l em{font:700 15px/1 var(--num);font-style:normal;color:var(--fg)}
+.x12-l .h em{color:var(--home-ink)} .x12-l .a em{color:var(--away-ink)}
+/* giocate in più */
+.xm{padding:16px 14px}
+.xm h3{display:flex;align-items:center;gap:8px}
+.xm .xs{margin:14px 0 4px;font:700 12px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.xr{display:grid;grid-template-columns:1fr 52px 58px;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid var(--line);font-size:14.5px}
+.xr b{text-align:right;font:700 15px/1 var(--num)} .xr small{text-align:right;color:var(--muted);font:600 13px/1 var(--num)}
+.xr.xh{border-top:0;padding:2px;color:var(--muted)} .xr.xh b,.xr.xh small{font:600 11px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.exg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ex{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;border-radius:14px;background:var(--surface2);border:1px solid var(--line)}
+.ex b{font:800 26px/1 var(--num)} .ex span{font:700 14px/1 var(--num);color:var(--accent-ink)} .ex small{color:var(--muted);font-size:12px}
+/* testa a testa */
+.duel{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end}
+.duel span{display:flex;flex-direction:column;gap:4px;font:800 22px/1 var(--num)}
+.duel b{font:600 14px/1.2 var(--body)}
+.duel .home{color:var(--home-ink)} .duel .away{color:var(--away-ink);text-align:right;align-items:flex-end} .duel .dx{color:var(--muted);align-items:center;font-size:18px}
+/* radar e andamento */
+.radar{display:block;width:100%;max-width:340px;margin:0 auto}
+.radar .rg{fill:none;stroke:var(--line);stroke-width:1}
+.radar .rg.avg{stroke:var(--muted);stroke-dasharray:3 3}
+.radar text{fill:var(--muted);font:600 11px var(--body)}
+.radar .rp{stroke-width:2;fill-opacity:.22}
+.radar .rp.home{stroke:var(--home);fill:var(--home)} .radar .rp.away{stroke:var(--away);fill:var(--away)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
+.dot.home{background:var(--home)} .dot.away{background:var(--away)}
+.fc h3{display:flex;align-items:center;gap:8px;margin:10px 0 4px;font:700 15px/1.2 var(--body)}
+.fsvg{display:block;width:100%}
+.fsvg .rg{stroke:var(--line);stroke-width:1}
+.fsvg .fb.home{fill:var(--home)} .fsvg .fb.away{fill:var(--away)} .fsvg .fa{fill:var(--lo);opacity:.55}
+.fsvg .fr.w{fill:var(--hi)} .fsvg .fr.d{fill:var(--mid)} .fsvg .fr.l{fill:var(--err)}
+
+/* simulazione */
+.simz{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.simbtn em{margin-right:2px}
+.simbtn[disabled]{opacity:.75}
+.simbar{display:grid;grid-template-columns:1fr auto 1fr auto;align-items:center;gap:10px;margin:0 0 10px;padding:10px 14px;border-radius:14px;background:#0b1013;border:1px solid rgba(255,255,255,.08);color:#fff}
+.simbar[hidden]{display:none}
+.simbar span{font:700 15px/1.1 var(--disp);letter-spacing:.06em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.simbar .home{color:#4fd8e6} .simbar .away{color:#ff8f63;text-align:right}
+.simbar b{font:800 24px/1 var(--num);font-variant-numeric:tabular-nums}
+.simbar i{font:700 14px/1 var(--num);font-style:normal;color:var(--gold);min-width:34px;text-align:right}
+.sball{position:absolute;z-index:3;width:16px;height:16px;margin:-26px 0 0 -8px;border-radius:50%;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10.5' fill='%23fff' stroke='%23111' stroke-width='1.6'/%3E%3Cpath d='M12 7.2l4.2 3-1.6 4.9H9.4L7.8 10.2z' fill='%23111'/%3E%3C/svg%3E") center/100% no-repeat;box-shadow:0 4px 10px rgba(0,0,0,.5);transition:left .55s cubic-bezier(.3,.7,.3,1),top .55s cubic-bezier(.3,.7,.3,1);pointer-events:none}
+.pn.hasball i{transform:scale(1.18);box-shadow:0 0 0 3px rgba(255,255,255,.85),0 6px 16px rgba(0,0,0,.5);transition:transform .2s}
+.simfx{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;opacity:0;transform:scale(.8);transition:opacity .25s,transform .25s;background:radial-gradient(75% 34% at 50% 50%,rgba(0,0,0,.82),rgba(0,0,0,.35) 70%,transparent 90%);color:#fff;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.simfx.on{opacity:1;transform:none}
+.simfx b{font:900 54px/1 var(--disp);letter-spacing:.04em;background:linear-gradient(180deg,#ffd77f,#f5a524);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px rgba(245,165,36,.5))}
+.simfx.end b{font-size:34px}
+.simfx span{font:700 20px/1.2 var(--body)} .simfx small{font:600 14px/1 var(--body);opacity:.85}
+.simfx.home span{color:#5be3f0} .simfx.away span{color:#ff9a70}
+.ycard.big{width:30px;height:42px;border-radius:4px}
+.sim-end{border:1px solid rgba(243,182,63,.35);border-radius:16px;padding:14px;background:radial-gradient(120% 90% at 50% 0%,rgba(243,182,63,.12),transparent 70%),var(--surface2)}
+.sim-end>small{display:block;text-align:center;font:700 12px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.sim-sc{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:10px 0 8px}
+.sim-sc span{font:700 17px/1.1 var(--disp);letter-spacing:.06em;text-transform:uppercase} .sim-sc .home{color:var(--home-ink)} .sim-sc .away{color:var(--away-ink);text-align:right}
+.sim-sc b{font:900 34px/1 var(--num)}
+.sim-e{display:grid;grid-template-columns:34px auto 1fr auto auto;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:14.5px}
+.sim-m{font:700 14px/1 var(--num);color:var(--gold)} .sim-e small{font-size:12.5px} .sim-e .home{color:var(--home-ink)} .sim-e .away{color:var(--away-ink)}
+.sim-p{font:700 14px/1 var(--num);color:var(--muted)}
+
+/* card da condividere */
+.shbtn{margin-top:0}
+.shov{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
+.shbox{display:flex;flex-direction:column;gap:12px;width:100%;max-width:420px;max-height:100%;overflow:auto;padding:14px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.shbox img{display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:14px}
+.shbtns{display:flex;flex-wrap:wrap;gap:8px} .shbtns .btn{flex:1 1 30%}
+
+/* partita del giorno, preferiti */
+.motd{display:flex;flex-direction:column;gap:12px;width:100%;margin:6px 0 14px;padding:16px;border-radius:22px;border:1px solid rgba(243,182,63,.4);background:radial-gradient(120% 80% at 50% 0%,rgba(243,182,63,.14),transparent 70%),var(--surface);color:inherit;text-align:center;cursor:pointer}
+.motd-k{display:inline-flex;align-self:center;align-items:center;gap:7px;font:800 13px/1 var(--disp);letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.motd-k .ic{fill:currentColor}
+.motd-t{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.motd-s{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.motd-s .lg{width:52px;height:52px} .motd-s b{font:700 17px/1.1 var(--disp);letter-spacing:.02em}
+.motd-c{display:flex;flex-direction:column;gap:3px;color:var(--muted);font-size:12px} .motd-c i{font:800 28px/1 var(--disp);font-style:normal;color:var(--muted)}
+.motd-b{height:8px}
+.motd-p{display:flex;flex-direction:column;gap:5px}
+.motd-p small{font:700 11.5px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.motd-p b{font:900 26px/1.05 var(--disp);text-transform:uppercase;background:linear-gradient(180deg,var(--pro1),var(--pro2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.motd-p span{color:var(--muted);font-size:13px}
+.favs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 12px}
+.favs .ic,.day .ic{width:15px;height:15px}
+.chip.on .ic{fill:currentColor}
+.mrow.fav{border-color:rgba(243,182,63,.35)}
+
+.themes{margin-top:10px;align-items:center}
+.th-l{font:700 11.5px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+
+.lu-lock{margin:10px 4px 0;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.5}
+.tp.locked .tp-w{text-align:center;margin-top:2px}
+.simskip .ic{color:var(--gold)}
+.pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
+.tgt.big,.shot.big,.foul.big{width:40px;height:40px}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}.sball{transition:none}}
 </style>
 </head>
 <body>
@@ -325,7 +488,7 @@ a{color:inherit;text-decoration:none}
 <main class="wrap" id="app"></main>
 <nav class="bnav" aria-label="Sezioni"><div class="bnav-in">
 <button data-hv="list" class="on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5L12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H5.5A1.5 1.5 0 0 1 4 19Z"/></svg><span>Partite</span></button>
-<button data-hv="sure"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg><span>Occasioni</span></button>
+<button data-hv="sure"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg><span>In evidenza</span></button>
 <button data-hv="slip"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9Z"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z"/></svg><span>Schedina IA</span></button>
 <button data-nav="info" data-bn="info"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.4"/></svg><span>Info</span></button>
 </div></nav>
@@ -350,11 +513,21 @@ a{color:inherit;text-decoration:none}
 <p>Risultato: l'esito più probabile è uscito il 53% delle volte. Doppia chance sopra l'85%: uscita circa 9 volte su 10. Goal/no goal: il modello fa appena meglio di una moneta.</p>
 <p>Giocatori senza formazione ufficiale: su 12.600 casi reali un titolare probabile è partito davvero titolare circa 2 volte su 3. Le percentuali ne tengono conto; se confermi tu il titolare salgono.</p>
 <p>Un 70% vuol dire che 3 volte su 10 non esce. Cinque giocate al 90% messe insieme escono circa 6 volte su 10. Sono probabilità, non certezze.</p>
-<h2>Quote del bookmaker e Schedina IA</h2>
-<p>Quando ci sono le quote del bookmaker l'app mostra solo le giocate che si possono giocare davvero, con la loro quota. Per risultato, doppia chance, goal e gol totali la percentuale è quella delle quote (tolta la commissione): su 26.394 partite le quote da sole hanno previsto meglio di qualsiasi miscela con il modello. Per tiri, corner, falli e giocatori è una media tra modello e quote. In più, i gol attesi dalle quote correggono tiri e tiri in porta di squadra: nella prova li hanno migliorati.</p>
-<p>La Schedina IA compone la schedina tra le giocate che si possono giocare davvero. Con «Sceglie l'IA» imposti periodo, tipo di giocata, obiettivo (una quota da raggiungere o una probabilità minima), quante partite e il budget: l'IA sceglie partite e linee. Con «Scelgo io le partite» tocchi tu le partite e l'IA sceglie la linea migliore in ognuna. Per arrivare a una quota cerca la combinazione con la probabilità più alta; per una probabilità minima cerca la quota più alta. Usa solo giocate che escono almeno una volta su due e, per scegliere, prende la stima più prudente tra modello e quote. Con MyCombo può mettere due giocate nella stessa partita: in quel caso la quota viene ricalcolata. Il budget lo scegli tu: l'app calcola l'incasso, non ti dice quanto puntare. Quasi sempre la quota totale è più bassa di quella giusta: è il margine del bookmaker. Le quote sono quelle lette all'ultimo aggiornamento e possono cambiare.</p>
-<h2>Quota minima</h2>
-<p>È la quota sotto la quale la giocata non conviene (1 diviso la probabilità). Se il bookmaker paga di più, la giocata ha valore secondo il modello. Se paga di meno, lasciala stare anche se la percentuale è alta.</p>
+<h2>Quote</h2>
+<p>L'app non usa le quote dei bookmaker: tutte le percentuali vengono dal modello. Accanto a ogni giocata c'è la <b>quota giusta</b>, cioè 1 diviso la probabilità (al 70% la quota giusta è 1,43). Se il tuo bookmaker paga più della quota giusta, secondo il modello la giocata conviene; se paga meno, il rischio non è pagato abbastanza.</p>
+<h2>Pronostico principale e In evidenza</h2>
+<p>Per ogni partita il pronostico principale è la giocata più probabile con quota giusta tra 1,40 e 2,50, scelta tra gol, risultato, gol delle squadre, tiri, corner e giocatori. Quando due giocate sono quasi alla pari vince quella sui gol, poi tiri, poi corner. «In evidenza» raccoglie il pronostico principale di tutte le partite, dal più probabile.</p>
+<h2>Schedina IA</h2>
+<p>Con «Sceglie l'IA» imposti periodo, tipo di giocata, obiettivo (una quota da raggiungere o una probabilità minima), quante partite e il budget: l'IA sceglie partite e linee. Con «Scelgo io» tocchi tu le partite e l'IA sceglie la giocata in ognuna. Usa solo giocate che secondo il modello escono almeno 6 volte su 10 e, a parità, preferisce meno partite. La quota della schedina è quella giusta: quella del bookmaker sarà un po' più bassa.</p>
+<h2>Giocatori: cartellino e marcatore</h2>
+<p>Il rischio giallo parte dai gialli che il giocatore prende ogni 90 minuti, avvicinati alla media del ruolo se ha giocato poco, e riportati ai gialli attesi per la sua squadra. Il marcatore è stimato dai suoi tiri in porta attesi e dai gol attesi della squadra (nei dati non ci sono i gol dei singoli giocatori). Le icone sul campo segnano chi spicca in ogni squadra.</p>
+<h2>Simulazione «Scopri chi segnerà»</h2>
+<p>È una partita animata costruita sul pronostico: finisce con il risultato più probabile del modello, segnano i marcatori più probabili e durante la partita si scopre chi riceverà il cartellino, chi farà e subirà fallo e chi tirerà di più. Serve a vedere la stima in modo immediato, non è una previsione certa.</p>
+<h2>Multigol, combo, esatti, corner e primo tempo</h2>
+<p>Multigol, combo e risultato esatto sono calcolati sulla griglia dei punteggi del modello. Corner 1X2 e handicap sulle distribuzioni dei corner delle due squadre. Il primo tempo è una stima approssimata: nei dati non ci sono i gol per tempo, quindi conta il 45% dei gol attesi nel primo tempo.</p>
+<h2>Verifica delle giocate</h2>
+<p>Test in avanti su 26.396 partite di 18 campionati dal 2022, usando per ogni partita solo i dati precedenti. Nelle giocate che l'app mostra (dal 50% in su), previsto contro uscito: multigol 69,7% → 70,4%, combo esito + under/over 59,4% → 58,6%, segna sì/no 71,7% → 72,8%, corner 1X2 62,0% → 61,1%, handicap corner 71,3% → 70,0%, linee di corner 69,5% → 69,6%, linee di cartellini 75,7% → 76,5%. Goal/no goal era troppo estremo ed è stato corretto; le combo con goal/no goal sono state tolte perché non reggevano.</p>
+<p>Giallo del singolo giocatore: test su 37.683 giocatori-partita di questa stagione. È molto casuale: in media lo prende un titolare su 7, e il più a rischio di ogni squadra circa uno su 6. Marcatore e primo tempo non si possono verificare con questi dati.</p>
 <h2>Cosa non fa</h2>
 <ul>
 <li>L'arbitro non entra nel calcolo: nella prova sui dati non migliorava le previsioni sui cartellini.</li>

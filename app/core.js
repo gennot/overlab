@@ -32,7 +32,7 @@ var Core = (function () {
   ];
   var STAT_IT = { sh: 'Tiri', sot: 'Tiri in porta', co: 'Corner', fo: 'Falli commessi', yc: 'Cartellini gialli' };
   var PST = ['sh', 'sot', 'fc', 'fs'];
-  var PST_IT = { sh: 'tiri', sot: 'tiri in porta', fc: 'falli commessi', fs: 'falli subiti' };
+  var PST_IT = { sh: 'tiri', sot: 'tiri in porta', fc: 'falli commessi', fs: 'falli subiti', yc: 'cartellini gialli', gl: 'gol' };
   var PST_1 = { sh: 'tiro', sot: 'tiro in porta', fc: 'fallo commesso', fs: 'fallo subito' };
   // quota media delle azioni di squadra per ruolo (ogni 90'), dal test su Premier 2024-25
   var PRIOR = { D: { sh: 0.045, sot: 0.037, fc: 0.078, fs: 0.064 }, M: { sh: 0.124, sot: 0.121, fc: 0.116, fs: 0.119 }, F: { sh: 0.204, sot: 0.254, fc: 0.117, fs: 0.119 }, G: { sh: 0.002, sot: 0.001, fc: 0.008, fs: 0.02 } };
@@ -180,7 +180,9 @@ var Core = (function () {
         aH: f.A[m.h], dH: f.D[m.h], aA: f.A[m.a], dA: f.D[m.a]
       };
     });
-    if (isFinite(pr.H.g) && isFinite(pr.A.g)) { out.res = Model.outcomes(pr.H.g, pr.A.g, cd.par.rho); out.res.lh = pr.H.g; out.res.la = pr.A.g; }
+    if (isFinite(pr.H.g) && isFinite(pr.A.g)) { out.res = Model.outcomes(pr.H.g, pr.A.g, cd.par.rho); out.res.lh = pr.H.g; out.res.la = pr.A.g;
+      // goal/no goal: nel test su 26.396 partite la stima era troppo estrema (72% previsto, 62% reale): correzione tarata su metà delle partite e verificata sull'altra
+      out.res.ggRaw = out.res.gg; out.res.gg = Math.min(0.97, Math.max(0.03, 0.229 + 0.582 * out.res.gg)); }
     out.nH = lastN(cd.played, m.h, 99).length; out.nA = lastN(cd.played, m.a, 99).length;
     return out;
   }
@@ -321,25 +323,75 @@ var Core = (function () {
       });
     });
   }
+  /* Cartellino e gol del singolo giocatore.
+     Giallo: gialli ogni 90 minuti del giocatore, avvicinati alla media del ruolo quando ha giocato poco, per i gialli che la sua squadra
+     dovrebbe prendere in questa partita rispetto alla media del campionato. Gol: i suoi tiri in porta attesi per i gol che la squadra
+     segna ogni tiro in porta in questa partita (gol attesi diviso tiri in porta attesi). */
+  var YC_PRIOR = { G: 0.04, D: 0.21, M: 0.19, F: 0.13 }, YC_K = 40;   // test su 37.683 giocatori-partita: i gialli del singolo sono molto casuali, conta soprattutto il ruolo
+  function mixP(f, perMin) {
+    var at = function (n, lam) { return n === 1 ? 1 - Math.exp(-lam) : 1 - Math.exp(-lam) * (1 + lam + (n === 3 ? lam * lam / 2 : 0)); };
+    var one = function (n) {
+      if (f.status === 'out') return 0;
+      if (f.status === 'tit' && f.ps < 1) return f.ps * at(n, perMin * f.minS) + (1 - f.ps) * P_ENTER * at(n, perMin * MIN_ENTER);
+      return at(n, perMin * f.expMin);
+    };
+    return { mean: perMin * f.expMin, per90: perMin, p1: one(1), p2: one(2), p3: one(3) };
+  }
+  function extras(f, tf, side) {
+    var p = f.p, rate90 = ((p.yc || 0) + YC_K * (YC_PRIOR[p.pos] || 0.17)) / ((p.m90 || 0) + YC_K);
+    f.st.yc = mixP(f, rate90 / 90); f.st.yc.rate90 = rate90; f.st.yc.fac = 1;
+    var r = tf.res, lg = r ? (side === 'H' ? r.lh : r.la) : 0, sotT = tf.pr[side].sot, conv = lg > 0 && sotT > 0 ? lg / sotT : 0;
+    f.st.gl = p.pos === 'G' || !conv ? { mean: 0, per90: 0, p1: 0, p2: 0, p3: 0 } : mixP(f, f.st.sot.per90 * conv); f.st.gl.conv = conv;
+  }
+  // i gialli e i gol dei titolari devono sommare a quelli attesi per la squadra nei minuti che giocano
+  function normX(list, tf, side) {
+    var mins = 0, sy = 0, sg = 0, r = tf.res, lg = r ? (side === 'H' ? r.lh : r.la) : 0;
+    list.forEach(function (f) { if (f.status !== 'tit') return; mins += f.expMin; sy += f.st.yc.mean; sg += f.st.gl.mean; });   // si tara sui titolari: i minuti della panchina sono più incerti
+    var cov = Math.min(1, mins / 990), cl = function (x) { return Math.min(1.8, Math.max(0.6, x)); };
+    var fy = sy > 0 && tf.pr[side].yc > 0 ? cl(tf.pr[side].yc * cov / sy) : 1, fg = sg > 0 && lg > 0 ? cl(lg * cov / sg) : 1;
+    list.forEach(function (f) {
+      var y = f.st.yc, g = f.st.gl;
+      f.st.yc = mixP(f, y.per90 * fy); f.st.yc.rate90 = y.rate90; f.st.yc.fac = fy; f.st.yc.teamYc = tf.pr[side].yc;
+      if (g.per90) { f.st.gl = mixP(f, g.per90 * fg); f.st.gl.conv = g.conv * fg; }
+    });
+  }
+  // spiegazioni per cartellino e gol del giocatore
+  function explainExtra(m, tf, f, k) {
+    var p = f.p, L = [], f1 = function (x) { return (Math.round(x * 100) / 100).toFixed(2).replace('.', ','); }, role = { G: 'portiere', D: 'difensore', M: 'centrocampista', F: 'attaccante' }[p.pos] || 'giocatore';
+    if (k === 'yc') {
+      var s = f.st.yc;
+      L.push(p.name + ': ' + (p.yc || 0) + ' gialli in ' + (p.apps || 0) + ' presenze recenti (' + Math.round((p.m90 || 0) * 90) + ' minuti), cioè ' + f1((p.yc || 0) / Math.max(0.5, p.m90 || 0)) + ' ogni 90 minuti.');
+      L.push('Per un ' + role + ' la media è circa ' + f1(YC_PRIOR[p.pos] || 0.17) + ' ogni 90 minuti: con poche partite la stima si avvicina a questa media. Stima usata: ' + f1(s.rate90) + '.');
+      L.push('Gialli attesi per la sua squadra in questa partita: ' + f1(s.teamYc || 0) + '. La stima del giocatore è riportata a questo totale (fattore ' + f1(s.fac) + ').');
+      L.push('Minuti attesi: ' + Math.round(f.expMin) + '.');
+    } else {
+      var g = f.st.gl, so = f.st.sot;
+      L.push(p.name + ' dovrebbe fare ' + f1(so.mean) + ' tiri in porta in questa partita.');
+      L.push('La squadra segna circa un gol ogni ' + f1(1 / Math.max(0.01, g.conv)) + ' tiri in porta attesi: gol attesi del giocatore ' + f1(g.mean) + '.');
+      L.push('Rigori e autogol non sono contati a parte. Minuti attesi: ' + Math.round(f.expMin) + '.');
+    }
+    return L;
+  }
   function playersForecast(pd, tf, m, overrides) {
     var out = {};
     [[m.h, 'H', 'A'], [m.a, 'A', 'H']].forEach(function (x) {
       var t = x[0], lamT = { sh: tf.pr[x[1]].sh, sot: tf.pr[x[1]].sot, fc: tf.pr[x[1]].fo, fs: tf.pr[x[2]].fo }, sq = pd.squads[t], st = pd.lu[t].st;
       var official = pd.lu[t].src === 'ufficiale';
-      out[t] = Object.keys(sq).map(function (id) { var ov = overrides && overrides[id], s = ov || st[id] || 'out', f = playerForecast(sq[id], s, lamT, (ov || official) ? 1 : psOf(sq[id].score)); f.team = t; return f; })
+      out[t] = Object.keys(sq).map(function (id) { var ov = overrides && overrides[id], s = ov || st[id] || 'out', f = playerForecast(sq[id], s, lamT, (ov || official) ? 1 : psOf(sq[id].score)); f.team = t; extras(f, tf, x[1]); return f; })
         .sort(function (a, b) { var o = { tit: 0, pan: 1, out: 2 }; return o[a.status] - o[b.status] || b.st.sh.mean - a.st.sh.mean; });
+      normX(out[t], tf, x[1]);
     });
     return out;
   }
 
   /* ---------- giocate in evidenza ---------- */
-  var LO = 0.6, HI = 0.9, SURE = 0.85, MINQ_TOP = 1.3, MINQ_OCC = 1.4;
+  var LO = 0.6, HI = 0.9, SURE = 0.85, MINQ_TOP = 1.2, MINQ_OCC = 1.4;
   /* ---------- quote del bookmaker ---------- */
   var BOOK = null;
   function setBook(b) { BOOK = b && b.ev ? b : null; }
   function bookOf(m) { return (BOOK && m && BOOK.ev[m.id]) || null; }
   function bookInfo() { return BOOK ? { name: BOOK.name, t: BOOK.t, n: Object.keys(BOOK.ev).length } : null; }
-  var CAT_IT = { sot: 'Tiri in porta squadra', sotT: 'Tiri in porta partita', sh: 'Tiri totali squadra', shT: 'Tiri totali partita', co: 'Corner squadra', coT: 'Corner partita', res: 'Esito e gol', psot: 'Giocatori: tiri in porta', psh: 'Giocatori: tiri', pfc: 'Giocatori: falli fatti', pfs: 'Giocatori: falli subiti' };
+  var CAT_IT = { sot: 'Tiri in porta squadra', sotT: 'Tiri in porta partita', sh: 'Tiri totali squadra', shT: 'Tiri totali partita', co: 'Corner squadra', coT: 'Corner partita', res: 'Esito e gol', tg: 'Gol squadra (segna, U/O squadra)', fo: 'Falli squadra', foT: 'Falli partita', yc: 'Cartellini squadra', ycT: 'Cartellini partita', mg: 'Multigol', combo: 'Combo', cx: 'Corner 1X2 e handicap', ht: 'Primo tempo', psot: 'Giocatori: tiri in porta', psh: 'Giocatori: tiri', pfc: 'Giocatori: falli fatti', pfs: 'Giocatori: falli subiti', pgl: 'Giocatori: marcatore', pyc: 'Giocatori: ammonito' };
   var DUO = { sot: true, sh: true };
   // tiri e tiri in porta si giocano solo nei campionati maggiori (Francia esclusa) e con le nazionali: altrove non si propongono
   var SHOTS_OK = { 'ita.1': 1, 'eng.1': 1, 'esp.1': 1, 'ger.1': 1, 'uefa.nations': 1 };
@@ -360,7 +412,16 @@ var Core = (function () {
       if (x) [['1', 'Vince ' + hn + ' (1)', r.h], ['X', 'Pareggio (X)', r.d], ['2', 'Vince ' + an + ' (2)', r.a]].forEach(function (y, i) { add({ kind: 'res', cat: 'res', fam: '1x2', stat: y[0], label: y[1], p: y[2], odds: x[i] }, q3 ? q3[i] : mk1(x[i]), W_RES); });
       if (mk.dc) [['1X', 'Doppia chance 1X: ' + hn + ' o pareggio', r.h + r.d, q3 && q3[0] + q3[1]], ['12', 'Doppia chance 12: non finisce pari', r.h + r.a, q3 && q3[0] + q3[2]], ['X2', 'Doppia chance X2: ' + an + ' o pareggio', r.a + r.d, q3 && q3[1] + q3[2]]].forEach(function (y, i) { add({ kind: 'res', cat: 'res', fam: 'dc', stat: y[0], label: y[1], p: y[2], odds: mk.dc[i] }, y[3] || mk1(mk.dc[i]), W_RES); });
       if (mk.gg) { add({ kind: 'res', cat: 'res', fam: 'gg', stat: 'GG', label: 'Goal: segnano entrambe', p: r.gg, odds: mk.gg[0] }, mk2(mk.gg[0], mk.gg[1]), W_RES); add({ kind: 'res', cat: 'res', fam: 'gg', stat: 'NG', label: 'No goal: almeno una non segna', p: 1 - r.gg, odds: mk.gg[1] }, mk2(mk.gg[1], mk.gg[0]), W_RES); }
-      if (mk.uo) Object.keys(mk.uo).forEach(function (L) { var k = Math.floor(+L), u = mk.uo[L]; if (k > 5) return; add({ kind: 'res', cat: 'res', fam: 'ov', stat: 'O' + k, hard: k, label: 'Gol totali over ' + ln(L), p: r.over[k], odds: u[0] }, mk2(u[0], u[1]), W_RES); add({ kind: 'res', cat: 'res', fam: 'un', stat: 'U' + k, hard: -k, label: 'Gol totali under ' + ln(L), p: 1 - r.over[k], odds: u[1] }, mk2(u[1], u[0]), W_RES); });
+      if (mk.uo) Object.keys(mk.uo).forEach(function (L) { var k = Math.floor(+L), u = mk.uo[L]; if (k > 5) return; add({ kind: 'res', cat: 'res', fam: 'ov' + k, stat: 'O' + k, hard: k, label: 'Gol totali over ' + ln(L), p: r.over[k], odds: u[0] }, mk2(u[0], u[1]), W_RES); add({ kind: 'res', cat: 'res', fam: 'un' + k, stat: 'U' + k, hard: -k, label: 'Gol totali under ' + ln(L), p: 1 - r.over[k], odds: u[1] }, mk2(u[1], u[0]), W_RES); });
+      // gol della singola squadra: segna sì/no e under/over squadra
+      [['H', hn, 'sg1', 'tg1', r.ho], ['A', an, 'sg2', 'tg2', r.ao]].forEach(function (y) {
+        var side = y[0], nm = y[1], sg = mk[y[2]], tg = mk[y[3]] || {}, po = y[4]; if (!po) return;
+        if (sg) { add({ kind: 'res', cat: 'tg', fam: 'sg' + side, stat: 'S' + side, side: side, label: nm + ' segna almeno un gol', p: po[0], odds: sg[0] }, mk2(sg[0], sg[1]), W_RES);
+          add({ kind: 'res', cat: 'tg', fam: 'ng' + side, stat: 'N' + side, side: side, label: nm + ' non segna', p: 1 - po[0], odds: sg[1] }, mk2(sg[1], sg[0]), W_RES); }
+        Object.keys(tg).forEach(function (L) { var k = Math.floor(+L), u = tg[L]; if (k > 3 || (k === 0 && sg)) return;
+          add({ kind: 'res', cat: 'tg', fam: 'to' + side + k, stat: 'TO' + side + k, side: side, hard: k, label: nm + ': gol over ' + ln(L), p: po[k], odds: u[0] }, mk2(u[0], u[1]), W_RES);
+          add({ kind: 'res', cat: 'tg', fam: 'tu' + side + k, stat: 'TU' + side + k, side: side, hard: -k, label: nm + ': gol under ' + ln(L), p: 1 - po[k], odds: u[1] }, mk2(u[1], u[0]), W_RES); });
+      });
     }
     [['sot', 'T', 'sotT'], ['sot', 'H', 'sot1'], ['sot', 'A', 'sot2'], ['sh', 'T', 'shT'], ['sh', 'H', 'sh1'], ['sh', 'A', 'sh2'], ['co', 'T', 'coT'], ['co', 'H', 'co1'], ['co', 'A', 'co2']].forEach(function (y) {
       var s = y[0], side = y[1], L = mk[y[2]]; if (!L || !statOk(m.lg, s)) return;
@@ -388,6 +449,100 @@ var Core = (function () {
     }
     return out;
   }
+  /* Senza quote del bookmaker: tutte le giocate generate dal modello, con la quota giusta (1 diviso la probabilità).
+     Stessa forma di offers(), così pronostico principale, In evidenza e Schedina IA funzionano uguale. */
+  function fairQ(p) { return Math.round(100 / p) / 100; }
+  /* Mercati in più: multigol, risultato esatto, combo, corner 1X2 e handicap, primo tempo.
+     Gol: dalla griglia dei punteggi del modello. Corner: dalle distribuzioni dei corner delle due squadre.
+     Primo tempo: approssimato, con il 45% dei gol attesi nel primo tempo (media dei campionati). */
+  var HT = 0.45;
+  function extraMarkets(m, tf) {
+    var r = tf.res, out = { exact: [], mg: [], mgT: [], combo: [], cx: [], ht: [] }; if (!r || !r.grid) return out;
+    var hn = teams[m.h] ? teams[m.h].n : 'Casa', an = teams[m.a] ? teams[m.a].n : 'Trasferta', G = r.grid, sum = function (fn) { var t = 0; for (var i = 0; i < G.length; i++) for (var j = 0; j < G[i].length; j++) if (fn(i, j)) t += G[i][j]; return t; };
+    // risultato esatto: nel test lo 0-0 era sopravvalutato (8,4% contro 7,2%) e il 2-2 sottovalutato (4,6% contro 5,6%)
+    var EXF = { '0-0': 0.86, '2-2': 1.2 }, all = []; G.forEach(function (row, i) { row.forEach(function (p, j) { all.push([i, j, p * (EXF[i + '-' + j] || 1)]); }); }); all.sort(function (a, b) { return b[2] - a[2]; });
+    out.exact = all.slice(0, 6).map(function (x) { return { label: 'Risultato esatto ' + x[0] + '-' + x[1], sc: x[0] + '-' + x[1], p: x[2] }; });
+    [[1, 2], [1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5], [2, 6], [3, 4], [3, 5], [3, 6], [4, 6]].forEach(function (z) { out.mg.push({ key: z.join('-'), label: 'Multigol ' + z[0] + '-' + z[1], p: sum(function (i, j) { return i + j >= z[0] && i + j <= z[1]; }) }); });
+    [['H', hn], ['A', an]].forEach(function (y) { [[1, 2], [1, 3], [2, 3], [2, 4]].forEach(function (z) { out.mgT.push({ side: y[0], key: y[0] + z.join('-'), label: 'Multigol ' + y[1] + ' ' + z[0] + '-' + z[1], p: sum(function (i, j) { var g = y[0] === 'H' ? i : j; return g >= z[0] && g <= z[1]; }) }); }); });
+    var RES = [['1', function (i, j) { return i > j; }], ['X', function (i, j) { return i === j; }], ['2', function (i, j) { return i < j; }], ['1X', function (i, j) { return i >= j; }], ['X2', function (i, j) { return i <= j; }], ['12', function (i, j) { return i !== j; }]];
+    var UO = [['Over 1,5', function (i, j) { return i + j > 1.5; }], ['Over 2,5', function (i, j) { return i + j > 2.5; }], ['Under 2,5', function (i, j) { return i + j < 2.5; }], ['Under 3,5', function (i, j) { return i + j < 3.5; }], ['Over 3,5', function (i, j) { return i + j > 3.5; }], ['Under 4,5', function (i, j) { return i + j < 4.5; }]];
+    RES.forEach(function (a) { UO.forEach(function (b) { out.combo.push({ key: a[0] + '+' + b[0], label: a[0] + ' + ' + b[0], p: sum(function (i, j) { return a[1](i, j) && b[1](i, j); }) }); }); });
+    // le combo con goal/no goal sono state tolte: nel test su 26.396 partite non reggevano (72% previsto, 50% reale)
+    // corner: differenza tra i corner delle due squadre
+    var par = tf.par || Model.PAR, mh = tf.pr.H.co, ma = tf.pr.A.co;
+    if (mh > 0 && ma > 0) {
+      var ph = [], pa = [], k, d = {}; for (k = 0; k <= 30; k++) { ph.push(Model.nbPmf(k, mh, par.r.co)); pa.push(Model.nbPmf(k, ma, par.r.co)); }
+      ph.forEach(function (x, i) { pa.forEach(function (y, j) { d[i - j] = (d[i - j] || 0) + x * y; }); });
+      var gt = function (h) { var t = 0; for (var z in d) if (+z > h) t += d[z]; return t; };
+      out.cx.push({ key: 'C1', label: 'Più corner ' + hn + ' (1)', p: gt(0) }, { key: 'CX', label: 'Corner pari (X)', p: d[0] || 0 }, { key: 'C2', label: 'Più corner ' + an + ' (2)', p: 1 - gt(-1) });
+      [1.5, 2.5].forEach(function (h) {
+        out.cx.push({ key: 'CH-' + h, label: 'Handicap corner ' + hn + ' -' + String(h).replace('.', ','), p: gt(h) }, { key: 'CH+' + h, label: 'Handicap corner ' + hn + ' +' + String(h).replace('.', ','), p: gt(-h) },
+          { key: 'CA-' + h, label: 'Handicap corner ' + an + ' -' + String(h).replace('.', ','), p: 1 - gt(-h) }, { key: 'CA+' + h, label: 'Handicap corner ' + an + ' +' + String(h).replace('.', ','), p: 1 - gt(h) });
+      });
+    }
+    // primo tempo (approssimato)
+    var l1 = HT * r.lh, a1 = HT * r.la, T1 = l1 + a1, T2 = (1 - HT) * (r.lh + r.la), po = function (x, k) { var e = Math.exp(-x), t = 0, f = 1; for (var n = 0; n <= k; n++) { if (n) f *= x / n; t += e * f; } return t; };
+    var h1 = 0, d1 = 0; for (var i = 0; i < 9; i++) for (var j = 0; j < 9; j++) { var pp = po(l1, i) - (i ? po(l1, i - 1) : 0), qq = po(a1, j) - (j ? po(a1, j - 1) : 0); if (i > j) h1 += pp * qq; else if (i === j) d1 += pp * qq; }
+    out.ht.push({ key: 'HO0', label: 'Primo tempo over 0,5', p: 1 - po(T1, 0) }, { key: 'HO1', label: 'Primo tempo over 1,5', p: 1 - po(T1, 1) }, { key: 'HU1', label: 'Primo tempo under 1,5', p: po(T1, 1) },
+      { key: 'H1', label: 'Primo tempo 1', p: h1 }, { key: 'HX', label: 'Primo tempo X', p: d1 }, { key: 'H2', label: 'Primo tempo 2', p: 1 - h1 - d1 },
+      { key: 'HB', label: 'Gol in entrambi i tempi', p: (1 - po(T1, 0)) * (1 - po(T2, 0)) },
+      { key: 'HSH', label: hn + ' segna in entrambi i tempi', p: (1 - Math.exp(-l1)) * (1 - Math.exp(-(1 - HT) * r.lh)) }, { key: 'HSA', label: an + ' segna in entrambi i tempi', p: (1 - Math.exp(-a1)) * (1 - Math.exp(-(1 - HT) * r.la)) });
+    return out;
+  }
+  function modelOffers(m, tf, pf) {
+    var out = [], r = tf.res, par = tf.par || Model.PAR, hn = teams[m.h] ? teams[m.h].n : 'casa', an = teams[m.a] ? teams[m.a].n : 'trasferta', ln = function (x) { return String(x).replace('.', ','); };
+    var add = function (o) { if (!(o.p >= (o.cat === 'pgl' || o.cat === 'pyc' ? 0.08 : 0.5)) || o.p > 0.97) return; o.pm = o.p; o.pk = 0; o.odds = fairQ(o.p); o.fair = true; out.push(o); };
+    if (r) {
+      [['1', 'Vince ' + hn + ' (1)', r.h], ['X', 'Pareggio (X)', r.d], ['2', 'Vince ' + an + ' (2)', r.a]].forEach(function (y) { add({ kind: 'res', cat: 'res', fam: '1x2', stat: y[0], label: y[1], p: y[2] }); });
+      [['1X', 'Doppia chance 1X: ' + hn + ' o pareggio', r.h + r.d], ['12', 'Doppia chance 12: non finisce pari', r.h + r.a], ['X2', 'Doppia chance X2: ' + an + ' o pareggio', r.a + r.d]].forEach(function (y) { add({ kind: 'res', cat: 'res', fam: 'dc', stat: y[0], label: y[1], p: y[2] }); });
+      add({ kind: 'res', cat: 'res', fam: 'gg', stat: 'GG', label: 'Goal: segnano entrambe', p: r.gg }); add({ kind: 'res', cat: 'res', fam: 'gg', stat: 'NG', label: 'No goal: almeno una non segna', p: 1 - r.gg });
+      for (var k = 0; k < 5; k++) { add({ kind: 'res', cat: 'res', fam: 'ov' + k, stat: 'O' + k, hard: k, label: 'Gol totali over ' + ln(k + 0.5), p: r.over[k] }); if (k) add({ kind: 'res', cat: 'res', fam: 'un' + k, stat: 'U' + k, hard: -k, label: 'Gol totali under ' + ln(k + 0.5), p: 1 - r.over[k] }); }
+      [['H', hn, r.ho], ['A', an, r.ao]].forEach(function (y) {
+        var side = y[0], nm = y[1], po = y[2]; if (!po) return;
+        add({ kind: 'res', cat: 'tg', fam: 'sg' + side, stat: 'S' + side, side: side, label: nm + ' segna almeno un gol', p: po[0] });
+        add({ kind: 'res', cat: 'tg', fam: 'ng' + side, stat: 'N' + side, side: side, label: nm + ' non segna', p: 1 - po[0] });
+        [1, 2].forEach(function (k) { add({ kind: 'res', cat: 'tg', fam: 'to' + side + k, stat: 'TO' + side + k, side: side, hard: k, label: nm + ': gol over ' + ln(k + 0.5), p: po[k] });
+          add({ kind: 'res', cat: 'tg', fam: 'tu' + side + k, stat: 'TU' + side + k, side: side, hard: -k, label: nm + ': gol under ' + ln(k + 0.5), p: 1 - po[k] }); });
+      });
+    }
+    var X = extraMarkets(m, tf);
+    X.mg.concat(X.mgT).forEach(function (o) { add({ kind: 'res', cat: 'mg', fam: 'mg' + o.key, stat: 'MG' + o.key, label: o.label, p: o.p }); });
+    X.combo.forEach(function (o) { add({ kind: 'res', cat: 'combo', fam: 'cb' + o.key, stat: 'CB' + o.key, label: o.label, p: o.p }); });
+    X.ht.forEach(function (o) { add({ kind: 'res', cat: 'ht', fam: 'ht' + o.key, stat: o.key, label: o.label, p: o.p }); });
+    X.cx.forEach(function (o) { add({ kind: 'res', cat: 'cx', fam: 'cx' + o.key, stat: o.key, label: o.label, p: o.p }); });
+    Model.STATS.forEach(function (s) {
+      if (!statOk(m.lg, s)) return;
+      [['H', hn, m.h], ['A', an, m.a], ['T', 'Totale partita', null]].forEach(function (y) {
+        var side = y[0], mean = tf.pr[side][s], rr = side === 'T' ? par.rTot[s] : par.r[s]; if (!(mean > 0)) return;
+        var base = { kind: 'team', cat: side === 'T' ? s + 'T' : s, stat: s, side: side, team: y[2] };
+        for (var k = 0; k < 80; k++) {
+          var po = Model.pOver(k + 0.5, mean, rr); if (po < 0.03) break;
+          add(Object.assign({ fam: s + side + 'O', hard: k + 0.5, dir: 'O', line: k + 0.5, label: y[1] + ': ' + STAT_IT[s].toLowerCase() + ' over ' + ln(k + 0.5), p: po }, base));
+          add(Object.assign({ fam: s + side + 'U', hard: -(k + 0.5), dir: 'U', line: k + 0.5, label: y[1] + ': ' + STAT_IT[s].toLowerCase() + ' under ' + ln(k + 0.5), p: 1 - po }, base));
+        }
+      });
+    });
+    if (pf) [m.h, m.a].forEach(function (t) {
+      (pf[t] || []).forEach(function (f) {
+        if (f.status === 'out' || f.p.pos === 'G') return;
+        if (f.status === 'tit' && f.st.gl) {
+          add({ kind: 'player', cat: 'pgl', fam: f.p.id + 'gl', stat: 'gl', team: t, pid: f.p.id, n: 1, line: 0.5, dir: 'O', status: f.status, sure: f.sure, label: f.p.name + ' segna', p: f.st.gl.p1 });
+          add({ kind: 'player', cat: 'pyc', fam: f.p.id + 'yc', stat: 'yc', team: t, pid: f.p.id, n: 1, line: 0.5, dir: 'O', status: f.status, sure: f.sure, label: f.p.name + ' ammonito', p: f.st.yc.p1 });
+        }
+        PST.forEach(function (k) {
+          if (!statOk(m.lg, k)) return;
+          [1, 2, 3].forEach(function (n) {
+            var p = pPlayer(f, k, n, !!DUO[k]), base = { kind: 'player', cat: 'p' + k, stat: k, team: t, pid: f.p.id, n: n, line: n - 0.5, status: f.status, sure: f.sure, duo: !!DUO[k] };
+            add(Object.assign({ fam: f.p.id + k + 'O', hard: n, dir: 'O', label: f.p.name + ': ' + n + '+ ' + (n === 1 ? PST_1[k] : PST_IT[k]), p: p }, base));
+            add(Object.assign({ fam: f.p.id + k + 'U', hard: -n, dir: 'U', label: f.p.name + ': meno di ' + n + ' ' + (n === 1 ? PST_1[k] : PST_IT[k]), p: 1 - p }, base));
+          });
+        });
+      });
+    });
+    return out;
+  }
+  // le giocate della partita: quelle del bookmaker se ci sono le quote, altrimenti quelle del modello
+  function allOffers(m, tf, pf) { return bookOf(m) ? offers(m, tf, pf) : modelOffers(m, tf, pf); }
   // per ogni mercato tiene la giocata più "difficile" (quindi che paga di più) che resta nella fascia di probabilità
   function bestOf(list, lo, hi) {
     var best = {};
@@ -399,9 +554,9 @@ var Core = (function () {
     var res = [], i = 0;
     function next() {
       if (i >= matches.length) return Promise.resolve(res);
-      var m = matches[i++]; if (!bookOf(m)) return next();
+      var m = matches[i++];
       return loadComp(m.lg, false).then(function (cd) {
-        var tf = teamForecast(cd, m), go = function (pf) { offers(m, tf, pf).forEach(function (o) { res.push({ m: m, o: o }); }); };
+        var tf = teamForecast(cd, m), go = function (pf) { allOffers(m, tf, pf).forEach(function (o) { res.push({ m: m, o: o }); }); };
         if (!withPlayers) { go(null); return; }
         return loadPlayers(cd, m).then(function (pd) { go(playersForecast(pd, tf, m, {})); }, function () { go(null); });
       }, function () {}).then(next);
@@ -456,15 +611,15 @@ var Core = (function () {
     return true;
   }
   function optSlip(cands, opt) {
-    var now = Date.now(), per = {}, minP = opt.minLegP || 0.5;
+    var now = Date.now(), per = {}, minP0 = opt.minLegP || 0.5, PEN = Math.log(0.95), minF = opt.minLegP != null ? opt.minLegP : 0.6;
     cands.forEach(function (c) {
       var o = c.o, m = c.m;
       if (!opt.cats[o.cat] || (opt.ids && !opt.ids[m.id]) || !(m.d > now) || m.d > (opt.to || Infinity) || m.d < (opt.from || 0)) return;
       if (o.kind === 'player' && o.status !== 'tit') return;
       if (o.odds < 1.04 || o.p > 0.985) return;
-      var ps = o.pk > 0 ? Math.min(o.p, o.pk) : o.p; if (ps < minP) return;
+      var minP = o.fair ? (opt.minLegP != null ? opt.minLegP : 0.6) : minP0, ps = o.pk > 0 ? Math.min(o.p, o.pk) : o.p; if (ps < minP) return;
       var k = legKey(m, o); if (opt.ban && opt.ban[k]) return;
-      (per[m.id] || (per[m.id] = [])).push({ m: m, legs: [o], ps: ps, p: o.p, odds: o.odds });
+      (per[m.id] || (per[m.id] = [])).push({ m: m, legs: [o], ps: ps, p: o.p, odds: o.odds, pen: o.fair ? PEN : 0 });
     });
     var ids = Object.keys(per), opts = ids.map(function (id) {
       var singles = per[id];
@@ -472,7 +627,7 @@ var Core = (function () {
       var g = {}; singles.forEach(function (x) { var o = x.legs[0], k = o.kind === 'res' ? 'res' : o.kind === 'player' ? o.pid + o.stat : o.stat + o.side; (g[k] || (g[k] = [])).push(x); });
       var fr = Object.keys(g).map(function (k) { return pareto(g[k].slice()); }), all = singles.slice();
       for (var i = 0; i < fr.length; i++) for (var j = i + 1; j < fr.length; j++) fr[i].forEach(function (a) { fr[j].forEach(function (b) {
-        if (a.ps * b.ps >= minP * 0.75 && comboOk(a.legs[0], b.legs[0])) all.push({ m: a.m, legs: [a.legs[0], b.legs[0]], ps: a.ps * b.ps, p: a.p * b.p, odds: a.odds * b.odds });
+        if (a.ps * b.ps >= (a.legs[0].fair ? minF : minP0) * 0.75 && comboOk(a.legs[0], b.legs[0])) all.push({ m: a.m, legs: [a.legs[0], b.legs[0]], ps: a.ps * b.ps, p: a.p * b.p, odds: a.odds * b.odds, pen: a.pen + b.pen });
       }); });
       return pareto(all);
     });
@@ -488,8 +643,8 @@ var Core = (function () {
         var k2 = K ? k + 1 : 0; if (k2 > K) continue;
         for (var j = 0; j < L.length; j++) {
           var x = L[j], w2, v;
-          if (Q) { w2 = Math.min(MAX, w + Math.floor(Math.log(x.odds) * S)); v = cur + Math.log(x.ps); }
-          else { w2 = w + Math.ceil(-Math.log(x.ps) * S); if (w2 > MAX) continue; v = cur + Math.log(x.odds); }
+          if (Q) { w2 = Math.min(MAX, w + Math.floor(Math.log(x.odds) * S)); v = cur + Math.log(x.ps) + x.pen; }
+          else { w2 = w + Math.ceil(-Math.log(x.ps) * S); if (w2 > MAX) continue; v = cur + Math.log(x.odds) + x.pen; }
           var at = k2 * W + w2; if (v > nd[at] + 1e-12) { nd[at] = v; pi[at] = j; pf[at] = k * W + w; }
         }
       }
@@ -513,11 +668,17 @@ var Core = (function () {
     fam('1x2', [{ key: '1', label: 'Vince ' + hn + ' (1)', p: r.h }, { key: 'X', label: 'Pareggio (X)', p: r.d }, { key: '2', label: 'Vince ' + an + ' (2)', p: r.a }]);
     fam('dc', [{ key: '1X', label: 'Doppia chance 1X: ' + hn + ' o pareggio', p: r.h + r.d }, { key: 'X2', label: 'Doppia chance X2: ' + an + ' o pareggio', p: r.a + r.d }, { key: '12', label: 'Doppia chance 12: non finisce pari', p: r.h + r.a }]);
     fam('gg', [{ key: 'GG', label: 'Goal: segnano entrambe', p: r.gg }, { key: 'NG', label: 'No goal: almeno una non segna', p: 1 - r.gg }]);
-    fam('ov', [0, 1, 2, 3, 4].map(function (k) { return { key: 'O' + k, label: 'Gol totali over ' + ln(k + 0.5), p: r.over[k], hard: k }; }));
-    fam('un', [1, 2, 3, 4].map(function (k) { return { key: 'U' + k, label: 'Gol totali under ' + ln(k + 0.5), p: 1 - r.over[k], hard: -k }; }));
+    [0, 1, 2, 3, 4].forEach(function (k) { fam('ov' + k, [{ key: 'O' + k, grp: 'ov', label: 'Gol totali over ' + ln(k + 0.5), p: r.over[k], hard: k }]); });
+    [1, 2, 3, 4].forEach(function (k) { fam('un' + k, [{ key: 'U' + k, grp: 'un', label: 'Gol totali under ' + ln(k + 0.5), p: 1 - r.over[k], hard: -k }]); });
+    if (r.ho) [['H', hn, r.ho], ['A', an, r.ao]].forEach(function (y) {
+      fam('sg' + y[0], [{ key: 'S' + y[0], label: y[1] + ' segna almeno un gol', p: y[2][0] }]);
+      fam('ng' + y[0], [{ key: 'N' + y[0], label: y[1] + ' non segna', p: 1 - y[2][0] }]);
+      [1, 2].forEach(function (k) { fam('to' + y[0] + k, [{ key: 'TO' + y[0] + k, grp: 'to' + y[0], label: y[1] + ': gol over ' + ln(k + 0.5), p: y[2][k], hard: k }]);
+        fam('tu' + y[0] + k, [{ key: 'TU' + y[0] + k, grp: 'tu' + y[0], label: y[1] + ': gol under ' + ln(k + 0.5), p: 1 - y[2][k], hard: -k }]); });
+    });
     // per famiglia: l'opzione più "difficile" (quindi che paga di più) che resta sopra la soglia
     var mark = function (thr, flag) {
-      var best = {}; out.forEach(function (o) { if (o.p < thr || o.p > 0.985) return; var b = best[o.fam]; if (!b || (o.hard != null ? o.hard > b.hard : o.p < b.p)) best[o.fam] = o; });
+      var best = {}; out.forEach(function (o) { if (o.p < thr || o.p > 0.985) return; var g = flag === 'sureBest' ? o.grp || o.fam : o.fam, b = best[g]; if (!b || (o.hard != null ? o.hard > b.hard : o.p < b.p)) best[g] = o; });
       for (var f in best) best[f][flag] = true;
     };
     mark(LO, 'inFamilyBest'); mark(SURE, 'sureBest');
@@ -553,21 +714,41 @@ var Core = (function () {
      Per ogni mercato tiene la linea col miglior rapporto probabilità x quota; "occ" se la stima supera quella implicita nella quota. */
   function occasions(m, tf, pf) {
     var best = {};
-    offers(m, tf, pf).forEach(function (o) {
+    allOffers(m, tf, pf).forEach(function (o) {
       if (o.odds < MINQ_OCC || o.odds > 4 || o.p < 0.5 || o.p > 0.985) return;
       if (o.kind === 'player' && o.status !== 'tit') return;
-      o.v = o.p * o.odds; o.occ = o.v >= 1.0;
-      var b = best[o.fam]; if (!b || o.v > b.v) best[o.fam] = o;
+      o.v = o.p * o.odds; o.occ = !o.fair && o.v >= 1.0;
+      // senza quote non c'è convenienza da misurare: per ogni mercato la linea più probabile da 1,40 in su
+      var b = best[o.fam]; if (!b || (o.fair ? o.p > b.p : o.v > b.v)) best[o.fam] = o;
     });
-    return Object.keys(best).map(function (k) { return best[k]; }).sort(function (a, b) { return b.v - a.v || b.p - a.p; });
+    return Object.keys(best).map(function (k) { return best[k]; }).sort(function (a, b) { return a.fair ? b.p - a.p : b.v - a.v || b.p - a.p; });
   }
-  function occAcross(matches, withPlayers) {
+  /* Pronostico principale della partita: tra le giocate con quota da MINQ_OCC a 2,5, quella su cui modello e bookmaker sono più d'accordo
+     che succeda (conta la più bassa delle due stime). Così non vince sempre il mercato dove il modello si discosta di più dalle quote
+     (di solito i corner), ma quello più solido. */
+  var NOMAIN = { fo: 1, foT: 1, yc: 1, ycT: 1, pfc: 1, pfs: 1, mg: 1, combo: 1, cx: 1, ht: 1, pgl: 1, pyc: 1 };   // falli e cartellini restano nelle liste, ma non fanno da pronostico principale
+  var GRP = { res: 'g', tg: 'g', mg: 'g', combo: 'g', ht: 'g', sot: 's', sotT: 's', sh: 's', shT: 's', co: 'c', coT: 'c', cx: 'c' }, GORD = ['g', 's', 'c', 'p'];
+  function mainPick(m, tf, pf, band) {
+    var best = null, byG = {}, qlo = band ? band[0] : MINQ_OCC, qhi = band ? band[1] : 2.5;
+    allOffers(m, tf, pf).forEach(function (o) {
+      if (o.odds < qlo || o.odds > qhi || o.p > 0.985 || NOMAIN[o.cat]) return;
+      if (o.kind === 'player' && (o.status !== 'tit' || o.dir === 'U')) return;   // dei giocatori solo tiri e tiri in porta "almeno"
+      o.ps = o.pk > 0 ? Math.min(o.pm, o.pk) : o.pm; if (o.ps < 0.5) return;
+      if (!best || o.ps > best.ps + 1e-9 || (Math.abs(o.ps - best.ps) <= 1e-9 && o.odds > best.odds)) best = o;
+      var g = GRP[o.cat] || 'p', bg = byG[g]; if (!bg || o.ps > bg.ps + 1e-9 || (Math.abs(o.ps - bg.ps) <= 1e-9 && o.odds > bg.odds)) byG[g] = o;
+    });
+    // senza quote i corner hanno tante linee e una cade sempre vicino al limite: a parità (entro un punto e mezzo) vincono gol, poi tiri, poi corner
+    if (best && best.fair) { for (var gi = 0; gi < GORD.length; gi++) { var c = byG[GORD[gi]]; if (c && c.ps >= best.ps - 0.015) { best = c; break; } } }
+    if (best) { best.v = best.p * best.odds; best.occ = !best.fair && best.v >= 1; }
+    return best;
+  }
+  function occAcross(matches, withPlayers, band) {
     var res = [], i = 0;
     function next() {
       if (i >= matches.length) { res.sort(function (a, b) { return b.pick.v - a.pick.v || b.pick.p - a.pick.p; }); return Promise.resolve(res); }
-      var m = matches[i++]; if (!bookOf(m)) return next();
+      var m = matches[i++];
       return loadComp(m.lg, false).then(function (cd) {
-        var tf = teamForecast(cd, m), go = function (pf) { occasions(m, tf, pf).forEach(function (p) { res.push({ m: m, pick: p }); }); };
+        var tf = teamForecast(cd, m), go = function (pf) { if (!bookOf(m)) { var mp = mainPick(m, tf, pf, band); if (mp) res.push({ m: m, pick: mp }); return; } occasions(m, tf, pf).forEach(function (p) { res.push({ m: m, pick: p }); }); };
         if (!withPlayers) { go(null); return; }
         return loadPlayers(cd, m).then(function (pd) { go(playersForecast(pd, tf, m, {})); }, function () { go(null); });
       }, function () {}).then(next);
@@ -721,6 +902,6 @@ var Core = (function () {
   return { COMPS: COMPS, STAT_IT: STAT_IT, PST: PST, PST_IT: PST_IT, teams: teams, comp: comp, store: store, setFetch: setFetch,
     parseEvent: parseEvent, parseSummary: parseSummary, loadUpcoming: loadUpcoming, loadComp: loadComp, resetCache: resetCache, itName: itName, teamForecast: teamForecast,
     loadPlayers: loadPlayers, playersForecast: playersForecast, occasions: occasions, occAcross: occAcross, picks: picks, surePicks: surePicks, sureAcross: sureAcross, resOptions: resOptions, explainRes: explainRes, explainTeam: explainTeam, explainPlayer: explainPlayer,
-    lastN: lastN, f1: f1, pct: pct, posGroup: posGroup, buildSquad: buildSquad, lineup: lineup, playerForecast: playerForecast, psOf: psOf, pPlayer: pPlayer, setCompLoader: setCompLoader, setBook: setBook, bookOf: bookOf, bookInfo: bookInfo, offers: offers, bestOf: bestOf, slipCandidates: slipCandidates, analysis: analysis, shotsOk: shotsOk, statOk: statOk, buildSlip: buildSlip, optSlip: optSlip, legKey: legKey, CAT_IT: CAT_IT, DUO: DUO };
+    lastN: lastN, f1: f1, pct: pct, posGroup: posGroup, buildSquad: buildSquad, lineup: lineup, playerForecast: playerForecast, psOf: psOf, pPlayer: pPlayer, setCompLoader: setCompLoader, setBook: setBook, bookOf: bookOf, bookInfo: bookInfo, offers: offers, bestOf: bestOf, slipCandidates: slipCandidates, analysis: analysis, shotsOk: shotsOk, statOk: statOk, buildSlip: buildSlip, optSlip: optSlip, mainPick: mainPick, extraMarkets: extraMarkets, explainExtra: explainExtra, grpOf: function (c) { return GRP[c] || (NOMAIN[c] ? 'f' : 'p'); }, modelOffers: modelOffers, allOffers: allOffers, legKey: legKey, CAT_IT: CAT_IT, DUO: DUO };
 })();
 if (typeof module !== 'undefined') module.exports = Core;

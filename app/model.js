@@ -149,7 +149,7 @@ var Model = (function () {
 
   /* Esiti dai gol attesi: griglia dei punteggi (Poisson con correzione sui punteggi bassi) */
   function outcomes(lh, la, rho) {
-    var N = 10, tot = 0, h = 0, d = 0, a = 0, gg = 0, over = [0, 0, 0, 0, 0, 0], sc = [], i, j, p, k;
+    var N = 10, grid = [], tot = 0, h = 0, d = 0, a = 0, gg = 0, over = [0, 0, 0, 0, 0, 0], ho = [0, 0, 0, 0], ao = [0, 0, 0, 0], sc = [], i, j, p, k;
     rho = rho || 0;
     for (i = 0; i <= N; i++) for (j = 0; j <= N; j++) {
       p = nbPmf(i, lh, Infinity) * nbPmf(j, la, Infinity);
@@ -157,10 +157,12 @@ var Model = (function () {
       tot += p; if (i > j) h += p; else if (i === j) d += p; else a += p;
       if (i > 0 && j > 0) gg += p;
       for (k = 0; k < 6; k++) if (i + j > k) over[k] += p;
+      for (k = 0; k < 4; k++) { if (i > k) ho[k] += p; if (j > k) ao[k] += p; }
       if (i <= 4 && j <= 4) sc.push([i, j, p]);
+      (grid[i] || (grid[i] = []))[j] = p;
     }
     sc.sort(function (x, y) { return y[2] - x[2]; });
-    return { h: h / tot, d: d / tot, a: a / tot, gg: gg / tot, over: over.map(function (x) { return x / tot; }), scores: sc.slice(0, 3).map(function (x) { return [x[0], x[1], x[2] / tot]; }) };
+    return { h: h / tot, d: d / tot, a: a / tot, gg: gg / tot, over: over.map(function (x) { return x / tot; }), ho: ho.map(function (x) { return x / tot; }), ao: ao.map(function (x) { return x / tot; }), scores: sc.slice(0, 3).map(function (x) { return [x[0], x[1], x[2] / tot]; }), grid: grid.map(function (row) { return row.map(function (x) { return x / tot; }); }) };
   }
 
   /* Gol attesi che le quote del bookmaker sottintendono: dati P(1), P(2) e P(over 2,5) senza margine,
