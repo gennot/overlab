@@ -508,20 +508,18 @@ var Core = (function () {
       { key: 'HSH', label: hn + ' segna in entrambi i tempi', p: (1 - Math.exp(-l1)) * (1 - Math.exp(-(1 - HT) * r.lh)) }, { key: 'HSA', label: an + ' segna in entrambi i tempi', p: (1 - Math.exp(-a1)) * (1 - Math.exp(-(1 - HT) * r.la)) });
     return out;
   }
-  /* Punteggio per la simulazione: l'esito più probabile (1, X o 2) con un numero di gol vicino a quelli attesi; se le due squadre
-     si equivalgono (vittorie distanti meno di 5 punti) finisce pari. Il punteggio esatto più probabile da solo è quasi sempre
-     1-1 o 1-0 anche quando una squadra è nettamente favorita. */
-  function simScore(tf) {
+  /* Punteggio per la simulazione: l'esito è quello più probabile (1, X o 2; pari se le vittorie distano meno di 5 punti),
+     il punteggio è estratto tra quelli di quell'esito con le probabilità del modello. L'estrazione dipende solo dalla partita:
+     stesso risultato a ogni replay e per chiunque. Prima finivano quasi tutte 1-1 (punteggio più probabile) e poi 2-1. */
+  function simScore(tf, m) {
     var r = tf && tf.res; if (!r || !r.grid) return null;
-    var G = r.grid, xg = r.lh + r.la, sign = Math.abs(r.h - r.a) < 0.05 ? 0 : r.h >= r.d && r.h >= r.a ? 1 : r.a >= r.d ? 2 : 0;
-    if (sign === 0) { var k = Math.max(0, Math.min(G.length - 1, Math.round(xg / 2))); return { sc: k + '-' + k, p: G[k][k] }; }
-    var tot = Math.round(xg), best = null, any = null;
-    G.forEach(function (row, i) { row.forEach(function (p, j) {
-      if ((i > j ? 1 : i < j ? 2 : 0) !== sign) return;
-      if (!any || p > any.p) any = { sc: i + '-' + j, p: p };
-      if (i + j === tot && (!best || p > best.p)) best = { sc: i + '-' + j, p: p };
-    }); });
-    return best || any;
+    var sign = Math.abs(r.h - r.a) < 0.05 ? 0 : r.h >= r.d && r.h >= r.a ? 1 : r.a >= r.d ? 2 : 0, cells = [], tot = 0;
+    r.grid.forEach(function (row, i) { row.forEach(function (p, j) { if ((i > j ? 1 : i < j ? 2 : 0) === sign && p > 0) { cells.push([i, j, p]); tot += p; } }); });
+    if (!cells.length) return null;
+    var h = 2166136261, id = String(m && m.id != null ? m.id : ''); for (var k = 0; k < id.length; k++) { h ^= id.charCodeAt(k); h = Math.imul(h, 16777619) >>> 0; }
+    h = (h + 0x6D2B79F5) >>> 0; var t = Math.imul(h ^ h >>> 15, h | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); var u = ((t ^ t >>> 14) >>> 0) / 4294967296 * tot;
+    for (var c = 0; c < cells.length; c++) { u -= cells[c][2]; if (u <= 0) break; }
+    var x = cells[Math.min(c, cells.length - 1)]; return { sc: x[0] + '-' + x[1], p: x[2] };
   }
   function modelOffers(m, tf, pf) {
     var out = [], r = tf.res, par = tf.par || Model.PAR, hn = teams[m.h] ? teams[m.h].n : 'casa', an = teams[m.a] ? teams[m.a].n : 'trasferta', ln = function (x) { return String(x).replace('.', ','); };

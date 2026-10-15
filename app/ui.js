@@ -504,11 +504,11 @@
     [m.h, m.a].forEach(function (t) { var a = best(t, 'yc'); if (a && a.st.yc.p1 >= 0.12) put(t, a, 'yc'); put(t, best(t, 'gl'), 'gl'); put(t, best(t, 'fc'), 'fc'); put(t, best(t, 'fs'), 'fs'); if (sot) { put(t, best(t, 'sot'), 'sot'); put(t, best(t, 'sh'), 'sh'); } });
     return { mark: mark, who: who };
   }
-  /* Simulazione: una partita animata costruita sul pronostico. Finisce con l'esito più probabile e i gol attesi dal modello e segnano
+  /* Simulazione: una partita animata costruita sul pronostico. Finisce con l'esito più probabile, con un punteggio estratto secondo le probabilità del modello, e segnano
      i marcatori più probabili; durante la partita si scoprono anche chi rischia il giallo, chi tira e chi fa e subisce più falli.
      È un modo di vedere la stima, non una certezza. */
   function simPlan(m) {
-    var top = Core.simScore(S.tf) || { sc: '0-0', p: 0 }, sc = top.sc.split('-').map(Number);
+    var top = Core.simScore(S.tf, m) || { sc: '0-0', p: 0 }, sc = top.sc.split('-').map(Number);
     var seed = 0; String(m.id).split('').forEach(function (c) { seed = (seed * 31 + c.charCodeAt(0)) >>> 0; }); seed = (seed + 7919 * (S.simN = (S.simN || 0) + 1)) >>> 0;   // ogni replay cambia passaggi e minuti, non risultato e protagonisti
     var rnd = function () { seed = (seed + 0x6D2B79F5) >>> 0; var t = seed; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
     var rank = function (t) { return (S.pf[t] || []).filter(function (f) { return f.status === 'tit' && f.p.pos !== 'G'; }).sort(function (a, b) { return b.st.gl.p1 - a.st.gl.p1; }); };
@@ -533,7 +533,7 @@
     var rows = se.ev.map(function (e) { return '<div class="sim-e"><span class="sim-m">' + e.min + '\'</span><em class="' + EV[e.k][0] + '"></em><b>' + esc(initN(e.f.p.name)) + (e.k === 'fallo' && e.f2 ? ' <small>su ' + esc(initN(e.f2.p.name)) + '</small>' : '') + '</b><small class="' + (e.side === 'H' ? 'home' : 'away') + '">' + EV[e.k][1] + '</small><span class="sim-p">' + val(e) + '</span></div>'; }).join('');
     return '<div class="sim-end"><small>Finale simulato</small><div class="sim-sc"><span class="home">' + esc(nm(m.h)) + '</span><b>' + se.sc[0] + ' - ' + se.sc[1] + '</b><span class="away">' + esc(nm(m.a)) + '</span></div>' + rows +
       (se.sc[0] + se.sc[1] === 0 && se.best ? '<p class="tp-w">Nessun gol nel risultato simulato. Il marcatore più probabile resta ' + esc(initN(se.best.p.name)) + ' (' + pct(se.best.st.gl.p1) + ').</p>' : '') +
-      '<p class="foot">Partita simulata sul pronostico: finisce con l\'esito più probabile secondo il modello e con un numero di gol vicino a quelli attesi (questo punteggio esatto: ' + pct(se.p) + '); i protagonisti sono i giocatori che spiccano nelle stime; accanto a ogni nome la sua probabilità o quanto ne fa in media. È un modo di vedere la stima, non una certezza.</p></div>';
+      '<p class="foot">Partita simulata sul pronostico: finisce con l\'esito più probabile secondo il modello; il punteggio è estratto tra quelli di quell\'esito con le loro probabilità, quindi cambia da partita a partita (questo: ' + pct(se.p) + '). I protagonisti sono i giocatori che spiccano nelle stime; accanto a ogni nome la sua probabilità o quanto ne fa in media. È un modo di vedere la stima, non una certezza.</p></div>';
   }
   function simReveal(plan) { S.simOn = false; S.simSkip = false; S.rev[plan.id] = true; S.simEnd = { id: plan.id, sc: plan.sc, p: plan.p, ev: plan.ev, best: plan.best }; rerender(); var z = document.querySelector('.sim-end'); if (z) z.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   function simSkip() { if (S.simOn) { S.simSkip = true; return; } if (!S.pf || !S.m) return; simReveal(simPlan(S.m)); }
