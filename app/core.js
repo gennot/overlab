@@ -399,6 +399,9 @@ var Core = (function () {
 
   /* ---------- giocate in evidenza ---------- */
   var LO = 0.6, HI = 0.9, SURE = 0.85, MINQ_TOP = 1.2, MINQ_OCC = 1.4;
+  // niente under tra i pronostici: gol, tiri, corner, falli, cartellini e giocatori si propongono solo come over / "almeno"
+  var NO_UNDER = true;
+  function isUnder(o) { return o.dir === 'U' || /^(un|tu)\d|^(un|tu)[HA]/.test(o.fam || '') || /\bunder\b|: meno di \d/i.test(o.label || ''); }
   /* ---------- quote del bookmaker ---------- */
   var BOOK = null;
   function setBook(b) { BOOK = b && b.ev ? b : null; }
@@ -419,7 +422,7 @@ var Core = (function () {
   function offers(m, tf, pf) {
     var b = bookOf(m), out = []; if (!b) return out;
     var mk = b.mk || {}, r = tf.res, par = tf.par || Model.PAR, hn = teams[m.h] ? teams[m.h].n : 'casa', an = teams[m.a] ? teams[m.a].n : 'trasferta', ln = function (x) { return String(x).replace('.', ','); };
-    var add = function (o, pk, w) { if (!(o.odds > 1) || !(o.p > 0.001)) return; o.pm = o.p; o.pk = pk; o.p = pk > 0 ? w * pk + (1 - w) * o.pm : o.pm; out.push(o); };
+    var add = function (o, pk, w) { if (!(o.odds > 1) || !(o.p > 0.001) || (NO_UNDER && isUnder(o))) return; o.pm = o.p; o.pk = pk; o.p = pk > 0 ? w * pk + (1 - w) * o.pm : o.pm; out.push(o); };
     if (r) {
       var x = mk.x12, full = x && x[0] > 1 && x[1] > 1 && x[2] > 1, s3 = full ? 1 / x[0] + 1 / x[1] + 1 / x[2] : 0, q3 = full ? [1 / x[0] / s3, 1 / x[1] / s3, 1 / x[2] / s3] : null;
       if (x) [['1', 'Vince ' + hn + ' (1)', r.h], ['X', 'Pareggio (X)', r.d], ['2', 'Vince ' + an + ' (2)', r.a]].forEach(function (y, i) { add({ kind: 'res', cat: 'res', fam: '1x2', stat: y[0], label: y[1], p: y[2], odds: x[i] }, q3 ? q3[i] : mk1(x[i]), W_RES); });
@@ -479,7 +482,7 @@ var Core = (function () {
     [['H', hn], ['A', an]].forEach(function (y) { [[1, 2], [1, 3], [2, 3], [2, 4]].forEach(function (z) { out.mgT.push({ side: y[0], key: y[0] + z.join('-'), label: 'Multigol ' + y[1] + ' ' + z[0] + '-' + z[1], p: sum(function (i, j) { var g = y[0] === 'H' ? i : j; return g >= z[0] && g <= z[1]; }) }); }); });
     var RES = [['1', function (i, j) { return i > j; }], ['X', function (i, j) { return i === j; }], ['2', function (i, j) { return i < j; }], ['1X', function (i, j) { return i >= j; }], ['X2', function (i, j) { return i <= j; }], ['12', function (i, j) { return i !== j; }]];
     var UO = [['Over 1,5', function (i, j) { return i + j > 1.5; }], ['Over 2,5', function (i, j) { return i + j > 2.5; }], ['Under 2,5', function (i, j) { return i + j < 2.5; }], ['Under 3,5', function (i, j) { return i + j < 3.5; }], ['Over 3,5', function (i, j) { return i + j > 3.5; }], ['Under 4,5', function (i, j) { return i + j < 4.5; }]];
-    RES.forEach(function (a) { UO.forEach(function (b) { out.combo.push({ key: a[0] + '+' + b[0], label: a[0] + ' + ' + b[0], p: sum(function (i, j) { return a[1](i, j) && b[1](i, j); }) }); }); });
+    RES.forEach(function (a) { UO.forEach(function (b) { if (NO_UNDER && b[0].indexOf('Under') === 0) return; out.combo.push({ key: a[0] + '+' + b[0], label: a[0] + ' + ' + b[0], p: sum(function (i, j) { return a[1](i, j) && b[1](i, j); }) }); }); });
     // le combo con goal/no goal sono state tolte: nel test su 26.396 partite non reggevano (72% previsto, 50% reale)
     // corner: differenza tra i corner delle due squadre
     var par = tf.par || Model.PAR, mh = tf.pr.H.co, ma = tf.pr.A.co;
@@ -496,15 +499,30 @@ var Core = (function () {
     // primo tempo (approssimato)
     var l1 = HT * r.lh, a1 = HT * r.la, T1 = l1 + a1, T2 = (1 - HT) * (r.lh + r.la), po = function (x, k) { var e = Math.exp(-x), t = 0, f = 1; for (var n = 0; n <= k; n++) { if (n) f *= x / n; t += e * f; } return t; };
     var h1 = 0, d1 = 0; for (var i = 0; i < 9; i++) for (var j = 0; j < 9; j++) { var pp = po(l1, i) - (i ? po(l1, i - 1) : 0), qq = po(a1, j) - (j ? po(a1, j - 1) : 0); if (i > j) h1 += pp * qq; else if (i === j) d1 += pp * qq; }
-    out.ht.push({ key: 'HO0', label: 'Primo tempo over 0,5', p: 1 - po(T1, 0) }, { key: 'HO1', label: 'Primo tempo over 1,5', p: 1 - po(T1, 1) }, { key: 'HU1', label: 'Primo tempo under 1,5', p: po(T1, 1) },
+    out.ht.push({ key: 'HO0', label: 'Primo tempo over 0,5', p: 1 - po(T1, 0) }, { key: 'HO1', label: 'Primo tempo over 1,5', p: 1 - po(T1, 1) },
       { key: 'H1', label: 'Primo tempo 1', p: h1 }, { key: 'HX', label: 'Primo tempo X', p: d1 }, { key: 'H2', label: 'Primo tempo 2', p: 1 - h1 - d1 },
       { key: 'HB', label: 'Gol in entrambi i tempi', p: (1 - po(T1, 0)) * (1 - po(T2, 0)) },
       { key: 'HSH', label: hn + ' segna in entrambi i tempi', p: (1 - Math.exp(-l1)) * (1 - Math.exp(-(1 - HT) * r.lh)) }, { key: 'HSA', label: an + ' segna in entrambi i tempi', p: (1 - Math.exp(-a1)) * (1 - Math.exp(-(1 - HT) * r.la)) });
     return out;
   }
+  /* Punteggio per la simulazione: l'esito più probabile (1, X o 2) con un numero di gol vicino a quelli attesi; se le due squadre
+     si equivalgono (vittorie distanti meno di 5 punti) finisce pari. Il punteggio esatto più probabile da solo è quasi sempre
+     1-1 o 1-0 anche quando una squadra è nettamente favorita. */
+  function simScore(tf) {
+    var r = tf && tf.res; if (!r || !r.grid) return null;
+    var G = r.grid, xg = r.lh + r.la, sign = Math.abs(r.h - r.a) < 0.05 ? 0 : r.h >= r.d && r.h >= r.a ? 1 : r.a >= r.d ? 2 : 0;
+    if (sign === 0) { var k = Math.max(0, Math.min(G.length - 1, Math.round(xg / 2))); return { sc: k + '-' + k, p: G[k][k] }; }
+    var tot = Math.round(xg), best = null, any = null;
+    G.forEach(function (row, i) { row.forEach(function (p, j) {
+      if ((i > j ? 1 : i < j ? 2 : 0) !== sign) return;
+      if (!any || p > any.p) any = { sc: i + '-' + j, p: p };
+      if (i + j === tot && (!best || p > best.p)) best = { sc: i + '-' + j, p: p };
+    }); });
+    return best || any;
+  }
   function modelOffers(m, tf, pf) {
     var out = [], r = tf.res, par = tf.par || Model.PAR, hn = teams[m.h] ? teams[m.h].n : 'casa', an = teams[m.a] ? teams[m.a].n : 'trasferta', ln = function (x) { return String(x).replace('.', ','); };
-    var add = function (o) { if (!(o.p >= (o.cat === 'pgl' || o.cat === 'pyc' ? 0.08 : 0.5)) || o.p > 0.97) return; o.pm = o.p; o.pk = 0; o.odds = fairQ(o.p); o.fair = true; out.push(o); };
+    var add = function (o) { if (!(o.p >= (o.cat === 'pgl' || o.cat === 'pyc' ? 0.08 : 0.5)) || o.p > 0.97 || (NO_UNDER && isUnder(o))) return; o.pm = o.p; o.pk = 0; o.odds = fairQ(o.p); o.fair = true; out.push(o); };
     if (r) {
       [['1', 'Vince ' + hn + ' (1)', r.h], ['X', 'Pareggio (X)', r.d], ['2', 'Vince ' + an + ' (2)', r.a]].forEach(function (y) { add({ kind: 'res', cat: 'res', fam: '1x2', stat: y[0], label: y[1], p: y[2] }); });
       [['1X', 'Doppia chance 1X: ' + hn + ' o pareggio', r.h + r.d], ['12', 'Doppia chance 12: non finisce pari', r.h + r.a], ['X2', 'Doppia chance X2: ' + an + ' o pareggio', r.a + r.d]].forEach(function (y) { add({ kind: 'res', cat: 'res', fam: 'dc', stat: y[0], label: y[1], p: y[2] }); });
@@ -677,7 +695,7 @@ var Core = (function () {
   function resOptions(m, tf) {
     var r = tf.res, out = []; if (!r) return out;
     var hn = teams[m.h] ? teams[m.h].n : 'casa', an = teams[m.a] ? teams[m.a].n : 'trasferta', ln = function (x) { return String(x).replace('.', ','); };
-    var fam = function (name, opts) { opts.forEach(function (o) { o.fam = name; out.push(o); }); };
+    var fam = function (name, opts) { opts.forEach(function (o) { o.fam = name; if (NO_UNDER && isUnder(o)) return; out.push(o); }); };
     fam('1x2', [{ key: '1', label: 'Vince ' + hn + ' (1)', p: r.h }, { key: 'X', label: 'Pareggio (X)', p: r.d }, { key: '2', label: 'Vince ' + an + ' (2)', p: r.a }]);
     fam('dc', [{ key: '1X', label: 'Doppia chance 1X: ' + hn + ' o pareggio', p: r.h + r.d }, { key: 'X2', label: 'Doppia chance X2: ' + an + ' o pareggio', p: r.a + r.d }, { key: '12', label: 'Doppia chance 12: non finisce pari', p: r.h + r.a }]);
     fam('gg', [{ key: 'GG', label: 'Goal: segnano entrambe', p: r.gg }, { key: 'NG', label: 'No goal: almeno una non segna', p: 1 - r.gg }]);
@@ -915,6 +933,6 @@ var Core = (function () {
   return { COMPS: COMPS, STAT_IT: STAT_IT, PST: PST, PST_IT: PST_IT, teams: teams, comp: comp, store: store, setFetch: setFetch,
     parseEvent: parseEvent, parseSummary: parseSummary, loadUpcoming: loadUpcoming, loadComp: loadComp, resetCache: resetCache, itName: itName, teamForecast: teamForecast,
     loadPlayers: loadPlayers, playersForecast: playersForecast, occasions: occasions, occAcross: occAcross, picks: picks, surePicks: surePicks, sureAcross: sureAcross, resOptions: resOptions, explainRes: explainRes, explainTeam: explainTeam, explainPlayer: explainPlayer,
-    lastN: lastN, f1: f1, pct: pct, posGroup: posGroup, buildSquad: buildSquad, lineup: lineup, playerForecast: playerForecast, psOf: psOf, pPlayer: pPlayer, setCompLoader: setCompLoader, setBook: setBook, bookOf: bookOf, bookInfo: bookInfo, offers: offers, bestOf: bestOf, slipCandidates: slipCandidates, analysis: analysis, shotsOk: shotsOk, statOk: statOk, buildSlip: buildSlip, optSlip: optSlip, mainPick: mainPick, extraMarkets: extraMarkets, explainExtra: explainExtra, grpOf: function (c) { return GRP[c] || (NOMAIN[c] ? 'f' : 'p'); }, modelOffers: modelOffers, allOffers: allOffers, legKey: legKey, CAT_IT: CAT_IT, DUO: DUO };
+    lastN: lastN, f1: f1, pct: pct, posGroup: posGroup, buildSquad: buildSquad, lineup: lineup, playerForecast: playerForecast, psOf: psOf, pPlayer: pPlayer, setCompLoader: setCompLoader, setBook: setBook, bookOf: bookOf, bookInfo: bookInfo, offers: offers, bestOf: bestOf, slipCandidates: slipCandidates, analysis: analysis, shotsOk: shotsOk, statOk: statOk, buildSlip: buildSlip, optSlip: optSlip, mainPick: mainPick, extraMarkets: extraMarkets, simScore: simScore, isUnder: isUnder, explainExtra: explainExtra, grpOf: function (c) { return GRP[c] || (NOMAIN[c] ? 'f' : 'p'); }, modelOffers: modelOffers, allOffers: allOffers, legKey: legKey, CAT_IT: CAT_IT, DUO: DUO };
 })();
 if (typeof module !== 'undefined') module.exports = Core;

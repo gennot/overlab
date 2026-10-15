@@ -367,8 +367,8 @@
         } else lines = r.lines;
         body += '<div class="trow"><button class="trow-h" data-exp="' + key + '" aria-expanded="' + (S.open === key) + '"><span>' + esc(x[1]) + '</span><span class="exp">attesi <b>' + f1(r.mean) + '</b></span></button>' +
           '<div class="lines">' + lines.map(function (l) { return '<span class="ln ' + cls(l.over) + (l.val ? ' val' : '') + '"><small>over ' + ln(l.line) + '</small><b>' + pct(l.over) + '</b>' + (l.odds ? '<small class="od">' + q2(l.odds) + '</small>' : '') + '</span>'; }).join('') + '</div>';
-        if (S.open === key) body += '<div class="why"><b>Perché</b><ul>' + Core.explainTeam(S.cd, S.m, S.tf, s, x[0]).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + (ob ? '<li>La percentuale è una media tra il modello e le quote.</li>' : '') + '</ul><table class="qt"><tr><th>Linea</th><th>Over</th><th class="qm">minima</th>' + (ob ? '<th>Quota</th>' : '<th>Under</th><th class="qm">minima</th>') + '</tr>' +
-          lines.map(function (l) { return '<tr><td>' + ln(l.line) + '</td><td>' + pct(l.over) + '</td><td class="qm">' + quota(l.over) + '</td>' + (ob ? '<td>' + q2(l.odds) + '</td>' : '<td>' + pct(l.under) + '</td><td class="qm">' + quota(l.under) + '</td>') + '</tr>'; }).join('') + '</table></div>';
+        if (S.open === key) body += '<div class="why"><b>Perché</b><ul>' + Core.explainTeam(S.cd, S.m, S.tf, s, x[0]).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + (ob ? '<li>La percentuale è una media tra il modello e le quote.</li>' : '') + '</ul><table class="qt"><tr><th>Linea</th><th>Over</th><th class="qm">minima</th>' + (ob ? '<th>Quota</th>' : '') + '</tr>' +
+          lines.map(function (l) { return '<tr><td>' + ln(l.line) + '</td><td>' + pct(l.over) + '</td><td class="qm">' + quota(l.over) + '</td>' + (ob ? '<td>' + q2(l.odds) + '</td>' : '') + '</tr>'; }).join('') + '</table></div>';
         body += '</div>';
       });
       if (body) h += '<section class="card"><h3>' + ic(s) + esc(Core.STAT_IT[s]) + '</h3>' + body + '</section>'; else missing.push(Core.STAT_IT[s].toLowerCase());
@@ -439,7 +439,7 @@
     var r = S.tf.res, hn = tn(S.m.h), an = tn(S.m.a), cupM = !!(Core.comp(S.m.lg) || {}).cup;
     if (r && r.ho) h += card('Goal / No goal', 'res', hd + [{ label: 'Goal: segnano entrambe', p: r.gg }, { label: 'No goal: almeno una non segna', p: 1 - r.gg }, { label: 'Segna ' + hn, p: r.ho[0] }, { label: 'Segna ' + an, p: r.ao[0] }, { label: 'Non segna ' + hn, p: 1 - r.ho[0] }, { label: 'Non segna ' + an, p: 1 - r.ao[0] }].map(row).join(''), 'Goal vuol dire che segnano tutte e due le squadre. ' + (cupM ? 'Nelle coppe provato su 1.494 partite: è la giocata più incerta.' : 'Verificato su 26.396 partite.'));
     h += card('Multigol', 'res', hd + X.mg.map(row).join('') + '<h4 class="xs">Multigol squadra</h4>' + X.mgT.map(row).join(''));
-    h += card('Combo', 'spark', hd + X.combo.slice().sort(function (a, b) { return b.p - a.p; }).slice(0, 10).map(row).join(''), 'Le dieci combo più probabili tra esito o doppia chance e under/over, calcolate sui punteggi. Verificate su ' + (cupM ? '1.494 partite di coppa e ' : '') + '26.396 partite. Le combo con goal/no goal non le metto: nel test non reggevano.');
+    h += card('Combo', 'spark', hd + X.combo.slice().sort(function (a, b) { return b.p - a.p; }).slice(0, 10).map(row).join(''), 'Le dieci combo più probabili tra esito o doppia chance e over, calcolate sui punteggi. Verificate su ' + (cupM ? '1.494 partite di coppa e ' : '') + '26.396 partite. Le combo con goal/no goal non le metto: nel test non reggevano.');
     if (X.cx.length) h += card('Corner 1X2 e handicap', 'co', hd + X.cx.map(row).join(''));
     h += card('Primo tempo', 'clock', hd + X.ht.map(row).join(''), 'Stima approssimata: nei dati non ci sono i gol divisi per tempo, quindi conto il 45% dei gol attesi nel primo tempo, come in media nei campionati.');
     return h;
@@ -503,11 +503,11 @@
     [m.h, m.a].forEach(function (t) { var a = best(t, 'yc'); if (a && a.st.yc.p1 >= 0.12) put(t, a, 'yc'); put(t, best(t, 'gl'), 'gl'); put(t, best(t, 'fc'), 'fc'); put(t, best(t, 'fs'), 'fs'); if (sot) { put(t, best(t, 'sot'), 'sot'); put(t, best(t, 'sh'), 'sh'); } });
     return { mark: mark, who: who };
   }
-  /* Simulazione: una partita animata costruita sul pronostico. Finisce con il risultato più probabile del modello e segnano
+  /* Simulazione: una partita animata costruita sul pronostico. Finisce con l'esito più probabile e i gol attesi dal modello e segnano
      i marcatori più probabili; durante la partita si scoprono anche chi rischia il giallo, chi tira e chi fa e subisce più falli.
      È un modo di vedere la stima, non una certezza. */
   function simPlan(m) {
-    var X = Core.extraMarkets(m, S.tf), top = X.exact[0] || { sc: '0-0', p: 0 }, sc = top.sc.split('-').map(Number);
+    var top = Core.simScore(S.tf) || { sc: '0-0', p: 0 }, sc = top.sc.split('-').map(Number);
     var seed = 0; String(m.id).split('').forEach(function (c) { seed = (seed * 31 + c.charCodeAt(0)) >>> 0; }); seed = (seed + 7919 * (S.simN = (S.simN || 0) + 1)) >>> 0;   // ogni replay cambia passaggi e minuti, non risultato e protagonisti
     var rnd = function () { seed = (seed + 0x6D2B79F5) >>> 0; var t = seed; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
     var rank = function (t) { return (S.pf[t] || []).filter(function (f) { return f.status === 'tit' && f.p.pos !== 'G'; }).sort(function (a, b) { return b.st.gl.p1 - a.st.gl.p1; }); };
@@ -531,8 +531,8 @@
     var val = function (e) { return e.k === 'gol' ? pct(e.f.st.gl.p1) : e.k === 'giallo' ? pct(e.f.st.yc.p1) : e.k === 'tiro' ? pct(e.f.st.sot.p1) : e.k === 'tirot' ? f2(e.f.st.sh.mean) + ' attesi' : f2(e.f.st.fc.mean) + ' attesi'; };
     var rows = se.ev.map(function (e) { return '<div class="sim-e"><span class="sim-m">' + e.min + '\'</span><em class="' + EV[e.k][0] + '"></em><b>' + esc(initN(e.f.p.name)) + (e.k === 'fallo' && e.f2 ? ' <small>su ' + esc(initN(e.f2.p.name)) + '</small>' : '') + '</b><small class="' + (e.side === 'H' ? 'home' : 'away') + '">' + EV[e.k][1] + '</small><span class="sim-p">' + val(e) + '</span></div>'; }).join('');
     return '<div class="sim-end"><small>Finale simulato</small><div class="sim-sc"><span class="home">' + esc(nm(m.h)) + '</span><b>' + se.sc[0] + ' - ' + se.sc[1] + '</b><span class="away">' + esc(nm(m.a)) + '</span></div>' + rows +
-      (se.sc[0] + se.sc[1] === 0 && se.best ? '<p class="tp-w">Nessun gol nel risultato più probabile. Il marcatore più probabile resta ' + esc(initN(se.best.p.name)) + ' (' + pct(se.best.st.gl.p1) + ').</p>' : '') +
-      '<p class="foot">Partita simulata sul pronostico: finisce con il risultato più probabile secondo il modello (' + se.sc[0] + '-' + se.sc[1] + ', ' + pct(se.p) + ') e i protagonisti sono i giocatori che spiccano nelle stime; accanto a ogni nome la sua probabilità o quanto ne fa in media. È un modo di vedere la stima, non una certezza.</p></div>';
+      (se.sc[0] + se.sc[1] === 0 && se.best ? '<p class="tp-w">Nessun gol nel risultato simulato. Il marcatore più probabile resta ' + esc(initN(se.best.p.name)) + ' (' + pct(se.best.st.gl.p1) + ').</p>' : '') +
+      '<p class="foot">Partita simulata sul pronostico: finisce con l\'esito più probabile secondo il modello e con un numero di gol vicino a quelli attesi (questo punteggio esatto: ' + pct(se.p) + '); i protagonisti sono i giocatori che spiccano nelle stime; accanto a ogni nome la sua probabilità o quanto ne fa in media. È un modo di vedere la stima, non una certezza.</p></div>';
   }
   function simReveal(plan) { S.simOn = false; S.simSkip = false; S.rev[plan.id] = true; S.simEnd = { id: plan.id, sc: plan.sc, p: plan.p, ev: plan.ev, best: plan.best }; rerender(); var z = document.querySelector('.sim-end'); if (z) z.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   function simSkip() { if (S.simOn) { S.simSkip = true; return; } if (!S.pf || !S.m) return; simReveal(simPlan(S.m)); }
