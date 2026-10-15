@@ -148,6 +148,27 @@ async function byIds(ids) {
     try { const r = await fetch(teams[id].l); if (r.ok) { fs.writeFileSync(f, Buffer.from(await r.arrayBuffer())); nl++; } } catch (e) { }
   }
   if (nl) note('stemmi scaricati: ' + nl);
+  // foto dei giocatori per le card: titolari delle ultime 3 partite (e formazioni ufficiali) delle squadre che giocano nei prossimi
+  // 4 giorni, prima le partite più vicine. Servite dal sito stesso; le immagini non contano nel limite di richieste.
+  const PH = path.join(ROOT, 'players'); fs.mkdirSync(PH, { recursive: true }); let np = 0;
+  const MAXPH = +(process.env.MAX_PHOTOS || 900), wantPh = [], seenPh = {};
+  const addPh = id => { id = String(id); if (!seenPh[id] && !fs.existsSync(path.join(PH, id + '.png'))) { seenPh[id] = 1; wantPh.push(id); } };
+  const upcoming = [];
+  LEAGUES.forEach(l => Object.values(fx[l.lg]).forEach(m => { if (m.d > now - 3 * 36e5 && m.d < now + 4 * 864e5 && !DONE[m.s]) upcoming.push(m); }));
+  upcoming.sort((a, b) => a.d - b.d).forEach(m => {
+    (m.lu || []).forEach(t => (t.x || []).forEach(p => addPh(p[0])));
+    const lg = fx[m.lg] ? m.lg : null; if (!lg) return;
+    [m.h, m.a].forEach(t => {
+      const last = Object.values(fx[lg]).filter(x => x.P && (x.h === t || x.a === t)).sort((a, b) => b.d - a.d).slice(0, 3);
+      last.forEach(x => x.P.forEach(r => { if (r[0] === t && (r[4] === 1 || r[5] >= 45)) addPh(r[1]); }));
+    });
+  });
+  if (!process.env.API_BASE) for (const id of wantPh) {
+    if (np >= MAXPH) break;
+    try { const r = await fetch('https://media.api-sports.io/football/players/' + id + '.png'); if (r.ok) { const b = Buffer.from(await r.arrayBuffer()); if (b.length > 200) { fs.writeFileSync(path.join(PH, id + '.png'), b); np++; } } } catch (e) { }
+    await new Promise(z => setTimeout(z, 40));
+  }
+  if (np) note('foto giocatori scaricate: ' + np + ' (ne mancano ' + Math.max(0, wantPh.length - np) + ')');
   const left = need().length;
   note('giro finito: ' + calls + ' richieste' + (remaining != null ? ', ne restano oggi ' + remaining : '') + (stop ? ' (stop: ' + stop + ')' : '') + ', partite senza dettagli ancora: ' + left);
   state.pending = left; state.t = now;

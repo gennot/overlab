@@ -14,6 +14,9 @@ const teamsRaw = readJ('teams.json', {}), state = readJ('state.json', {});
 const T = {}; Object.keys(teamsRaw).forEach(id => { const n = Core.itName(teamsRaw[id].n); T[id] = { n: n, s: n, l: '' }; });
 // stemmi serviti dal sito stesso (scaricati da collect.js): il browser non contatta altri server
 const logos = {}; fs.mkdirSync(path.join(OUT, 'logos'), { recursive: true });
+// foto dei giocatori (per le card): stesse regole degli stemmi
+const PHD = path.join(STORE, 'players'), photos = []; fs.mkdirSync(path.join(OUT, 'players'), { recursive: true });
+if (fs.existsSync(PHD)) fs.readdirSync(PHD).forEach(f => { if (/^\d+\.png$/.test(f)) { fs.copyFileSync(path.join(PHD, f), path.join(OUT, 'players', f)); photos.push(f.slice(0, -4)); } });
 Object.keys(teamsRaw).forEach(id => { const f = path.join(STORE, 'logos', id + '.png'); if (fs.existsSync(f)) { fs.copyFileSync(f, path.join(OUT, 'logos', id + '.png')); logos[id] = 'logos/' + id + '.png'; } });
 
 // partita nel formato dell'app
@@ -81,7 +84,7 @@ if (CUPS.length) {
 }
 fs.mkdirSync(OUT, { recursive: true });
 fs.readdirSync(OUT).filter(f => /^c-.*\.json$/.test(f)).forEach(f => fs.unlinkSync(path.join(OUT, f)));
-fs.writeFileSync(path.join(OUT, 'data.json'), JSON.stringify({ t: state.t || now, mem: base, logos: logos }));
+fs.writeFileSync(path.join(OUT, 'data.json'), JSON.stringify({ t: state.t || now, mem: base, logos: logos, ph: photos.join(',') }));
 let tot = 0; Object.keys(comp).forEach(c => { const s = JSON.stringify({ mem: comp[c] }); fs.writeFileSync(path.join(OUT, 'c-' + c + '.json'), s); tot += s.length; });
 const nUp = Object.values(base).reduce((s, b) => s + b.m.length, 0) / 3;
 console.log('esportato: ' + Object.keys(comp).length + ' competizioni, ' + Math.round(tot / 1e6 * 10) / 10 + ' MB di storico, ' + Math.round(nUp) + ' prossime partite');

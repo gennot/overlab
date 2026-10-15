@@ -708,6 +708,7 @@
      (segna, ammonito, tiro in porta...) e lascia il posto alla successiva. Tocca la card per passare alla prossima. */
   var XC = { tick: 0 }, ROLE = { G: 'Portiere', D: 'Difensore', M: 'Centrocampista', F: 'Attaccante' };
   // solo giocate probabili: marcatore dal 40%, giallo dal 35%, tiri/tiri in porta/falli dal 60% (la linea più alta che ci arriva)
+  function ph(id) { var P = window.OVERLAB_PH; return P && P[String(id)] ? 'players/' + id + '.png' : ''; }
   function heroCards(m) {
     if (!S.pf) return '';
     var cand = [];
@@ -733,8 +734,9 @@
       var f = c.f, st = f.st, ev = EV(c), val = pct(c.p);
       return '<div class="xcc ' + (c.t === m.h ? 'h' : 'a') + ' ' + ev[1] + (i === XC.tick % list.length ? ' on' : '') + '" role="group" aria-label="' + esc(f.p.name + ': ' + ev[0].toLowerCase() + ' ' + val) + '">' +
         '<div class="xc-f">' +
+        (ph(f.p.id) ? '<div class="xc-ph"><img src="' + ph(f.p.id) + '" alt="" loading="lazy" onerror="this.parentNode.className=\'xc-ph none\'"><span>' + esc(ini(f.p.name)) + '</span></div>' : '') +
         '<div class="xc-top">' + logo(c.t) + '<span class="xc-n">' + esc(f.p.jersey || '') + '</span></div>' +
-        '<div class="xc-av"><span>' + esc(ini(f.p.name)) + '</span></div>' +
+        (ph(f.p.id) ? '<div class="xc-gap"></div>' : '<div class="xc-av"><span>' + esc(ini(f.p.name)) + '</span></div>') +
         '<div class="xc-nm"><b>' + esc(shortN(f.p.name)) + '</b><small>' + esc(ROLE[f.p.pos] || '') + '</small></div>' +
         '<div class="xc-ev"><small>' + ev[0] + '</small><b>' + val + '</b></div>' +
         '<div class="xc-st"><span><small>TIRI</small>' + f1(st.sh.mean) + '</span><span><small>IN PORTA</small>' + f1(st.sot.mean) + '</span><span><small>FALLI</small>' + f1(st.fc.mean) + '</span></div><i class="xc-sh"></i></div></div>';

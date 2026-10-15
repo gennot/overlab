@@ -69,7 +69,7 @@ boot2 = '''Core.store.noLocal = true;
 Core.setFetch(function () { return Promise.reject(new Error('offline')); });
 window.OverLabReload = function () {
   return fetch('data.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function (d) { Core.store.preload(d.mem); window.OVERLAB_T = d.t; window.OVERLAB_LOGOS = d.logos || {}; Core.setBook(null); CL = {}; });
+    .then(function (d) { Core.store.preload(d.mem); window.OVERLAB_T = d.t; window.OVERLAB_LOGOS = d.logos || {}; window.OVERLAB_PH = {}; (d.ph || '').split(',').forEach(function (x) { if (x) window.OVERLAB_PH[x] = 1; }); Core.setBook(null); CL = {}; });
 };
 var CL = {};
 function getJ(f) { return fetch(f, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
@@ -134,7 +134,7 @@ PRIV = page('Privacy', f"""<h1>Informativa privacy</h1>
 <h2>Titolare del trattamento</h2>
 <p>{TITOLARE} – email: {MAIL}</p>
 <h2>In breve</h2>
-<ul><li>Non serve registrarsi e non ci sono account.</li><li>Nessuna pubblicità, nessuno strumento di statistica sui visitatori, nessuna profilazione.</li><li>Nessun cookie di terze parti. Caratteri e stemmi delle squadre sono ospitati sul sito stesso: il tuo browser non contatta altri servizi.</li></ul>
+<ul><li>Non serve registrarsi e non ci sono account.</li><li>Nessuna pubblicità, nessuno strumento di statistica sui visitatori, nessuna profilazione.</li><li>Nessun cookie di terze parti. Caratteri, stemmi delle squadre e foto dei giocatori sono ospitati sul sito stesso: il tuo browser non contatta altri servizi.</li></ul>
 <h2>Dati di navigazione (hosting)</h2>
 <p>Il sito è ospitato su GitHub Pages, servizio di GitHub, Inc. (Stati Uniti). Quando apri una pagina, il server riceve i dati tecnici che ogni browser invia, come indirizzo IP, tipo di browser, data e ora della richiesta. Servono solo a consegnarti le pagine e a proteggere il servizio da abusi; il titolare non li riceve e non li usa. Base giuridica: legittimo interesse a far funzionare il sito in modo sicuro (art. 6.1.f GDPR). GitHub tratta questi dati come fornitore di hosting e li trasferisce negli Stati Uniti con le garanzie previste dal GDPR (Data Privacy Framework UE-USA e clausole contrattuali standard): vedi l'<a href="https://docs.github.com/it/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">informativa di GitHub</a>.</p>
 <h2>Dati salvati sul tuo dispositivo</h2>
@@ -161,7 +161,7 @@ TERM = page('Termini', f"""<h1>Termini d'uso e note legali</h1>
 <h2>Gioco responsabile</h2>
 <p>Il gioco può causare dipendenza. Se scegli di giocare, fallo solo con operatori autorizzati dall'Agenzia delle Dogane e dei Monopoli e con somme che puoi permetterti di perdere. Per aiuto: Telefono Verde Nazionale per le problematiche legate al gioco d'azzardo dell'Istituto Superiore di Sanità, <a href="tel:800558822">800 558 822</a>, gratuito e anonimo.</p>
 <h2>Dati, nomi e marchi</h2>
-<p>Dati delle partite forniti da API-Football (API-Sports). Nomi, loghi e marchi di squadre, campionati e competizioni appartengono ai rispettivi titolari e sono usati solo per identificare le partite. OverLab non è affiliato, sponsorizzato o approvato da UEFA, leghe, federazioni o club.</p>
+<p>Dati delle partite forniti da API-Football (API-Sports). Nomi, loghi e marchi di squadre, campionati e competizioni e le foto dei giocatori appartengono ai rispettivi titolari e sono usati solo per identificare partite e giocatori. Chi ne detiene i diritti può chiederne la rimozione scrivendo all'indirizzo indicato sopra. OverLab non è affiliato, sponsorizzato o approvato da UEFA, leghe, federazioni o club.</p>
 <h2>Contenuti di OverLab</h2>
 <p>Testi, grafica, codice e modello di OverLab appartengono al gestore. I caratteri Public Sans e Saira sono usati secondo la licenza SIL Open Font License 1.1.</p>
 <h2>Modifiche e disponibilità</h2>
