@@ -704,6 +704,40 @@
       return '<div class="tp-r"><h4><em class="' + r[0] + '"></em>' + r[1] + '</h4><p class="tp-n"><span class="' + (r[2].team === m.h ? 'home' : 'away') + '">' + esc(T[r[2].team] ? T[r[2].team].s : tn(r[2].team)) + ':</span> ' + esc(initN(r[2].p.name)) + ' <small>(' + pct(r[3]) + ')</small></p><p class="tp-w">' + esc(r[4]) + '</p></div>';
     }).join('') + duel + '</div>';
   }
+  /* Card dei protagonisti accanto al pronostico: una alla volta, entra girando, mostra la giocata del giocatore
+     (segna, ammonito, tiro in porta...) e lascia il posto alla successiva. Tocca la card per passare alla prossima. */
+  var XC = { tick: 0 }, ROLE = { G: 'Portiere', D: 'Difensore', M: 'Centrocampista', F: 'Attaccante' };
+  function heroCards(m) {
+    if (!S.pf) return '';
+    var so; try { so = standouts(m); } catch (e) { return ''; }
+    var W = so.who, shot = Core.shotsOk(m.lg) ? 'sot' : 'sh', seen = {}, list = [];
+    var EVT = { gl: ['SEGNA', 'gold'], yc: ['AMMONITO', 'yel'], sot: ['TIRO IN PORTA', 'grn'], sh: ['TIRI', 'grn'], fc: ['FALLI', 'org'] };
+    [[m.h, 'gl'], [m.a, 'gl'], [m.h, 'yc'], [m.a, 'yc'], [m.h, shot], [m.a, shot], [m.h, 'fc'], [m.a, 'fc']].forEach(function (x) {
+      var f = (W[x[0]] || {})[x[1]]; if (!f || seen[f.p.id] || list.length >= 6) return; seen[f.p.id] = 1; list.push({ t: x[0], k: x[1], f: f });
+    });
+    if (!list.length) return '';
+    var ini = function (n) { var w = String(n || '').trim().split(/\s+/); return ((w[0] || '').charAt(0) + (w.length > 1 ? w[w.length - 1].charAt(0) : '')).toUpperCase(); };
+    var cards = list.map(function (c, i) {
+      var f = c.f, st = f.st, k = c.k, ev = EVT[k], val = k === 'sh' || k === 'fc' ? f1(st[k].mean) : pct(st[k].p1), unit = k === 'sh' || k === 'fc' ? 'attesi' : '';
+      return '<div class="xcc ' + (c.t === m.h ? 'h' : 'a') + ' ' + ev[1] + (i === XC.tick % list.length ? ' on' : '') + '" role="group" aria-label="' + esc(f.p.name + ': ' + ev[0].toLowerCase() + ' ' + val + (unit ? ' ' + unit : '')) + '">' +
+        '<div class="xc-f">' +
+        '<div class="xc-top">' + logo(c.t) + '<span class="xc-n">' + esc(f.p.jersey || '') + '</span></div>' +
+        '<div class="xc-av"><span>' + esc(ini(f.p.name)) + '</span></div>' +
+        '<div class="xc-nm"><b>' + esc(shortN(f.p.name)) + '</b><small>' + esc(ROLE[f.p.pos] || '') + '</small></div>' +
+        '<div class="xc-ev"><small>' + ev[0] + '</small><b>' + val + (unit ? '<i>' + unit + '</i>' : '') + '</b></div>' +
+        '<div class="xc-st"><span><small>GOL</small>' + pct(st.gl.p1) + '</span><span><small>TIRI</small>' + f1(st.sh.mean) + '</span><span><small>GIALLO</small>' + pct(st.yc.p1) + '</span></div><i class="xc-sh"></i></div></div>';
+    }).join('');
+    return '<button class="xc" data-act="xcnext" aria-label="Protagonisti della partita: tocca per il prossimo">' + cards + '</button>';
+  }
+  function xcStep() {
+    XC.tick++;
+    [].forEach.call(document.querySelectorAll('.xc'), function (w) {
+      var cs = w.querySelectorAll('.xcc'); if (cs.length < 2) return;
+      var cur = XC.tick % cs.length, prev = (cur - 1 + cs.length) % cs.length;
+      [].forEach.call(cs, function (c, i) { c.classList.toggle('on', i === cur); c.classList.toggle('off', i === prev); });
+    });
+  }
+  setInterval(function () { if (!document.hidden && document.querySelector('.xc')) xcStep(); }, 3400);
   // il pronostico principale della partita, con fiducia, rischio e analisi
   function heroHtml() {
     var ob = obOn(), has = ob && Core.bookOf(S.m), p = null;
@@ -717,7 +751,8 @@
     } catch (e) { lines = []; }
     var fid = p.p >= 0.72 ? ['Alta', 'hit', 'Basso', 'hit'] : p.p >= 0.58 ? ['Media', 'okt', 'Medio', 'midt'] : ['Bassa', 'midt', 'Alto', 'midt'];
     var story = ''; try { story = Core.analysis(S.cd, S.m, S.tf).text[0] || ''; } catch (e) { story = ''; }
-    return '<section class="hero"><div class="hero-p"><small>Pronostico</small><b class="' + (p.label.length > 18 ? 'lng' : '') + '">' + esc(p.label) + '</b><span>stima ' + pct(p.p) + (p.occ ? ' · occasione' : '') + '</span></div>' +
+    var xc = heroCards(S.m);
+    return '<section class="hero">' + (xc ? '<div class="hero-top">' : '') + '<div class="hero-p"><small>Pronostico</small><b class="' + (p.label.length > 18 ? 'lng' : '') + '">' + esc(p.label) + '</b><span>stima ' + pct(p.p) + (p.occ ? ' · occasione' : '') + '</span></div>' + (xc ? xc + '</div>' : '') +
       '<div class="hero-k"><div><small>Fiducia</small><b class="' + fid[1] + '">' + fid[0] + '</b></div><div><small>Rischio</small><b class="' + fid[3] + '">' + fid[2] + '</b></div><div><small>' + (PLAY ? 'Probabilità' : p.odds && !p.fair ? 'Quota' : 'Quota giusta') + '</small><b>' + (PLAY ? pct(p.p) : p.odds && !p.fair ? q2(p.odds) : quota(p.p)) + '</b></div></div>' +
       (story ? '<div class="hero-a"><h2>' + ic('star') + 'Analisi</h2><p class="story">' + esc(story) + '</p></div>' : '') +
       (lines.length ? '<div class="hero-a"><h2>' + ic('spark') + 'Perché questa giocata</h2><ul>' + lines.slice(0, 5).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul></div>' : '') +
@@ -837,6 +872,7 @@
     if (d.act === 'slipset') { e.preventDefault(); var st = document.querySelector('.sett'); if (st) st.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (d.act === 'sim') { runSim(); return; }
     if (d.act === 'simskip') { simSkip(); return; }
+    if (d.act === 'xcnext') { xcStep(); return; }
     if (d.act === 'hi70') { S.hi70 = !S.hi70; S.sure = null; rerender(); return; }
     if (d.act === 'fav') { if (FAV[d.team]) delete FAV[d.team]; else FAV[d.team] = 1; saveFav(); rerender(); return; }
     if (d.act === 'share') { shareCard(); return; }
