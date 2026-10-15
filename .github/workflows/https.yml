@@ -1,0 +1,36 @@
+# Controlla dominio e certificato e, se il certificato è pronto, attiva "Enforce HTTPS" (lucchetto e passaggio automatico a https).
+name: Controllo HTTPS
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/https.yml']
+  schedule:
+    - cron: '41 */6 * * *'
+permissions:
+  pages: write
+  contents: read
+jobs:
+  https:
+    runs-on: ubuntu-latest
+    steps:
+      - name: DNS
+        run: |
+          for h in overlabcalcio.it www.overlabcalcio.it; do echo "== $h"; dig +short A $h; dig +short AAAA $h; dig +short CNAME $h; dig +short CAA $h; done
+      - name: Risposta del sito
+        run: |
+          for u in http://overlabcalcio.it/ https://overlabcalcio.it/ https://www.overlabcalcio.it/ http://www.overlabcalcio.it/; do echo "== $u"; curl -sS -o /dev/null -m 20 -w '%{http_code} -> %{redirect_url}\n' "$u" || true; done
+          echo | openssl s_client -connect overlabcalcio.it:443 -servername overlabcalcio.it 2>/dev/null | openssl x509 -noout -subject -issuer -dates -ext subjectAltName || echo "nessun certificato valido"
+      - name: Impostazioni GitHub Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/${{ github.repository }}/pages || true
+          echo "== health"; gh api repos/${{ github.repository }}/pages/health || true
+      - name: Attiva HTTPS se possibile
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          on=$(gh api repos/${{ github.repository }}/pages --jq .https_enforced 2>/dev/null || echo "?")
+          echo "https_enforced: $on"
+          if [ "$on" = "false" ]; then gh api -X PUT repos/${{ github.repository }}/pages -F https_enforced=true && echo "HTTPS attivato" || echo "non ancora possibile"; fi
