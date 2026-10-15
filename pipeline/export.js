@@ -16,7 +16,12 @@ const T = {}; Object.keys(teamsRaw).forEach(id => { const n = Core.itName(teamsR
 const logos = {}; fs.mkdirSync(path.join(OUT, 'logos'), { recursive: true });
 // foto dei giocatori (per le card): stesse regole degli stemmi
 const PHD = path.join(STORE, 'players'), photos = []; fs.mkdirSync(path.join(OUT, 'players'), { recursive: true });
-if (fs.existsSync(PHD)) fs.readdirSync(PHD).forEach(f => { if (/^\d+\.png$/.test(f)) { fs.copyFileSync(path.join(PHD, f), path.join(OUT, 'players', f)); photos.push(f.slice(0, -4)); } });
+// chi non ha la foto riceve da API-Football la stessa sagoma grigia: le immagini identiche ripetute 5+ volte non si usano (resta l'iniziale)
+if (fs.existsSync(PHD)) {
+  const crypto = require('crypto'), files = fs.readdirSync(PHD).filter(f => /^[1-9]\d*\.png$/.test(f)), hash = {}, cnt = {};
+  files.forEach(f => { const h = crypto.createHash('md5').update(fs.readFileSync(path.join(PHD, f))).digest('hex'); hash[f] = h; cnt[h] = (cnt[h] || 0) + 1; });
+  files.forEach(f => { if (cnt[hash[f]] >= 5) return; fs.copyFileSync(path.join(PHD, f), path.join(OUT, 'players', f)); photos.push(f.slice(0, -4)); });
+}
 Object.keys(teamsRaw).forEach(id => { const f = path.join(STORE, 'logos', id + '.png'); if (fs.existsSync(f)) { fs.copyFileSync(f, path.join(OUT, 'logos', id + '.png')); logos[id] = 'logos/' + id + '.png'; } });
 
 // partita nel formato dell'app

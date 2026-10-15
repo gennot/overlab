@@ -151,7 +151,7 @@ async function byIds(ids) {
   // foto dei giocatori per le card: titolari delle ultime 3 partite (e formazioni ufficiali) delle squadre che giocano nei prossimi
   // 4 giorni, prima le partite più vicine. Servite dal sito stesso; le immagini non contano nel limite di richieste.
   const PH = path.join(ROOT, 'players'); fs.mkdirSync(PH, { recursive: true }); let np = 0;
-  const MAXPH = +(process.env.MAX_PHOTOS || 900), wantPh = [], seenPh = {};
+  const MAXPH = +(process.env.MAX_PHOTOS || 2500), wantPh = [], seenPh = {};
   const addPh = id => { id = String(id); if (!seenPh[id] && !fs.existsSync(path.join(PH, id + '.png'))) { seenPh[id] = 1; wantPh.push(id); } };
   const upcoming = [];
   LEAGUES.forEach(l => Object.values(fx[l.lg]).forEach(m => { if (m.d > now - 3 * 36e5 && m.d < now + 4 * 864e5 && !DONE[m.s]) upcoming.push(m); }));
