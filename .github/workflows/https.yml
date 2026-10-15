@@ -14,23 +14,20 @@ jobs:
   https:
     runs-on: ubuntu-latest
     steps:
-      - name: DNS
-        run: |
-          for h in overlabcalcio.it www.overlabcalcio.it; do echo "== $h"; dig +short A $h; dig +short AAAA $h; dig +short CNAME $h; dig +short CAA $h; done
-      - name: Risposta del sito
-        run: |
-          for u in http://overlabcalcio.it/ https://overlabcalcio.it/ https://www.overlabcalcio.it/ http://www.overlabcalcio.it/; do echo "== $u"; curl -sS -o /dev/null -m 20 -w '%{http_code} -> %{redirect_url}\n' "$u" || true; done
-          echo | openssl s_client -connect overlabcalcio.it:443 -servername overlabcalcio.it 2>/dev/null | openssl x509 -noout -subject -issuer -dates -ext subjectAltName || echo "nessun certificato valido"
-      - name: Impostazioni GitHub Pages
+      - name: Controllo e attivazione
         env:
           GH_TOKEN: ${{ github.token }}
+          R: ${{ github.repository }}
         run: |
-          gh api repos/${{ github.repository }}/pages || true
-          echo "== health"; gh api repos/${{ github.repository }}/pages/health || true
-      - name: Attiva HTTPS se possibile
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          on=$(gh api repos/${{ github.repository }}/pages --jq .https_enforced 2>/dev/null || echo "?")
-          echo "https_enforced: $on"
-          if [ "$on" = "false" ]; then gh api -X PUT repos/${{ github.repository }}/pages -F https_enforced=true && echo "HTTPS attivato" || echo "non ancora possibile"; fi
+          {
+            for h in overlabcalcio.it www.overlabcalcio.it; do echo "== DNS $h"; echo "A: $(dig +short A $h | tr '\n' ' ')"; echo "AAAA: $(dig +short AAAA $h | tr '\n' ' ')"; echo "CNAME: $(dig +short CNAME $h | tr '\n' ' ')"; echo "CAA: $(dig +short CAA $h | tr '\n' ' ')"; done
+            for u in http://overlabcalcio.it/ https://overlabcalcio.it/ https://www.overlabcalcio.it/ http://www.overlabcalcio.it/; do echo "== $u $(curl -sS -o /dev/null -m 20 -w '%{http_code} -> %{redirect_url}' "$u" 2>&1)"; done
+            echo "== certificato"; echo | openssl s_client -connect overlabcalcio.it:443 -servername overlabcalcio.it 2>/dev/null | openssl x509 -noout -subject -issuer -enddate -ext subjectAltName 2>&1 | tr '\n' ' '; echo
+            echo "== pages"; gh api repos/$R/pages --jq '{cname,status,https_enforced,https_certificate,html_url,source,build_type}' 2>&1
+            echo "== health"; gh api repos/$R/pages/health 2>&1 | head -c 1500; echo
+            on=$(gh api repos/$R/pages --jq .https_enforced 2>/dev/null || echo "?")
+            if [ "$on" = "false" ]; then echo "== attivo HTTPS"; gh api -X PUT repos/$R/pages -F https_enforced=true 2>&1 && echo "HTTPS attivato" || echo "non ancora possibile"; fi
+          } > out.txt 2>&1 || true
+          cat out.txt
+          msg=$(head -c 6000 out.txt | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+          echo "::notice title=Controllo HTTPS::$msg"
