@@ -353,6 +353,7 @@
       opts.map(function (o) { var b = byK[o.key], p = b ? b.p : o.p; return (of && !b) ? '' : '<tr><td>' + esc(o.label) + '</td><td>' + pct(p) + '</td><td class="qm">' + quota(p) + '</td>' + (of ? '<td>' + q2(b.odds) + '</td>' : '') + '</tr>'; }).join('') + '</table></div>';
     return h + '</div></section>';
   }
+  var UO_OK = { fo: 1, yc: 1 };   // under mostrati solo per falli e cartellini
   function teamsHtml() {
     var ob = obOn(), of = ob ? Core.offers(S.m, S.tf, S.pf) : null, h = obBar() + resCard(of), missing = [];
     if (!Core.shotsOk(S.m.lg)) h += '<div class="note">In questo campionato tiri e tiri in porta non si possono giocare: li ho tolti. Restano risultato, gol, corner, falli e cartellini.</div>';
@@ -367,8 +368,8 @@
         } else lines = r.lines;
         body += '<div class="trow"><button class="trow-h" data-exp="' + key + '" aria-expanded="' + (S.open === key) + '"><span>' + esc(x[1]) + '</span><span class="exp">attesi <b>' + f1(r.mean) + '</b></span></button>' +
           '<div class="lines">' + lines.map(function (l) { return '<span class="ln ' + cls(l.over) + (l.val ? ' val' : '') + '"><small>over ' + ln(l.line) + '</small><b>' + pct(l.over) + '</b>' + (l.odds ? '<small class="od">' + q2(l.odds) + '</small>' : '') + '</span>'; }).join('') + '</div>';
-        if (S.open === key) body += '<div class="why"><b>Perché</b><ul>' + Core.explainTeam(S.cd, S.m, S.tf, s, x[0]).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + (ob ? '<li>La percentuale è una media tra il modello e le quote.</li>' : '') + '</ul><table class="qt"><tr><th>Linea</th><th>Over</th><th class="qm">minima</th>' + (ob ? '<th>Quota</th>' : '') + '</tr>' +
-          lines.map(function (l) { return '<tr><td>' + ln(l.line) + '</td><td>' + pct(l.over) + '</td><td class="qm">' + quota(l.over) + '</td>' + (ob ? '<td>' + q2(l.odds) + '</td>' : '') + '</tr>'; }).join('') + '</table></div>';
+        if (S.open === key) body += '<div class="why"><b>Perché</b><ul>' + Core.explainTeam(S.cd, S.m, S.tf, s, x[0]).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + (ob ? '<li>La percentuale è una media tra il modello e le quote.</li>' : '') + '</ul><table class="qt"><tr><th>Linea</th><th>Over</th><th class="qm">minima</th>' + (ob ? '<th>Quota</th>' : UO_OK[s] ? '<th>Under</th><th class="qm">minima</th>' : '') + '</tr>' +
+          lines.map(function (l) { return '<tr><td>' + ln(l.line) + '</td><td>' + pct(l.over) + '</td><td class="qm">' + quota(l.over) + '</td>' + (ob ? '<td>' + q2(l.odds) + '</td>' : UO_OK[s] ? '<td>' + pct(l.under) + '</td><td class="qm">' + quota(l.under) + '</td>' : '') + '</tr>'; }).join('') + '</table></div>';
         body += '</div>';
       });
       if (body) h += '<section class="card"><h3>' + ic(s) + esc(Core.STAT_IT[s]) + '</h3>' + body + '</section>'; else missing.push(Core.STAT_IT[s].toLowerCase());

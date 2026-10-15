@@ -399,8 +399,11 @@ var Core = (function () {
 
   /* ---------- giocate in evidenza ---------- */
   var LO = 0.6, HI = 0.9, SURE = 0.85, MINQ_TOP = 1.2, MINQ_OCC = 1.4;
-  // niente under tra i pronostici: gol, tiri, corner, falli, cartellini e giocatori si propongono solo come over / "almeno"
-  var NO_UNDER = true;
+  // niente under tra i pronostici, tranne falli e cartellini di squadra e totali: gol, tiri, tiri in porta, corner e giocatori
+  // si propongono solo come over / "almeno". Nelle coppe del 13-15/10/2026 gli under sui gol uscivano il 66% contro il 76%
+  // stimato, quelli su falli e cartellini l'83-92%.
+  var NO_UNDER = true, UNDER_OK = { fo: 1, yc: 1 };
+  function noUnder(o) { return NO_UNDER && isUnder(o) && !(o.kind === 'team' && UNDER_OK[o.stat]); }
   function isUnder(o) { return o.dir === 'U' || /^(un|tu)\d|^(un|tu)[HA]/.test(o.fam || '') || /\bunder\b|: meno di \d/i.test(o.label || ''); }
   /* ---------- quote del bookmaker ---------- */
   var BOOK = null;
@@ -422,7 +425,7 @@ var Core = (function () {
   function offers(m, tf, pf) {
     var b = bookOf(m), out = []; if (!b) return out;
     var mk = b.mk || {}, r = tf.res, par = tf.par || Model.PAR, hn = teams[m.h] ? teams[m.h].n : 'casa', an = teams[m.a] ? teams[m.a].n : 'trasferta', ln = function (x) { return String(x).replace('.', ','); };
-    var add = function (o, pk, w) { if (!(o.odds > 1) || !(o.p > 0.001) || (NO_UNDER && isUnder(o))) return; o.pm = o.p; o.pk = pk; o.p = pk > 0 ? w * pk + (1 - w) * o.pm : o.pm; out.push(o); };
+    var add = function (o, pk, w) { if (!(o.odds > 1) || !(o.p > 0.001) || noUnder(o)) return; o.pm = o.p; o.pk = pk; o.p = pk > 0 ? w * pk + (1 - w) * o.pm : o.pm; out.push(o); };
     if (r) {
       var x = mk.x12, full = x && x[0] > 1 && x[1] > 1 && x[2] > 1, s3 = full ? 1 / x[0] + 1 / x[1] + 1 / x[2] : 0, q3 = full ? [1 / x[0] / s3, 1 / x[1] / s3, 1 / x[2] / s3] : null;
       if (x) [['1', 'Vince ' + hn + ' (1)', r.h], ['X', 'Pareggio (X)', r.d], ['2', 'Vince ' + an + ' (2)', r.a]].forEach(function (y, i) { add({ kind: 'res', cat: 'res', fam: '1x2', stat: y[0], label: y[1], p: y[2], odds: x[i] }, q3 ? q3[i] : mk1(x[i]), W_RES); });
@@ -522,7 +525,7 @@ var Core = (function () {
   }
   function modelOffers(m, tf, pf) {
     var out = [], r = tf.res, par = tf.par || Model.PAR, hn = teams[m.h] ? teams[m.h].n : 'casa', an = teams[m.a] ? teams[m.a].n : 'trasferta', ln = function (x) { return String(x).replace('.', ','); };
-    var add = function (o) { if (!(o.p >= (o.cat === 'pgl' || o.cat === 'pyc' ? 0.08 : 0.5)) || o.p > 0.97 || (NO_UNDER && isUnder(o))) return; o.pm = o.p; o.pk = 0; o.odds = fairQ(o.p); o.fair = true; out.push(o); };
+    var add = function (o) { if (!(o.p >= (o.cat === 'pgl' || o.cat === 'pyc' ? 0.08 : 0.5)) || o.p > 0.97 || noUnder(o)) return; o.pm = o.p; o.pk = 0; o.odds = fairQ(o.p); o.fair = true; out.push(o); };
     if (r) {
       [['1', 'Vince ' + hn + ' (1)', r.h], ['X', 'Pareggio (X)', r.d], ['2', 'Vince ' + an + ' (2)', r.a]].forEach(function (y) { add({ kind: 'res', cat: 'res', fam: '1x2', stat: y[0], label: y[1], p: y[2] }); });
       [['1X', 'Doppia chance 1X: ' + hn + ' o pareggio', r.h + r.d], ['12', 'Doppia chance 12: non finisce pari', r.h + r.a], ['X2', 'Doppia chance X2: ' + an + ' o pareggio', r.a + r.d]].forEach(function (y) { add({ kind: 'res', cat: 'res', fam: 'dc', stat: y[0], label: y[1], p: y[2] }); });
@@ -695,7 +698,7 @@ var Core = (function () {
   function resOptions(m, tf) {
     var r = tf.res, out = []; if (!r) return out;
     var hn = teams[m.h] ? teams[m.h].n : 'casa', an = teams[m.a] ? teams[m.a].n : 'trasferta', ln = function (x) { return String(x).replace('.', ','); };
-    var fam = function (name, opts) { opts.forEach(function (o) { o.fam = name; if (NO_UNDER && isUnder(o)) return; out.push(o); }); };
+    var fam = function (name, opts) { opts.forEach(function (o) { o.fam = name; if (noUnder(o)) return; out.push(o); }); };
     fam('1x2', [{ key: '1', label: 'Vince ' + hn + ' (1)', p: r.h }, { key: 'X', label: 'Pareggio (X)', p: r.d }, { key: '2', label: 'Vince ' + an + ' (2)', p: r.a }]);
     fam('dc', [{ key: '1X', label: 'Doppia chance 1X: ' + hn + ' o pareggio', p: r.h + r.d }, { key: 'X2', label: 'Doppia chance X2: ' + an + ' o pareggio', p: r.a + r.d }, { key: '12', label: 'Doppia chance 12: non finisce pari', p: r.h + r.a }]);
     fam('gg', [{ key: 'GG', label: 'Goal: segnano entrambe', p: r.gg }, { key: 'NG', label: 'No goal: almeno una non segna', p: 1 - r.gg }]);
