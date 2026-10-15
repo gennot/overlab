@@ -707,25 +707,37 @@
   /* Card dei protagonisti accanto al pronostico: una alla volta, entra girando, mostra la giocata del giocatore
      (segna, ammonito, tiro in porta...) e lascia il posto alla successiva. Tocca la card per passare alla prossima. */
   var XC = { tick: 0 }, ROLE = { G: 'Portiere', D: 'Difensore', M: 'Centrocampista', F: 'Attaccante' };
+  // solo giocate probabili: marcatore dal 40%, giallo dal 35%, tiri/tiri in porta/falli dal 60% (la linea più alta che ci arriva)
   function heroCards(m) {
     if (!S.pf) return '';
-    var so; try { so = standouts(m); } catch (e) { return ''; }
-    var W = so.who, shot = Core.shotsOk(m.lg) ? 'sot' : 'sh', seen = {}, list = [];
-    var EVT = { gl: ['SEGNA', 'gold'], yc: ['AMMONITO', 'yel'], sot: ['TIRO IN PORTA', 'grn'], sh: ['TIRI', 'grn'], fc: ['FALLI', 'org'] };
-    [[m.h, 'gl'], [m.a, 'gl'], [m.h, 'yc'], [m.a, 'yc'], [m.h, shot], [m.a, shot], [m.h, 'fc'], [m.a, 'fc']].forEach(function (x) {
-      var f = (W[x[0]] || {})[x[1]]; if (!f || seen[f.p.id] || list.length >= 6) return; seen[f.p.id] = 1; list.push({ t: x[0], k: x[1], f: f });
+    var cand = [];
+    [m.h, m.a].forEach(function (t) { (S.pf[t] || []).forEach(function (f) {
+      if (f.status !== 'tit' || f.p.pos === 'G') return;
+      if (f.st.gl && f.st.gl.p1 >= 0.4) cand.push({ t: t, f: f, k: 'gl', n: 1, p: f.st.gl.p1, w: 2 });
+      if (f.st.yc && f.st.yc.p1 >= 0.35) cand.push({ t: t, f: f, k: 'yc', n: 1, p: f.st.yc.p1, w: 1 });
+      ['sot', 'sh', 'fs', 'fc'].forEach(function (k) {
+        var s = f.st[k]; if (!s || !Core.statOk(m.lg, k)) return;
+        var n = s.p3 >= 0.6 ? 3 : s.p2 >= 0.6 ? 2 : s.p1 >= 0.6 ? 1 : 0; if (!n || s['p' + n] > 0.95) return;
+        cand.push({ t: t, f: f, k: k, n: n, p: s['p' + n], w: 0 });
+      });
+    }); });
+    cand.sort(function (a, b) { return b.w - a.w || b.p - a.p; });
+    var seen = {}, perK = {}, byT = {}; cand.forEach(function (c) {
+      if (seen[c.f.p.id] || (perK[c.k] || 0) >= 2) return; seen[c.f.p.id] = 1; perK[c.k] = (perK[c.k] || 0) + 1; (byT[c.t] = byT[c.t] || []).push(c);
     });
+    var list = [], H = byT[m.h] || [], A = byT[m.a] || []; for (var q = 0; list.length < 6 && (q < H.length || q < A.length); q++) { if (H[q]) list.push(H[q]); if (A[q] && list.length < 6) list.push(A[q]); }
     if (!list.length) return '';
+    var EV = function (c) { var n = c.n; return c.k === 'gl' ? ['SEGNA', 'gold'] : c.k === 'yc' ? ['AMMONITO', 'yel'] : c.k === 'sot' ? [n === 1 ? 'TIRO IN PORTA' : n + '+ IN PORTA', 'grn'] : c.k === 'sh' ? [n === 1 ? 'ALMENO UN TIRO' : n + '+ TIRI', 'grn'] : c.k === 'fc' ? [n === 1 ? 'FA FALLO' : n + '+ FALLI', 'org'] : [n === 1 ? 'SUBISCE FALLO' : n + '+ FALLI SUBITI', 'org']; };
     var ini = function (n) { var w = String(n || '').trim().split(/\s+/); return ((w[0] || '').charAt(0) + (w.length > 1 ? w[w.length - 1].charAt(0) : '')).toUpperCase(); };
     var cards = list.map(function (c, i) {
-      var f = c.f, st = f.st, k = c.k, ev = EVT[k], val = k === 'sh' || k === 'fc' ? f1(st[k].mean) : pct(st[k].p1), unit = k === 'sh' || k === 'fc' ? 'attesi' : '';
-      return '<div class="xcc ' + (c.t === m.h ? 'h' : 'a') + ' ' + ev[1] + (i === XC.tick % list.length ? ' on' : '') + '" role="group" aria-label="' + esc(f.p.name + ': ' + ev[0].toLowerCase() + ' ' + val + (unit ? ' ' + unit : '')) + '">' +
+      var f = c.f, st = f.st, ev = EV(c), val = pct(c.p);
+      return '<div class="xcc ' + (c.t === m.h ? 'h' : 'a') + ' ' + ev[1] + (i === XC.tick % list.length ? ' on' : '') + '" role="group" aria-label="' + esc(f.p.name + ': ' + ev[0].toLowerCase() + ' ' + val) + '">' +
         '<div class="xc-f">' +
         '<div class="xc-top">' + logo(c.t) + '<span class="xc-n">' + esc(f.p.jersey || '') + '</span></div>' +
         '<div class="xc-av"><span>' + esc(ini(f.p.name)) + '</span></div>' +
         '<div class="xc-nm"><b>' + esc(shortN(f.p.name)) + '</b><small>' + esc(ROLE[f.p.pos] || '') + '</small></div>' +
-        '<div class="xc-ev"><small>' + ev[0] + '</small><b>' + val + (unit ? '<i>' + unit + '</i>' : '') + '</b></div>' +
-        '<div class="xc-st"><span><small>GOL</small>' + pct(st.gl.p1) + '</span><span><small>TIRI</small>' + f1(st.sh.mean) + '</span><span><small>GIALLO</small>' + pct(st.yc.p1) + '</span></div><i class="xc-sh"></i></div></div>';
+        '<div class="xc-ev"><small>' + ev[0] + '</small><b>' + val + '</b></div>' +
+        '<div class="xc-st"><span><small>TIRI</small>' + f1(st.sh.mean) + '</span><span><small>IN PORTA</small>' + f1(st.sot.mean) + '</span><span><small>FALLI</small>' + f1(st.fc.mean) + '</span></div><i class="xc-sh"></i></div></div>';
     }).join('');
     return '<button class="xc" data-act="xcnext" aria-label="Protagonisti della partita: tocca per il prossimo">' + cards + '</button>';
   }

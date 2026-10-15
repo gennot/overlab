@@ -508,14 +508,15 @@ var Core = (function () {
       { key: 'HSH', label: hn + ' segna in entrambi i tempi', p: (1 - Math.exp(-l1)) * (1 - Math.exp(-(1 - HT) * r.lh)) }, { key: 'HSA', label: an + ' segna in entrambi i tempi', p: (1 - Math.exp(-a1)) * (1 - Math.exp(-(1 - HT) * r.la)) });
     return out;
   }
-  /* Punteggio per la simulazione: l'esito è quello più probabile (1, X o 2; pari se le vittorie distano meno di 5 punti),
-     il punteggio è estratto tra quelli di quell'esito con le probabilità del modello. L'estrazione dipende solo dalla partita:
-     stesso risultato a ogni replay e per chiunque. Prima finivano quasi tutte 1-1 (punteggio più probabile) e poi 2-1. */
+  /* Punteggio per la simulazione: l'esito è quello più probabile (1, X o 2; pari se le vittorie distano meno di 5 punti) e il
+     punteggio è uno dei 3 più probabili di quell'esito (2 se pari), estratto con le loro probabilità. L'estrazione dipende solo
+     dalla partita: stesso risultato a ogni replay e per chiunque. Prima finivano quasi tutte 1-1, poi 2-1, poi anche 0-5. */
   function simScore(tf, m) {
     var r = tf && tf.res; if (!r || !r.grid) return null;
     var sign = Math.abs(r.h - r.a) < 0.05 ? 0 : r.h >= r.d && r.h >= r.a ? 1 : r.a >= r.d ? 2 : 0, cells = [], tot = 0;
-    r.grid.forEach(function (row, i) { row.forEach(function (p, j) { if ((i > j ? 1 : i < j ? 2 : 0) === sign && p > 0) { cells.push([i, j, p]); tot += p; } }); });
+    r.grid.forEach(function (row, i) { row.forEach(function (p, j) { if ((i > j ? 1 : i < j ? 2 : 0) === sign && p > 0) cells.push([i, j, p]); }); });
     if (!cells.length) return null;
+    cells.sort(function (a, b) { return b[2] - a[2]; }); cells = cells.slice(0, sign === 0 ? 2 : 3); cells.forEach(function (c) { tot += c[2]; });
     var h = 2166136261, id = String(m && m.id != null ? m.id : ''); for (var k = 0; k < id.length; k++) { h ^= id.charCodeAt(k); h = Math.imul(h, 16777619) >>> 0; }
     h = (h + 0x6D2B79F5) >>> 0; var t = Math.imul(h ^ h >>> 15, h | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); var u = ((t ^ t >>> 14) >>> 0) / 4294967296 * tot;
     for (var c = 0; c < cells.length; c++) { u -= cells[c][2]; if (u <= 0) break; }
