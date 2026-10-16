@@ -16,11 +16,10 @@ head = re.sub(r'<link rel="(preconnect|stylesheet)" href="https://fonts\.(google
 head += '<link rel="stylesheet" href="fonts/fonts.css">\n'
 head += '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" href="icon-192.png">\n<link rel="apple-touch-icon" href="icon-192.png">\n'
 css = src[src.index('<style>'):src.index('</style>') + 8]
-css = css.replace('.bnav-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}', '.bnav-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(2,1fr)}')
+css = css.replace('.bnav-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}', '.bnav-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}')
 body = src[src.index('<body>') + 6:src.index('<script>')]
-# niente quote e niente schedina: restano Partite e Info
+# niente quote: restano Partite, Schedina IA (solo probabilità, senza quote né importi) e Info
 body = re.sub(r'<button data-hv="sure">.*?</button>\n', '', body, flags=re.S)
-body = re.sub(r'<button data-hv="slip">.*?</button>\n', '', body, flags=re.S)
 # avvertenze sempre visibili in fondo a ogni pagina (gioco responsabile, ADM, nessuna scommessa)
 LEGAL = ('\n<footer class="legal" role="contentinfo">'
   '<div class="legal-b"><span class="l18">18+</span><b>Gioca responsabile</b><a href="tel:800558822">Telefono Verde 800 558 822</a></div>'
