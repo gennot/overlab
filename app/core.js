@@ -29,7 +29,7 @@ var Core = (function () {
     { id: 'ger.3', name: '3. Liga', grp: 'Germania', pool: ['ger.3'] },
     { id: 'fra.1', name: 'Ligue 1', grp: 'Francia', pool: ['fra.1'] },
     { id: 'fra.2', name: 'Ligue 2', grp: 'Francia', pool: ['fra.2'] },
-    { id: 'fra.3', name: 'National (Francia)', grp: 'Francia', pool: ['fra.3'] },
+    { id: 'fra.3', name: 'Ligue 3 (Francia)', grp: 'Francia', pool: ['fra.3'] },
     { id: 'ned.1', name: 'Eredivisie (Olanda)', grp: 'Olanda', pool: ['ned.1'] },
     { id: 'ned.2', name: 'Eerste Divisie (Olanda)', grp: 'Olanda', pool: ['ned.2'] },
     { id: 'por.1', name: 'Primeira Liga (Portogallo)', grp: 'Portogallo', pool: ['por.1'] },

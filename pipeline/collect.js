@@ -40,7 +40,7 @@ async function api(q) {
   // piano a pagamento (es. Pro: 7.500 al giorno): più richieste per giro e meno attesa, restando sotto il limite giornaliero (8 giri al giorno)
   const lim = +(r.headers.get('x-ratelimit-requests-limit') || 0);
   if (lim >= 1000) paid = true;
-  if (lim >= 1000 && !process.env.API_BASE && GAP > 300) { GAP = 300; MAX_CALLS = Math.max(MAX_CALLS, Math.floor(lim / 8) - 110); RESERVE = Math.max(RESERVE, 350);   // restano richieste per i risultati live note('piano con ' + lim + ' richieste al giorno: fino a ' + MAX_CALLS + ' per giro'); }
+  if (lim >= 1000 && !process.env.API_BASE && GAP > 300) { GAP = 300; MAX_CALLS = Math.max(MAX_CALLS, Math.floor(lim / 8) - 110); RESERVE = Math.max(RESERVE, 350); /* restano richieste per i risultati live */ note('piano con ' + lim + ' richieste al giorno: fino a ' + MAX_CALLS + ' per giro'); }
   const err = j && j.errors && (Array.isArray(j.errors) ? j.errors.length : Object.keys(j.errors).length) ? j.errors : null;
   if (err) {
     const t = JSON.stringify(err); note('API: ' + q + ' -> ' + t);

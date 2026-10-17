@@ -44,7 +44,7 @@ module.exports = [
   { lg: 'esp.3', country: 'Spain', name: '^Primera (División )?(RFEF|Federación)( - .*)?$', type: 'eu' },
   { lg: 'esp.4', country: 'Spain', name: '^Segunda (División )?(RFEF|Federación)( - .*)?$', type: 'eu' },
   { lg: 'ger.3', country: 'Germany', name: '^3\\. Liga$', type: 'eu' },
-  { lg: 'fra.3', country: 'France', name: '^National( 1)?$', type: 'eu' },
+  { lg: 'fra.3', country: 'France', name: '^(National( 1)?|Ligue 3)$', type: 'eu' },
   { lg: 'ned.2', country: 'Netherlands', name: '^Eerste Divisie$', type: 'eu' },
   { lg: 'por.2', country: 'Portugal', name: '^(Segunda Liga|Liga Portugal 2)$', type: 'eu' },
   { lg: 'bel.2', country: 'Belgium', name: '^(Challenger Pro League|First Division B)$', type: 'eu' },
