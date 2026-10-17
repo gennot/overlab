@@ -436,7 +436,8 @@
   var UO_OK = { fo: 1, yc: 1 };   // under mostrati solo per falli e cartellini
   function teamsHtml() {
     var ob = obOn(), of = ob ? Core.offers(S.m, S.tf, S.pf) : null, h = obBar() + resCard(of), missing = [];
-    if (!Core.shotsOk(S.m.lg)) h += '<div class="note">In questo campionato tiri e tiri in porta non si possono giocare: li ho tolti. Restano risultato, gol, corner, falli e cartellini.</div>';
+    if (gonly()) h += '<div class="note">Per questo campionato ci sono solo i risultati delle partite, senza tiri, corner, falli e cartellini: restano esito e gol.</div>';
+    else if (!Core.shotsOk(S.m.lg)) h += '<div class="note">In questo campionato tiri e tiri in porta non si possono giocare: li ho tolti. Restano risultato, gol, corner, falli e cartellini.</div>';
     Model.STATS.forEach(function (s) {
       if (!Core.statOk(S.m.lg, s)) return;
       var st = S.tf.stats[s], body = '';
@@ -458,8 +459,11 @@
     return h + '<p class="foot">Tocca una riga per la spiegazione.' + (ob ? ' Sotto ogni percentuale c\'è la quota; il bordo giallo segna quelle che pagano più della quota minima.' : '') + '</p>';
   }
 
+  function gonly() { var c = S.m && Core.comp(S.m.lg); return !!(c && c.gonly); }
+  function noPlayers() { return !!(S.pd && !S.pd.loaded); }
   function playersHtml() {
     if (S.perr) return '<div class="note err">' + esc(S.perr) + '</div>';
+    if (noPlayers()) return '<div class="note">Per questa competizione non ci sono ancora i dati dei singoli giocatori: restano i pronostici di squadra.</div>';
     if (!S.pf) return '<div class="note">Carico i dati dei giocatori dalle ultime partite… <div class="bar"><i id="prog" style="width:' + (S.prog ? Math.round(100 * S.prog[0] / S.prog[1]) : 3) + '%"></i></div></div>' + skel(6);
     var PS = Core.PST.filter(function (x) { return Core.statOk(S.m.lg, x); }).concat(['yc', 'gl']), EXT = S.pst === 'yc' || S.pst === 'gl';
     if (PS.indexOf(S.pst) < 0) S.pst = PS[0];
@@ -546,7 +550,7 @@
   function pitchHtml() {
     var m = S.m, head = function (src) { return '<div class="lu-h"><div class="lu-t home"><b><i></i>' + esc(tn(m.h)) + '</b><small>' + (src ? form(m.h) : '') + '</small></div><div class="lu-t away"><b>' + esc(tn(m.a)) + '<i></i></b><small>' + (src ? form(m.a) : '') + '</small></div></div>' + (src ? '<div class="lu-srcw"><span class="lu-src' + (src === 'ufficiale' ? ' off' : '') + '">' + (src === 'ufficiale' ? 'Ufficiali' : 'Probabili') + '</span></div>' : ''); };
     var form = function (t) { var r = xiRows(t); return [r.D.length, r.M.length, r.F.length].filter(function (x) { return x; }).join('-'); };
-    if (S.perr) return '';
+    if (S.perr || noPlayers()) return '';
     if (!S.pf || !S.pd) return '<section class="lu"><div class="lu-h"><div class="lu-t home"><b><i></i>' + esc(tn(m.h)) + '</b></div><div class="lu-t away"><b>' + esc(tn(m.a)) + '<i></i></b></div></div><div class="note">Carico le formazioni… <div class="bar"><i id="prog" style="width:' + (S.prog ? Math.round(100 * S.prog[0] / S.prog[1]) : 3) + '%"></i></div></div></section>';
     var sot = Core.shotsOk(m.lg), rev = !!S.rev[m.id], mark = rev ? standouts(m).mark : {};
     var Y = { H: { G: 7, D: 18, M: 29, M2: 37, F: 40.5 }, A: { G: 93, D: 82, M: 71, M2: 63, F: 59.5 } }, nodes = '';
@@ -881,8 +885,8 @@
       rowv('Gol fatti (media)', H.avgF.g, A.avgF.g, 1) + rowv('Gol subiti (media)', H.avgA.g, A.avgA.g, -1) +
       row('Over 2,5', H.over25 + '/' + H.n10, A.over25 + '/' + A.n10, 0) + row('Segnano entrambe', H.btts + '/' + H.n10, A.btts + '/' + A.n10, 0) +
       row('Porta inviolata', H.cs + '/' + H.n10, A.cs + '/' + A.n10, 0) +
-      rowv('Tiri (media)', H.avgF.sh, A.avgF.sh, 1) + rowv('Tiri in porta (media)', H.avgF.sot, A.avgF.sot, 1) + rowv('Tiri in porta concessi', H.avgA.sot, A.avgA.sot, -1) +
-      rowv('Corner (media)', H.avgF.co, A.avgF.co, 1) + rowv('Corner concessi', H.avgA.co, A.avgA.co, -1) + rowv('Falli (media)', H.avgF.fo, A.avgF.fo, 0) + rowv('Gialli (media)', H.avgF.yc, A.avgF.yc, 0) +
+      (gonly() ? '' : rowv('Tiri (media)', H.avgF.sh, A.avgF.sh, 1) + rowv('Tiri in porta (media)', H.avgF.sot, A.avgF.sot, 1) + rowv('Tiri in porta concessi', H.avgA.sot, A.avgA.sot, -1) +
+      rowv('Corner (media)', H.avgF.co, A.avgF.co, 1) + rowv('Corner concessi', H.avgA.co, A.avgA.co, -1) + rowv('Falli (media)', H.avgF.fo, A.avgF.fo, 0) + rowv('Gialli (media)', H.avgF.yc, A.avgF.yc, 0)) +
       '</tbody></table></div><p class="foot">Forma e ultime partite dalla più recente. Medie sulle ultime ' + Math.max(H.n10, A.n10) + ' partite della competizione. In verde la squadra messa meglio.</p></section>';
     h += radarHtml() + formChart(H, A);
     // ultime partite
@@ -893,7 +897,7 @@
     // numeri attesi
     var R = a.res, bar = function (lab, p, cl) { return '<div class="pb"><span>' + lab + '</span><div class="pb-t"><i class="' + cl + '" style="width:' + Math.round(p * 100) + '%"></i></div><b>' + pct(p) + '</b></div>'; };
     if (R) h += '<section class="an"><h2 class="an-h">' + ic('target') + 'Cosa dicono i numeri</h2>' + bar('1 ' + esc(T[S.m.h] ? T[S.m.h].s : ''), R.h, 'g1') + bar('X', R.d, 'g2') + bar('2 ' + esc(T[S.m.a] ? T[S.m.a].s : ''), R.a, 'g3') + bar('Over 2,5', R.over[2], 'g1') + bar('Goal', R.gg, 'g2') +
-      '<div class="xg"><div><small>Gol attesi</small><b>' + f1(a.exp.gH) + ' - ' + f1(a.exp.gA) + '</b></div><div><small>Risultato più probabile</small><b>' + R.scores[0][0] + '-' + R.scores[0][1] + '</b></div><div><small>Corner attesi</small><b>' + f1(a.exp.co[2]) + '</b></div></div>' +
+      '<div class="xg"><div><small>Gol attesi</small><b>' + f1(a.exp.gH) + ' - ' + f1(a.exp.gA) + '</b></div><div><small>Risultato più probabile</small><b>' + R.scores[0][0] + '-' + R.scores[0][1] + '</b></div>' + (gonly() ? '' : '<div><small>Corner attesi</small><b>' + f1(a.exp.co[2]) + '</b></div>') + '</div>' +
       '<p class="foot">' + (a.exp.src === 'quote' ? 'Risultato e gol: stima che combina modello e quote del bookmaker, che nei test sono state la previsione migliore.' : 'Stima del modello.') + '</p></section>';
     // giocate suggerite
     var ob = obOn(), list = (ob ? Core.occasions(S.m, S.tf, S.pf) : []).slice(0, 3); if (list.length < 3) list = list.concat(Core.picks(S.m, S.tf, S.pf, ob).filter(function (p) { return list.indexOf(p) < 0; }).slice(0, 3 - list.length));
@@ -902,7 +906,7 @@
   }
   // radar: le due squadre rispetto alla media del campionato (1 = nella media), per questa partita
   function radarHtml() {
-    var cd = S.cd, tf = S.tf, r = tf.res, G = cd.fit && cd.fit.g, st = tf.stats; if (!r || !G || !st || !st.co) return '';
+    var cd = S.cd, tf = S.tf, r = tf.res, G = cd.fit && cd.fit.g, st = tf.stats; if (!r || !G || !st || !st.co || gonly()) return '';
     var v = function (side) { var H = side === 'H', mu = function (s) { return H ? st[s].muH : st[s].muA; };
       return [H ? r.lh / G.muH : r.la / G.muA, H ? G.muA / Math.max(0.2, r.la) : G.muH / Math.max(0.2, r.lh), tf.pr[side].sh / mu('sh'), tf.pr[side].co / mu('co'), tf.pr[side].fo / mu('fo'), tf.pr[side].yc / mu('yc')]; };
     var L = ['Attacco', 'Difesa', 'Tiri', 'Corner', 'Falli', 'Gialli'], N = L.length, cx = 150, cy = 128, R = 92;

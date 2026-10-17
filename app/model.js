@@ -138,8 +138,9 @@ var Model = (function () {
     STATS.forEach(function (s) { out.T[s] = out.H[s] + out.A[s]; });
     if (fit.g) {
       var gm = par.gMix;
-      out.H.g = gm * lam(fit.g, home, away, true, par) + (1 - gm) * out.H.sot * fit.conv;
-      out.A.g = gm * lam(fit.g, away, home, false, par) + (1 - gm) * out.A.sot * fit.conv;
+      // gMix 1 (campionati con i soli risultati): i gol attesi vengono solo dai gol, i tiri in porta non ci sono
+      out.H.g = gm * lam(fit.g, home, away, true, par) + (gm < 1 ? (1 - gm) * out.H.sot * fit.conv : 0);
+      out.A.g = gm * lam(fit.g, away, home, false, par) + (gm < 1 ? (1 - gm) * out.A.sot * fit.conv : 0);
       out.T.g = out.H.g + out.A.g;
       // il divario tra le due squadre viene allargato (nel test i favoriti vincevano più spesso del previsto); il totale gol resta uguale
       if (par.gStretch && out.H.g > 0 && out.A.g > 0) { var rho = Math.pow(out.H.g / out.A.g, par.gStretch); out.H.g = out.T.g * rho / (1 + rho); out.A.g = out.T.g / (1 + rho); }

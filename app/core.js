@@ -910,7 +910,7 @@ var Core = (function () {
       var gT = lh + la, gw = gT >= 3.1 ? 'una partita da gol' : gT <= 2.2 ? 'una partita bloccata, con pochi gol' : 'una partita con un numero di gol nella media';
       P.push('Secondo ' + (src === 'quote' ? 'modello e quote' : 'il modello') + ' ' + fav + ': 1 ' + al(R.h) + ', X ' + al(R.d) + ', 2 ' + al(R.a) + '. Gol attesi ' + f1x(lh) + ' - ' + f1x(la) + ', quindi ' + gw + ' (over 2,5 ' + al(R.over[2]) + ', goal ' + al(R.gg) + '). Risultati più probabili: ' + R.scores.map(function (s) { return s[0] + '-' + s[1] + ' (' + pc(s[2]) + ')'; }).join(', ') + '.');
     }
-    P.push('Numeri attesi: ' + (shotsOk(m.lg) ? 'tiri ' + f1x(exp.sh[0]) + ' - ' + f1x(exp.sh[1]) + ', tiri in porta ' + f1x(exp.sot[0]) + ' - ' + f1x(exp.sot[1]) + ', ' : '') + 'corner ' + f1x(exp.co[0]) + ' - ' + f1x(exp.co[1]) + ' (totale ' + f1x(exp.co[2]) + '), falli ' + f1x(exp.fo[0]) + ' - ' + f1x(exp.fo[1]) + ', gialli ' + f1x(exp.yc[0]) + ' - ' + f1x(exp.yc[1]) + '.');
+    if (!(comp(m.lg) || {}).gonly) P.push('Numeri attesi: ' + (shotsOk(m.lg) ? 'tiri ' + f1x(exp.sh[0]) + ' - ' + f1x(exp.sh[1]) + ', tiri in porta ' + f1x(exp.sot[0]) + ' - ' + f1x(exp.sot[1]) + ', ' : '') + 'corner ' + f1x(exp.co[0]) + ' - ' + f1x(exp.co[1]) + ' (totale ' + f1x(exp.co[2]) + '), falli ' + f1x(exp.fo[0]) + ' - ' + f1x(exp.fo[1]) + ', gialli ' + f1x(exp.yc[0]) + ' - ' + f1x(exp.yc[1]) + '.');
     P.push(h2h.length ? 'Precedenti recenti: ' + h2h.map(function (x) { return tn(x.h) + ' - ' + tn(x.a) + ' ' + x.sc[0] + '-' + x.sc[1]; }).join('; ') + '.' : 'Nessun precedente tra le due squadre negli ultimi due anni di dati.');
     return { H: H, A: A, h2h: h2h, exp: exp, res: R, text: P };
   }
