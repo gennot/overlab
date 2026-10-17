@@ -5,10 +5,12 @@ var Core = (function () {
   /* Coppe europee: le squadre arrivano da campionati diversi, quindi la forza si stima insieme su coppe, preliminari
      e tutti i campionati dell'app (test su 1.952 partite di coppa: gol stimati meglio del 50% rispetto alle sole coppe) */
   var CUP_L = ['uefa.champions', 'uefa.europa', 'uefa.europa.conf', 'uefa.champions_qual', 'uefa.europa_qual', 'uefa.europa.conf_qual'];
-  var DOM_L = ['ita.1', 'ita.2', 'eng.1', 'eng.2', 'eng.3', 'eng.4', 'esp.1', 'esp.2', 'ger.1', 'ger.2', 'fra.1', 'fra.2', 'ned.1', 'por.1', 'bel.1', 'tur.1', 'sco.1', 'gre.1', 'aut.1', 'den.1', 'nor.1', 'swe.1', 'bra.1', 'arg.1', 'usa.1'];
+  var DOM_L = ['ita.1', 'ita.2', 'eng.1', 'eng.2', 'eng.3', 'eng.4', 'esp.1', 'esp.2', 'ger.1', 'ger.2', 'fra.1', 'fra.2', 'ned.1', 'por.1', 'bel.1', 'tur.1', 'sco.1', 'gre.1', 'aut.1', 'den.1', 'nor.1', 'swe.1', 'bra.1', 'arg.1', 'usa.1', 'sui.1', 'pol.1', 'cze.1', 'cro.1', 'srb.1', 'rou.1'];
   var COMPS = [
     { id: 'ita.1', name: 'Serie A', grp: 'Italia', pool: ['ita.1'] },
     { id: 'ita.2', name: 'Serie B', grp: 'Italia', pool: ['ita.2'] },
+    { id: 'ita.3', name: 'Serie C', grp: 'Italia', pool: ['ita.3'] },
+    { id: 'ita.4', name: 'Serie D', grp: 'Italia', pool: ['ita.4'] },
     { id: 'uefa.champions', name: 'Champions League', grp: 'Coppe europee', cup: true, str: 1.8, pool: CUP_L, xpool: DOM_L },
     { id: 'uefa.europa', name: 'Europa League', grp: 'Coppe europee', cup: true, str: 1.8, pool: CUP_L, xpool: DOM_L },
     { id: 'uefa.europa.conf', name: 'Conference League', grp: 'Coppe europee', cup: true, str: 1.2, pool: CUP_L, xpool: DOM_L },
@@ -16,25 +18,50 @@ var Core = (function () {
     { id: 'eng.2', name: 'Championship', grp: 'Inghilterra', pool: ['eng.2'] },
     { id: 'eng.3', name: 'League One', grp: 'Inghilterra', pool: ['eng.3'] },
     { id: 'eng.4', name: 'League Two', grp: 'Inghilterra', pool: ['eng.4'] },
+    { id: 'eng.5', name: 'National League', grp: 'Inghilterra', pool: ['eng.5'] },
+    { id: 'eng.6', name: 'National League Nord e Sud', grp: 'Inghilterra', pool: ['eng.6'] },
     { id: 'esp.1', name: 'LaLiga', grp: 'Spagna', pool: ['esp.1'] },
     { id: 'esp.2', name: 'LaLiga 2', grp: 'Spagna', pool: ['esp.2'] },
+    { id: 'esp.3', name: 'Primera Federación', grp: 'Spagna', pool: ['esp.3'] },
+    { id: 'esp.4', name: 'Segunda Federación', grp: 'Spagna', pool: ['esp.4'] },
     { id: 'ger.1', name: 'Bundesliga', grp: 'Germania', pool: ['ger.1'] },
     { id: 'ger.2', name: '2. Bundesliga', grp: 'Germania', pool: ['ger.2'] },
+    { id: 'ger.3', name: '3. Liga', grp: 'Germania', pool: ['ger.3'] },
     { id: 'fra.1', name: 'Ligue 1', grp: 'Francia', pool: ['fra.1'] },
     { id: 'fra.2', name: 'Ligue 2', grp: 'Francia', pool: ['fra.2'] },
-    { id: 'ned.1', name: 'Eredivisie (Olanda)', grp: 'Altri campionati europei', pool: ['ned.1'] },
-    { id: 'por.1', name: 'Primeira Liga (Portogallo)', grp: 'Altri campionati europei', pool: ['por.1'] },
-    { id: 'bel.1', name: 'Pro League (Belgio)', grp: 'Altri campionati europei', pool: ['bel.1'] },
-    { id: 'tur.1', name: 'Süper Lig (Turchia)', grp: 'Altri campionati europei', pool: ['tur.1'] },
-    { id: 'sco.1', name: 'Premiership (Scozia)', grp: 'Altri campionati europei', pool: ['sco.1'] },
-    { id: 'gre.1', name: 'Super League (Grecia)', grp: 'Altri campionati europei', pool: ['gre.1'] },
-    { id: 'aut.1', name: 'Bundesliga (Austria)', grp: 'Altri campionati europei', pool: ['aut.1'] },
-    { id: 'den.1', name: 'Superliga (Danimarca)', grp: 'Altri campionati europei', pool: ['den.1'] },
-    { id: 'nor.1', name: 'Eliteserien (Norvegia)', grp: 'Altri campionati europei', pool: ['nor.1'] },
-    { id: 'swe.1', name: 'Allsvenskan (Svezia)', grp: 'Altri campionati europei', pool: ['swe.1'] },
-    { id: 'bra.1', name: 'Brasileirão (Brasile)', grp: 'Americhe', pool: ['bra.1'] },
-    { id: 'arg.1', name: 'Liga Profesional (Argentina)', grp: 'Americhe', pool: ['arg.1'] },
-    { id: 'usa.1', name: 'MLS (Stati Uniti)', grp: 'Americhe', pool: ['usa.1'] },
+    { id: 'fra.3', name: 'National (Francia)', grp: 'Francia', pool: ['fra.3'] },
+    { id: 'ned.1', name: 'Eredivisie (Olanda)', grp: 'Olanda', pool: ['ned.1'] },
+    { id: 'ned.2', name: 'Eerste Divisie (Olanda)', grp: 'Olanda', pool: ['ned.2'] },
+    { id: 'por.1', name: 'Primeira Liga (Portogallo)', grp: 'Portogallo', pool: ['por.1'] },
+    { id: 'por.2', name: 'Liga Portugal 2', grp: 'Portogallo', pool: ['por.2'] },
+    { id: 'bel.1', name: 'Pro League (Belgio)', grp: 'Belgio', pool: ['bel.1'] },
+    { id: 'bel.2', name: 'Challenger Pro League (Belgio)', grp: 'Belgio', pool: ['bel.2'] },
+    { id: 'tur.1', name: 'Süper Lig (Turchia)', grp: 'Turchia', pool: ['tur.1'] },
+    { id: 'tur.2', name: '1. Lig (Turchia)', grp: 'Turchia', pool: ['tur.2'] },
+    { id: 'sco.1', name: 'Premiership (Scozia)', grp: 'Scozia', pool: ['sco.1'] },
+    { id: 'sco.2', name: 'Championship (Scozia)', grp: 'Scozia', pool: ['sco.2'] },
+    { id: 'sui.1', name: 'Super League (Svizzera)', grp: 'Svizzera', pool: ['sui.1'] },
+    { id: 'sui.2', name: 'Challenge League (Svizzera)', grp: 'Svizzera', pool: ['sui.2'] },
+    { id: 'aut.1', name: 'Bundesliga (Austria)', grp: 'Austria', pool: ['aut.1'] },
+    { id: 'aut.2', name: '2. Liga (Austria)', grp: 'Austria', pool: ['aut.2'] },
+    { id: 'gre.1', name: 'Super League (Grecia)', grp: 'Grecia', pool: ['gre.1'] },
+    { id: 'den.1', name: 'Superliga (Danimarca)', grp: 'Danimarca', pool: ['den.1'] },
+    { id: 'den.2', name: '1. Division (Danimarca)', grp: 'Danimarca', pool: ['den.2'] },
+    { id: 'nor.1', name: 'Eliteserien (Norvegia)', grp: 'Norvegia', pool: ['nor.1'] },
+    { id: 'nor.2', name: 'OBOS-ligaen (Norvegia)', grp: 'Norvegia', pool: ['nor.2'] },
+    { id: 'swe.1', name: 'Allsvenskan (Svezia)', grp: 'Svezia', pool: ['swe.1'] },
+    { id: 'swe.2', name: 'Superettan (Svezia)', grp: 'Svezia', pool: ['swe.2'] },
+    { id: 'pol.1', name: 'Ekstraklasa (Polonia)', grp: 'Polonia', pool: ['pol.1'] },
+    { id: 'cze.1', name: 'Chance Liga (Rep. Ceca)', grp: 'Rep. Ceca', pool: ['cze.1'] },
+    { id: 'cro.1', name: 'HNL (Croazia)', grp: 'Croazia', pool: ['cro.1'] },
+    { id: 'srb.1', name: 'Super liga (Serbia)', grp: 'Serbia', pool: ['srb.1'] },
+    { id: 'rou.1', name: 'SuperLiga (Romania)', grp: 'Romania', pool: ['rou.1'] },
+    { id: 'bra.1', name: 'Brasileirão (Brasile)', grp: 'Brasile', pool: ['bra.1'] },
+    { id: 'bra.2', name: 'Série B (Brasile)', grp: 'Brasile', pool: ['bra.2'] },
+    { id: 'arg.1', name: 'Liga Profesional (Argentina)', grp: 'Argentina', pool: ['arg.1'] },
+    { id: 'arg.2', name: 'Primera Nacional (Argentina)', grp: 'Argentina', pool: ['arg.2'] },
+    { id: 'usa.1', name: 'MLS (Stati Uniti)', grp: 'Stati Uniti', pool: ['usa.1'] },
+    { id: 'usa.2', name: 'USL Championship (Stati Uniti)', grp: 'Stati Uniti', pool: ['usa.2'] },
     { id: 'uefa.nations', name: 'Nations League', grp: 'Nazionali', nat: true, pool: ['uefa.nations', 'fifa.worldq.uefa', 'fifa.world', 'fifa.friendly'] }
   ];
   var STAT_IT = { sh: 'Tiri', sot: 'Tiri in porta', co: 'Corner', fo: 'Falli commessi', yc: 'Cartellini gialli' };
@@ -142,14 +169,21 @@ var Core = (function () {
       jobs.push(lg === id ? cur : cur.catch(function () { return []; }));   // tornei del gruppo senza dati (es. preliminari) non bloccano la competizione
     });
     return Promise.all(jobs).then(function (res) {
-      var seen = {}, played = [], all = [];
-      res.forEach(function (ms) { ms.forEach(function (m) { if (seen[m.id]) return; seen[m.id] = 1; all.push(m); if (m.done && m.H && m.A && statsOk(m)) { if (m.H.g == null && m.sc && isFinite(m.sc[0]) && isFinite(m.sc[1])) { m.H.g = m.sc[0]; m.A.g = m.sc[1]; } played.push(m); } }); });
+      var seen = {}, played = [], all = [], gOnly = [];
+      res.forEach(function (ms) { ms.forEach(function (m) { if (seen[m.id]) return; seen[m.id] = 1; all.push(m); if (m.done && m.H && m.A && statsOk(m)) { if (m.H.g == null && m.sc && isFinite(m.sc[0]) && isFinite(m.sc[1])) { m.H.g = m.sc[0]; m.A.g = m.sc[1]; } played.push(m); }
+        else if (m.done && m.sc && isFinite(m.sc[0]) && isFinite(m.sc[1]) && m.lg === id) gOnly.push(m); }); });
+      // serie minori senza statistiche (tiri, corner, falli): si usano i soli risultati e si stimano solo esito e gol
+      var z = { sh: 0, sot: 0, co: 0, fo: 0, yc: 0 };
+      c.gonly = !c.cup && !c.nat && gOnly.length >= 20 && played.filter(function (m) { return m.lg === id; }).length < 0.3 * (gOnly.length + played.length);
+      if (c.gonly) played = played.concat(gOnly.map(function (m) { return { id: m.id, d: m.d, lg: m.lg, h: m.h, a: m.a, done: true, st: m.st, nm: m.nm, sc: m.sc, H: Object.assign({ g: m.sc[0] }, z), A: Object.assign({ g: m.sc[1] }, z) }; }));
       played.sort(function (a, b) { return a.d - b.d; });
       var par = Model.PAR;
       // coppe: in Champions ed Europa League i favoriti vincono più spesso che in campionato (divario gol più largo, tarato
       // su metà delle partite e confermato sull'altra metà), in Conference no; tiri, corner e falli variano di più
       if (c.cup) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gStretch = c.str || 1.5; par.r = { sh: 12, sot: 16, co: 8, fo: 90, yc: 1e9 }; par.rTot = { sh: 60, sot: 60, co: 30, fo: 90, yc: 22 }; }
+      if (c.gonly) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gMix = 1; }   // senza tiri in porta i gol attesi vengono solo dai gol
       if (c.nat) { par = JSON.parse(JSON.stringify(Model.PAR)); Model.STATS.forEach(function (s) { par.half[s] = 540; par.k[s] = Math.max(par.k[s], 6); }); par.half.g = 700; par.k.g = 6; par.newTeam = { att: 1, def: 1 }; }
+      if (!played.length) throw new Error('Partita senza dati: lo storico di questa competizione è in arrivo, riprova tra qualche ora.');
       var now = Date.now(), fit = Model.fitAll(played, now, par);
       return (compCache[id] = { t: Date.now(), comp: c, played: played, all: all, fit: fit, par: par });
     });
@@ -418,7 +452,7 @@ var Core = (function () {
   // tiri e tiri in porta si giocano solo nei campionati maggiori (Francia esclusa) e con le nazionali: altrove non si propongono
   var SHOTS_OK = { 'ita.1': 1, 'eng.1': 1, 'esp.1': 1, 'ger.1': 1, 'uefa.nations': 1, 'uefa.champions': 1, 'uefa.europa': 1 };
   function shotsOk(lg) { return !!SHOTS_OK[lg]; }
-  function statOk(lg, s) { return (s !== 'sot' && s !== 'sh') || shotsOk(lg); }   // mercati giocatore in cui il bookmaker conta anche il sostituto
+  function statOk(lg, s) { var c = comp(lg); if (c && c.gonly) return false; return (s !== 'sot' && s !== 'sh') || shotsOk(lg); }   // gonly: campionato con i soli risultati   // mercati giocatore in cui il bookmaker conta anche il sostituto
   // tutte le giocate che il bookmaker offre davvero per la partita, con la probabilità stimata dal modello
   /* Quando c'è la quota, la stima finale è una media tra il modello e la probabilità che la quota stessa indica
      (tolta la commissione): i bookmaker sanno cose che il modello non sa (formazioni, infortuni, notizie). */

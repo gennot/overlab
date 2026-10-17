@@ -1,6 +1,8 @@
 // Campionati dell'app -> codici API-Football.
 // type: 'eu' = stagione a cavallo d'anno (2026 = 2026/27), 'cal' = stagione nell'anno solare, 'int' = nazionali
 // L'ordine conta: lo storico si scarica prima per i primi della lista.
+// Senza id (serie minori e altre nazioni): collect.js cerca il codice per nazione e nome (espressione regolare), una volta a settimana;
+// se il nome corrisponde a più campionati (gironi) li prende tutti.
 module.exports = [
   { lg: 'ita.1', id: 135, type: 'eu' },
   { lg: 'eng.1', id: 39, type: 'eu' },
@@ -33,5 +35,34 @@ module.exports = [
   { lg: 'arg.1', id: 128, type: 'cal' },
   { lg: 'usa.1', id: 253, type: 'cal' },
   { lg: 'fifa.friendly', id: 10, type: 'int' },
-  { lg: 'fifa.world', id: 1, type: 'int' }
+  { lg: 'fifa.world', id: 1, type: 'int' },
+  // serie minori
+  { lg: 'ita.3', country: 'Italy', name: '^Serie C( - .*)?$', type: 'eu' },
+  { lg: 'ita.4', country: 'Italy', name: '^Serie D( - .*)?$', type: 'eu' },
+  { lg: 'eng.5', country: 'England', name: '^National League$', type: 'eu' },
+  { lg: 'eng.6', country: 'England', name: '^National League - (North|South)$', type: 'eu' },
+  { lg: 'esp.3', country: 'Spain', name: '^Primera (División )?(RFEF|Federación)( - .*)?$', type: 'eu' },
+  { lg: 'esp.4', country: 'Spain', name: '^Segunda (División )?(RFEF|Federación)( - .*)?$', type: 'eu' },
+  { lg: 'ger.3', country: 'Germany', name: '^3\\. Liga$', type: 'eu' },
+  { lg: 'fra.3', country: 'France', name: '^National( 1)?$', type: 'eu' },
+  { lg: 'ned.2', country: 'Netherlands', name: '^Eerste Divisie$', type: 'eu' },
+  { lg: 'por.2', country: 'Portugal', name: '^(Segunda Liga|Liga Portugal 2)$', type: 'eu' },
+  { lg: 'bel.2', country: 'Belgium', name: '^(Challenger Pro League|First Division B)$', type: 'eu' },
+  { lg: 'tur.2', country: 'Turkey', name: '^1\\. Lig$', type: 'eu' },
+  { lg: 'sco.2', country: 'Scotland', name: '^Championship$', type: 'eu' },
+  { lg: 'aut.2', country: 'Austria', name: '^2\\. Liga$', type: 'eu' },
+  { lg: 'den.2', country: 'Denmark', name: '^1\\. Division$', type: 'eu' },
+  { lg: 'nor.2', country: 'Norway', name: '^(1\\. Division|OBOS-ligaen)$', type: 'cal' },
+  { lg: 'swe.2', country: 'Sweden', name: '^Superettan$', type: 'cal' },
+  { lg: 'bra.2', country: 'Brazil', name: '^Serie B$', type: 'cal' },
+  { lg: 'arg.2', country: 'Argentina', name: '^Primera Nacional$', type: 'cal' },
+  { lg: 'usa.2', country: 'USA', name: '^USL Championship$', type: 'cal' },
+  // altre nazioni (servono anche alle coppe europee)
+  { lg: 'sui.1', country: 'Switzerland', name: '^Super League$', type: 'eu' },
+  { lg: 'sui.2', country: 'Switzerland', name: '^Challenge League$', type: 'eu' },
+  { lg: 'pol.1', country: 'Poland', name: '^Ekstraklasa$', type: 'eu' },
+  { lg: 'cze.1', country: 'Czech-Republic', name: '^(Czech Liga|1\\. Liga|Chance Liga|Fortuna Liga)$', type: 'eu' },
+  { lg: 'cro.1', country: 'Croatia', name: '^(HNL|Prva HNL|SuperSport HNL)$', type: 'eu' },
+  { lg: 'srb.1', country: 'Serbia', name: '^Super Liga$', type: 'eu' },
+  { lg: 'rou.1', country: 'Romania', name: '^(Liga I|SuperLiga)$', type: 'eu' }
 ];

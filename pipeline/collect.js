@@ -12,7 +12,8 @@ const RESERVE = +process.env.RESERVE || 4;
 let GAP = process.env.API_BASE ? 0 : 6500;              // 10 richieste al minuto sul piano gratis; col piano a pagamento si accelera da solo
 const ROOT = path.join(__dirname, '..', 'store');
 const DAY = 864e5;
-const BYID = {}; LEAGUES.forEach(l => { BYID[l.id] = l; });
+const BYID = {}; LEAGUES.forEach(l => { if (l.id) BYID[l.id] = l; });
+const ACTIVE = LEAGUES.filter(l => l.id);                // campionati con codice API (quelli cercati per nome si aggiungono all'avvio)
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const readJ = (f, d) => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8')); } catch (e) { return d; } };
@@ -110,6 +111,20 @@ async function byIds(ids) {
 (async function main() {
   if (!KEY && !process.env.API_BASE) { console.log('Manca la chiave APISPORTS_KEY: niente da scaricare.'); return; }
   const now = Date.now(), today = ymd(now);
+  // 0) campionati senza codice (serie minori, altre nazioni): il codice si cerca per nazione e nome, una volta a settimana
+  state.lids = state.lids || {};
+  const fresh = l => { const x = state.lids[l.lg]; return x && x.ids && x.ids.length && now - Date.parse(x.d) < 7 * DAY; };
+  for (const c of [...new Set(LEAGUES.filter(l => !l.id && !fresh(l)).map(l => l.country))]) {
+    const r = await api('/leagues?country=' + encodeURIComponent(c)); if (!r || r.err) continue;
+    const lgs = r.res.filter(x => x.league && x.league.type === 'League');
+    LEAGUES.filter(l => !l.id && l.country === c).forEach(l => {
+      const re = new RegExp(l.name, 'i'), hit = lgs.filter(x => re.test(x.league.name));
+      state.lids[l.lg] = { d: today, ids: hit.map(x => x.league.id), names: hit.map(x => x.league.name) };
+      if (!hit.length) state.lids[l.lg].tutti = lgs.map(x => x.league.id + ' ' + x.league.name).slice(0, 60);
+      note('campionato ' + l.lg + ': ' + (hit.length ? hit.map(x => x.league.id + ' ' + x.league.name).join(', ') : 'non trovato'));
+    });
+  }
+  LEAGUES.filter(l => !l.id).forEach(l => ((state.lids[l.lg] || {}).ids || []).forEach(id => { const e = Object.assign({}, l, { id: id, found: true }); ACTIVE.push(e); BYID[id] = e; }));
   // 1) calendario: una volta al giorno i prossimi 7 giorni, a ogni giro ieri/oggi/domani
   const full = state.calFull !== today, days = full ? [-1, 0, 1, 2, 3, 4, 5, 6, 7] : [-1, 0, 1];
   for (const k of days) { const r = await api('/fixtures?date=' + ymd(now + k * DAY) + '&timezone=Europe/Rome'); if (r && r.res) r.res.forEach(base); }
@@ -137,10 +152,10 @@ async function byIds(ids) {
   if (Object.keys(daysOk).length) note('assenti (squalificati e infortunati) nelle prossime partite: ' + nMiss);
   await byIds(need().filter(m => m.d > now - 10 * DAY).map(m => m.id));
   // 4) storico: elenco partite per stagione, poi i dettagli un po' alla volta
-  for (const l of LEAGUES) {
+  for (const l of ACTIVE) {
     if (stop) break;
     for (const s of seasonsOf(l, now)) {
-      const k = l.lg + ':' + s, b = state.blocked[k]; if (state.seasons[k] || (b && b.d === ymd(now) && !paid)) continue;   // se il piano non la copriva si riprova il giorno dopo
+      const k = l.found ? l.lg + '#' + l.id + ':' + s : l.lg + ':' + s, b = state.blocked[k]; if (state.seasons[k] || (b && b.d === ymd(now) && !paid)) continue;   // se il piano non la copriva si riprova il giorno dopo
       const r = await api('/fixtures?league=' + l.id + '&season=' + s); if (!r) break;
       if (r.err) { if (/season|plan/i.test(r.err)) { state.blocked[k] = { d: ymd(now), e: r.err.slice(0, 200) }; note('stagione non disponibile col piano attuale: ' + k); } continue; }
       r.res.forEach(base); state.seasons[k] = ymd(now); delete state.blocked[k];

@@ -75,21 +75,59 @@
     Core.loadUpcoming(force).then(function (up) { S.up = up; S.loading = false; render(); },
       function () { S.loading = false; S.err = 'Non riesco a leggere le partite. Controlla la connessione e riprova.'; render(); });
   }
+  /* Bandiere tonde per la barra delle nazioni: semplici forme SVG, nessuna immagine esterna */
+  var FLAGS = (function () {
+    var R = function (x, y, w, h, c) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c + '"/>'; };
+    var V = function (a, b, c) { return R(0, 0, 8, 24, a) + R(8, 0, 8, 24, b) + R(16, 0, 8, 24, c); };
+    var H = function (a, b, c) { return R(0, 0, 24, 8, a) + R(0, 8, 24, 8, b) + R(0, 16, 24, 8, c); };
+    var nord = function (bg, cr, x) { return R(0, 0, 24, 24, bg) + R(x, 0, 3.5, 24, cr) + R(0, 10.25, 24, 3.5, cr); };
+    var stars = ''; for (var i = 0; i < 10; i++) { var a = i / 10 * 2 * Math.PI; stars += '<circle cx="' + (12 + 7 * Math.cos(a)).toFixed(2) + '" cy="' + (12 + 7 * Math.sin(a)).toFixed(2) + '" r="1.2" fill="#ffcc00"/>'; }
+    return {
+      'Italia': V('#009246', '#fff', '#ce2b37'), 'Francia': V('#0055a4', '#fff', '#ef4135'), 'Belgio': V('#111', '#fdda24', '#ef3340'), 'Romania': V('#002b7f', '#fcd116', '#ce1126'),
+      'Germania': H('#111', '#dd0000', '#ffce00'), 'Olanda': H('#ae1c28', '#fff', '#21468b'), 'Austria': H('#ed2939', '#fff', '#ed2939'), 'Serbia': H('#c6363c', '#0c4076', '#fff'),
+      'Croazia': H('#ff0000', '#fff', '#171796') + R(9, 7, 6, 8, '#fff') + R(9, 7, 2, 2, '#ff0000') + R(13, 7, 2, 2, '#ff0000') + R(11, 9, 2, 2, '#ff0000') + R(9, 11, 2, 2, '#ff0000') + R(13, 11, 2, 2, '#ff0000') + R(11, 13, 2, 2, '#ff0000'),
+      'Spagna': R(0, 0, 24, 24, '#aa151b') + R(0, 6, 24, 12, '#f1bf00'),
+      'Inghilterra': R(0, 0, 24, 24, '#fff') + R(10, 0, 4, 24, '#ce1124') + R(0, 10, 24, 4, '#ce1124'),
+      'Scozia': R(0, 0, 24, 24, '#005eb8') + '<path d="M0 0L24 24M24 0L0 24" stroke="#fff" stroke-width="4"/>',
+      'Svizzera': R(0, 0, 24, 24, '#da291c') + R(10, 5, 4, 14, '#fff') + R(5, 10, 14, 4, '#fff'),
+      'Danimarca': nord('#c8102e', '#fff', 7), 'Svezia': nord('#006aa7', '#fecc00', 7),
+      'Norvegia': R(0, 0, 24, 24, '#ba0c2f') + R(6, 0, 6, 24, '#fff') + R(0, 9, 24, 6, '#fff') + R(7.5, 0, 3, 24, '#00205b') + R(0, 10.5, 24, 3, '#00205b'),
+      'Portogallo': R(0, 0, 24, 24, '#ff0000') + R(0, 0, 10, 24, '#006600') + '<circle cx="10" cy="12" r="3.6" fill="#ffcc29"/>',
+      'Turchia': R(0, 0, 24, 24, '#e30a17') + '<circle cx="10" cy="12" r="6" fill="#fff"/><circle cx="11.7" cy="12" r="4.8" fill="#e30a17"/><circle cx="16.6" cy="12" r="1.9" fill="#fff"/>',
+      'Grecia': R(0, 0, 24, 24, '#0d5eaf') + R(0, 2.67, 24, 2.67, '#fff') + R(0, 8, 24, 2.67, '#fff') + R(0, 13.33, 24, 2.67, '#fff') + R(0, 18.67, 24, 2.67, '#fff') + R(0, 0, 11, 11, '#0d5eaf') + R(4.3, 0, 2.4, 11, '#fff') + R(0, 4.3, 11, 2.4, '#fff'),
+      'Polonia': R(0, 0, 24, 12, '#fff') + R(0, 12, 24, 12, '#dc143c'),
+      'Rep. Ceca': R(0, 0, 24, 12, '#fff') + R(0, 12, 24, 12, '#d7141a') + '<path d="M0 0L12 12L0 24Z" fill="#11457e"/>',
+      'Brasile': R(0, 0, 24, 24, '#009c3b') + '<path d="M12 3L22 12L12 21L2 12Z" fill="#ffdf00"/><circle cx="12" cy="12" r="4.4" fill="#002776"/>',
+      'Argentina': H('#74acdf', '#fff', '#74acdf') + '<circle cx="12" cy="12" r="2.3" fill="#f6b40e"/>',
+      'Stati Uniti': R(0, 0, 24, 24, '#fff') + R(0, 0, 24, 3.4, '#b22234') + R(0, 6.9, 24, 3.4, '#b22234') + R(0, 13.7, 24, 3.4, '#b22234') + R(0, 20.6, 24, 3.4, '#b22234') + R(0, 0, 11, 12, '#3c3b6e'),
+      'Coppe europee': R(0, 0, 24, 24, '#003399') + stars,
+      'Nazionali': R(0, 0, 24, 24, '#1565c0') + '<circle cx="12" cy="12" r="7.5" fill="none" stroke="#fff" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="3.4" ry="7.5" fill="none" stroke="#fff" stroke-width="1.2"/><path d="M4.5 12H19.5" stroke="#fff" stroke-width="1.2"/>'
+    };
+  })();
+  function flag(g) { var f = FLAGS[g]; return f ? '<span class="flg" aria-hidden="true"><svg viewBox="0 0 24 24" preserveAspectRatio="none">' + f + '</svg></span>' : ''; }
+  // filtro competizione + nazione
+  function inSel(m) { if (S.comp !== 'all' && m.lg !== S.comp) return false; if (!S.naz) return true; var c = Core.comp(m.lg); return !!c && c.grp === S.naz; }
+  // serie minori: chiuse di partenza nell'elenco di tutte le nazioni (si aprono con un tocco)
+  var MINOR = { 'ita.3': 1, 'ita.4': 1, 'eng.5': 1, 'eng.6': 1, 'esp.3': 1, 'esp.4': 1, 'ger.3': 1, 'fra.3': 1, 'ned.2': 1, 'por.2': 1, 'bel.2': 1, 'tur.2': 1, 'sco.2': 1, 'sui.2': 1, 'aut.2': 1, 'den.2': 1, 'nor.2': 1, 'swe.2': 1, 'bra.2': 1, 'arg.2': 1, 'usa.2': 1 };
+  function isClosed(k, lg) { return S.coll[k] != null ? !!S.coll[k] : !S.naz && S.comp === 'all' && !!MINOR[lg]; }
   function homeHtml() {
     var have = {}; (S.up || []).forEach(function (m) { have[m.lg] = 1; });
-    var cs = SNAP && S.up ? Core.COMPS.filter(function (c) { return have[c.id]; }) : Core.COMPS;
-    var grp = [], seen = {}; cs.forEach(function (c) { if (!seen[c.grp]) { seen[c.grp] = 1; grp.push(c.grp); } });
+    var csAll = SNAP && S.up ? Core.COMPS.filter(function (c) { return have[c.id]; }) : Core.COMPS;
+    var grp = [], seen = {}; csAll.forEach(function (c) { if (!seen[c.grp]) { seen[c.grp] = 1; grp.push(c.grp); } });
+    if (S.naz && !seen[S.naz]) S.naz = '';
+    var cs = S.naz ? csAll.filter(function (c) { return c.grp === S.naz; }) : csAll, grpSel = S.naz ? [S.naz] : grp;
+    var nazHtml = '<div class="nazs" role="group" aria-label="Nazione">' + [''].concat(grp).map(function (g) { return '<button class="naz' + ((S.naz || '') === g ? ' on' : '') + '" data-naz="' + esc(g) + '" aria-pressed="' + ((S.naz || '') === g) + '">' + flag(g) + '<span>' + esc(g ? g.toUpperCase() : 'Tutte') + '</span></button>'; }).join('') + '</div>';
     var VH = { list: ['trophy', 'Partite', 'Tocca una partita per l\'analisi completa'], sure: Core.bookInfo() ? ['target', 'Occasioni', 'Quote da 1,40 in su che secondo il modello pagano bene'] : ['target', 'In evidenza', 'Il pronostico principale di ogni partita'], slip: ['spark', 'Schedina IA', (PLAY ? 'Scegli la probabilità minima: l\'IA compone la schedina' : 'Scegli obiettivo e budget: l\'IA compone la schedina')] }[S.hv] || ['trophy', 'Partite', ''];
     var h = '<div class="vh"><h1>' + ic(VH[0]) + esc(VH[1]) + '</h1><p>' + esc(VH[2]) + '</p></div>';
     if (+window.OVERLAB_EXPIRES) h += '<div class="note">Versione di prova: funziona fino a <b>' + esc(expTxt(true)) + '</b>.</div>';
-    h += dateStrip();
-    var sel = '<label class="psel">' + ic('filter') + '<select id="compsel" aria-label="Competizione"><option value="all"' + (S.comp === 'all' ? ' selected' : '') + '>Tutte le competizioni</option>' + grp.map(function (g) {
+    h += dateStrip() + nazHtml;
+    var sel = '<label class="psel">' + ic('filter') + '<select id="compsel" aria-label="Competizione"><option value="all"' + (S.comp === 'all' ? ' selected' : '') + '>' + (S.naz ? 'Tutte (' + esc(S.naz) + ')' : 'Tutte le competizioni') + '</option>' + grpSel.map(function (g) {
       return '<optgroup label="' + esc(g) + '">' + cs.filter(function (c) { return c.grp === g; }).map(function (c) { return '<option value="' + c.id + '"' + (S.comp === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</optgroup>';
     }).join('') + '</select></label>';
     h += '<div class="pills">' + sel + [['od', 'Oggi e domani'], ['weekend', 'Fino a domenica'], ['tutte', 'Tutte']].map(function (x) { return '<button class="pill' + (S.slip.when === x[0] ? ' on' : '') + '" data-swhen="' + x[0] + '">' + (x[0] === 'tutte' ? '' : ic('clock')) + x[1] + '</button>'; }).concat(S.hv === 'sure' ? ['<button class="pill' + (S.hi70 ? ' on' : '') + '" data-act="hi70" aria-pressed="' + S.hi70 + '">Solo sopra il 70%</button>'] : []).join('') + '</div>';
     if (S.err) return h + '<div class="note err">' + esc(S.err) + ' <button class="btn" data-act="reload">Riprova</button></div>';
     if (!S.up) return h + '<div class="note">Carico le prossime partite…</div>' + skel(5);
-    var list = S.up.filter(function (m) { return S.comp === 'all' || m.lg === S.comp; });
+    var list = S.up.filter(inSel);
     if (!list.length) return h + '<div class="note">Nessuna partita in programma per questa competizione nelle prossime settimane.</div>';
     var DW = winOf(S.slip.when);
     if (S.slip.when !== 'tutte' && S.hv !== 'slip') {
@@ -98,7 +136,7 @@
     }
     if (S.hv === 'sure') return h + sureHtml(list);
     if (S.hv === 'slip') return h + slipHtml(list);
-    var horizon = S.slip.when === 'tutte' ? Date.now() + (S.comp === 'all' ? 4 : 11) * 864e5 : Infinity;
+    var horizon = S.slip.when === 'tutte' ? Date.now() + (S.comp === 'all' && !S.naz ? 4 : 11) * 864e5 : Infinity;
     var shown = list.filter(function (m, i) { return m.d <= horizon || i < 8; });
     h += motdHtml(shown) + favHtml(shown);
     h += '<p class="count">' + shown.length + ' partite</p>';
@@ -110,8 +148,8 @@
       var lgs = [], byLg = {}; byDay[dl].forEach(function (m) { if (!byLg[m.lg]) { byLg[m.lg] = []; lgs.push(m.lg); } byLg[m.lg].push(m); });
       lgs.sort(function (a, b) { return (order[a] || 0) - (order[b] || 0); });
       lgs.forEach(function (lg) {
-        var c = Core.comp(lg), k = dl + '|' + lg, closed = !!S.coll[k];
-        h += '<section class="lgrp' + (closed ? ' closed' : '') + '"><button class="lgh" data-act="coll" data-k="' + esc(k) + '" aria-expanded="' + !closed + '"><b>' + esc(c ? c.name : lg) + '</b><span>' + byLg[lg].length + '</span>' + ic('down') + '</button>';
+        var c = Core.comp(lg), k = dl + '|' + lg, closed = isClosed(k, lg);
+        h += '<section class="lgrp' + (closed ? ' closed' : '') + '"><button class="lgh" data-act="coll" data-k="' + esc(k) + '" aria-expanded="' + !closed + '">' + (c ? flag(c.grp) : '') + '<b>' + esc(c ? c.name : lg) + '</b><span>' + byLg[lg].length + '</span>' + ic('down') + '</button>';
         byLg[lg].forEach(function (m) {
           h += '<button class="mrow" data-nav="m/' + m.lg + '/' + esc(m.id) + '"><span class="tm' + (m.st === 'in' ? ' live' : '') + '">' + (m.st === 'in' ? 'LIVE' : hm(m.d)) + '</span><span class="tn"><span class="row">' + logo(m.h) + '<span>' + esc(tn(m.h)) + '</span></span><span class="row">' + logo(m.a) + '<span>' + esc(tn(m.a)) + '</span></span></span>' + ic('chev') + '</button>';
         });
@@ -127,7 +165,7 @@
     var FAIR = !Core.bookInfo();
     var win = (S.slip.when === 'tutte' ? list.filter(function (m) { return m.d <= list[0].d + 36 * 36e5; }) : list).filter(function (m) { return m.d > Date.now() && (FAIR || Core.bookOf(m)); }).slice(0, 40);
     if (!win.length) return '<div class="note">' + (FAIR ? 'Nessuna partita ancora da giocare in questo periodo.' : 'In questo periodo non ho quote per queste partite.') + ' Scegli un altro giorno qui sopra o un\'altra competizione.</div>';
-    var key = S.comp + ':' + S.slip.when + ':' + win.length + ':' + win[0].id + ':' + (window.OVERLAB_T || 0) + ':' + S.hi70;
+    var key = S.comp + ':' + (S.naz || '') + ':' + S.slip.when + ':' + win.length + ':' + win[0].id + ':' + (window.OVERLAB_T || 0) + ':' + S.hi70;
     if (!S.sure || S.sure.key !== key) {
       var job = S.sure = { key: key, items: null };
       Core.occAcross(win, SNAP, FAIR && S.hi70 ? [1.2, 1.43] : null).then(function (items) { job.items = items; if (S.sure === job && S.hv === 'sure' && cur() === '') rerender(); }, function () { job.items = []; if (S.sure === job) rerender(); });
@@ -169,7 +207,7 @@
     var bi = Core.bookInfo(), FAIR = !bi;
     var ms = list.filter(function (m) { return (FAIR || Core.bookOf(m)) && m.d > Date.now(); });
     if (!ms.length) return '<div class="note">Nessuna partita ancora da giocare tra quelle in programma.</div>';
-    var key = S.comp + ':' + ms.length + ':' + ms[0].id + ':' + (bi ? bi.t : window.OVERLAB_T || 0);
+    var key = S.comp + ':' + (S.naz || '') + ':' + ms.length + ':' + ms[0].id + ':' + (bi ? bi.t : window.OVERLAB_T || 0);
     if (!S.cands || S.cands.key !== key) {
       var job = S.cands = { key: key, items: null };
       Core.slipCandidates(ms, true).then(function (it) { job.items = it; if (S.cands === job && S.hv === 'slip' && cur() === '') rerender(); }, function () { job.items = []; if (S.cands === job) rerender(); });
@@ -241,7 +279,7 @@
   function dayKey(n) { return n === 0 ? 'oggi' : n === 1 ? 'domani' : 'd' + n; }
   function dateStrip() {
     var d = new Date(), cnt = {}, s0 = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-    (S.up || []).forEach(function (m) { if (S.comp !== 'all' && m.lg !== S.comp) return; var n = Math.floor((m.d - s0) / 864e5); if (n >= 0 && n < 7 && m.d > Date.now() - 3 * 36e5) cnt[n] = (cnt[n] || 0) + 1; });
+    (S.up || []).forEach(function (m) { if (!inSel(m)) return; var n = Math.floor((m.d - s0) / 864e5); if (n >= 0 && n < 7 && m.d > Date.now() - 3 * 36e5) cnt[n] = (cnt[n] || 0) + 1; });
     var h = '<div class="dstrip" role="group" aria-label="Giorno">';
     for (var n = 0; n < 7; n++) {
       var dt = new Date(s0 + n * 864e5 + 3 * 36e5), k = dayKey(n);
@@ -852,9 +890,11 @@
     document.body.dataset.view = r.indexOf('m/') === 0 ? 'match' : r === 'info' ? 'info' : 'home';
     if (S.up || S.err || r !== '') hideSplash();
     [].forEach.call(document.querySelectorAll('.bnav button'), function (b) { var on = r === 'info' ? b.dataset.bn === 'info' : b.dataset.hv === S.hv; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    var nz = document.querySelector('.nazs'); if (nz) { nz.scrollLeft = S.nazX || 0; var on = nz.querySelector('.on'); if (on && (on.offsetLeft < nz.scrollLeft || on.offsetLeft + on.offsetWidth > nz.scrollLeft + nz.clientWidth)) nz.scrollLeft = on.offsetLeft - 16; }
     if (render.keep) { window.scrollTo(0, y); render.keep = false; }
   }
   function rerender() { render.keep = true; render(); }
+  document.addEventListener('scroll', function (e) { var t = e.target; if (t && t.classList && t.classList.contains('nazs')) S.nazX = t.scrollLeft; }, true);
   function route() {
     var r = cur(), p = r.split('/');
     window.scrollTo(0, 0);
@@ -865,7 +905,7 @@
   }
 
   document.addEventListener('click', function (e) {
-    var t = e.target.closest('[data-nav],[data-hv],[data-smode],[data-swhen],[data-sgoal],[data-sq],[data-sp],[data-scombo],[data-ssel],[data-stake],[data-scat],[data-sn],[data-smin],[data-comp],[data-act],[data-tab],[data-exp],[data-pfil],[data-pteam],[data-pst],[data-cyc],[data-ptap],[data-stheme]'); if (!t) return;
+    var t = e.target.closest('[data-naz],[data-nav],[data-hv],[data-smode],[data-swhen],[data-sgoal],[data-sq],[data-sp],[data-scombo],[data-ssel],[data-stake],[data-scat],[data-sn],[data-smin],[data-comp],[data-act],[data-tab],[data-exp],[data-pfil],[data-pteam],[data-pst],[data-cyc],[data-ptap],[data-stheme]'); if (!t) return;
     var d = t.dataset;
     if ('nav' in d) { nav(d.nav); return; }
     if (d.hv) { S.hv = d.hv; if (cur() !== '') nav(''); else { window.scrollTo(0, 0); render(); } return; }
@@ -882,7 +922,8 @@
     if (d.sn != null && d.sn !== '') { S.slip.N = +d.sn; S.slip.ban = {}; rerender(); return; }
     if (d.act === 'slipnext') { var cs = S.slipNow; if (cs) { var worst = null; cs.items.forEach(function (x) { if (!worst || x.ps < worst.ps) worst = x; }); if (worst) worst.legs.forEach(function (p) { S.slip.ban[Core.legKey(worst.m, p)] = 1; }); } rerender(); return; }
     if (d.act === 'slipfirst') { S.slip.ban = {}; rerender(); return; }
-    if (d.act === 'coll') { S.coll[d.k] = !S.coll[d.k]; rerender(); return; }
+    if ('naz' in d) { S.naz = d.naz; S.comp = 'all'; S.slip.off = 0; rerender(); return; }
+    if (d.act === 'coll') { S.coll[d.k] = !isClosed(d.k, d.k.split('|')[1]); rerender(); return; }
     if (d.act === 'slipup') { var r = document.getElementById('slipres'); if (r) r.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (d.act === 'slipset') { e.preventDefault(); var st = document.querySelector('.sett'); if (st) st.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (d.act === 'sim') { runSim(); return; }
