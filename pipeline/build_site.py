@@ -96,7 +96,7 @@ boot3 = '''window.OverLabReload().then(window.OverLabStart, function () {
 });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
 '''
-html = ('<!doctype html>\n<html lang="it">\n<head>\n' + head + css + '\n</head>\n<body>\n' + body + '<script>\n' + boot1 + js('model.js') + '\n' + js('core.js') + '\n' + boot2 + js('ui.js') + '\n' + boot3 + '</script>\n</body>\n</html>\n')
+html = ('<!doctype html>\n<html lang="it" data-theme="dark">\n<head>\n' + head + css + '\n</head>\n<body>\n' + body + '<script>\n' + boot1 + js('model.js') + '\n' + js('core.js') + '\n' + boot2 + js('ui.js') + '\n' + boot3 + '</script>\n</body>\n</html>\n')
 html = html.replace('<title>OverLab</title>', '<title>OverLab</title>')
 open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8').write(html)
 

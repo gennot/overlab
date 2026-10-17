@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>OverLab</title>
 <meta name="description" content="Pronostici statistici su tiri, tiri in porta, corner, falli e cartellini per squadre e giocatori.">
-<meta name="theme-color" content="#0a0f1c">
+<meta name="theme-color" content="#06080c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,12 +19,12 @@
 /* Impianto: app da telefono con barra di navigazione in basso, striscia dei giorni e partite raggruppate per campionato.
    Grafite scura, accento "erba" che sfuma dal verde all'acqua, oro solo per le occasioni. Titoli stretti e pesanti da tabellone. */
 :root{
-  --bg:#111214;--surface:#1a1c1f;--surface2:#24272b;--line:#2d3136;--fg:#f2f4f5;--muted:#8b9299;
-  --g1:#2fd47f;--g2:#16b5c6;--on-grad:#04231a;--grad:linear-gradient(120deg,var(--g1),var(--g2));
-  --accent:#25c584;--accent-fg:#04231a;--accent-ink:#52e3a0;--accent-bg:rgba(37,197,132,.13);--gold:#f3b63f;
-  --hi:#3ccf8a;--ok:#a6d66e;--mid:#f1b648;--lo:#858d98;--err:#ff8a78;
+  --bg:#06080c;--surface:#0d1218;--surface2:#151c25;--line:#1d2632;--fg:#eef3f7;--muted:#8593a3;
+  --g1:#34e3a0;--g2:#1ec3ea;--on-grad:#04231a;--grad:linear-gradient(120deg,var(--g1),var(--g2));
+  --accent:#2bd893;--accent-fg:#04231a;--accent-ink:#5cf0b2;--accent-bg:rgba(43,216,147,.12);--gold:#f5bb45;
+  --hi:#3ddc93;--ok:#a6d66e;--mid:#f1b648;--lo:#858d98;--err:#ff8a78;
   --hi-bg:rgba(60,207,138,.13);--ok-bg:rgba(166,214,110,.11);--mid-bg:rgba(241,182,72,.11);--lo-bg:rgba(133,141,152,.10);
-  --pitch:rgba(82,227,160,.07);--shadow:0 10px 30px rgba(0,0,0,.45);--glow:0 8px 24px rgba(37,197,132,.28);
+  --pitch:rgba(82,227,160,.07);--shadow:0 14px 34px rgba(0,0,0,.6);--glow:0 8px 26px rgba(43,216,147,.32);
   --pro1:#ffd77f;--pro2:#f5a524;--home:#16b5c6;--home-ink:#4fd8e6;--away:#ff6a3d;--away-ink:#ff8f63;
   --disp:"Saira Condensed","Arial Narrow",system-ui,sans-serif;--num:"Saira Semi Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -547,6 +547,22 @@ a{color:inherit;text-decoration:none}
 @keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
 .tgt.big,.shot.big,.foul.big{width:40px;height:40px}
 @media (prefers-reduced-motion:reduce){.pop{animation:none}.sball{transition:none}}
+
+/* Tema notte: lo stadio di sera. Fondo blu notte con la luce dei riflettori in alto e le linee del campo appena accennate,
+   barre in alto e in basso in vetro, pannelli con il bordo superiore illuminato come sotto i fari. */
+body{background:
+  radial-gradient(60% 34% at 8% -4%,rgba(52,227,160,.15),transparent 70%),
+  radial-gradient(60% 34% at 92% -4%,rgba(30,195,234,.13),transparent 70%),
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 760 560' fill='none' stroke='%23fff' stroke-opacity='.05' stroke-width='2'%3E%3Crect x='20' y='-2' width='720' height='560'/%3E%3Crect x='220' y='-2' width='320' height='120'/%3E%3Crect x='300' y='-2' width='160' height='48'/%3E%3Cpath d='M300 118a80 50 0 0 0 160 0'/%3E%3Cpath d='M20 520H740'/%3E%3Ccircle cx='380' cy='520' r='110'/%3E%3C/svg%3E") center 0/min(760px,190vw) auto no-repeat,
+  var(--bg)}
+:root:not([data-theme="light"]) .top{background:rgba(6,8,12,.72);-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);border-bottom-color:rgba(255,255,255,.06)}
+:root:not([data-theme="light"]) .bnav{background:rgba(8,11,16,.8);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);border-top-color:rgba(255,255,255,.06)}
+.bnav button.on .ic{filter:drop-shadow(0 0 8px rgba(52,227,160,.55))}
+:root:not([data-theme="light"]) :is(.card,.lgrp,.hero,.mt,.tabs,.seg,.dcard,.naz,.pill,.psel,.mnc,.an,.legal-b){background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0) 55%),var(--surface)}
+:root:not([data-theme="light"]) :is(.card,.lgrp,.hero,.mt,.mh,.motd,.dcard,.naz,.mnc,.an){box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 16px 34px -20px rgba(0,0,0,.9)}
+:root:not([data-theme="light"]) .hero-p,:root:not([data-theme="light"]) .hero-a{box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.lgh{background:linear-gradient(90deg,rgba(52,227,160,.07),transparent 60%)}
+.mrow:active,.mrow:hover{background:rgba(255,255,255,.03)}
 </style>
 </head>
 <body>
