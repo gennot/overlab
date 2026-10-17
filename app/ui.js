@@ -401,7 +401,7 @@
     h += '<div class="plist"><div class="phead"><span>Giocatore</span><span>1+</span><span>2+</span><span>3+</span></div>' + shown.map(function (f) {
       var s = f.st[k], key = 'p:' + f.p.id + ':' + k, off = f.status === 'out', o1 = ob && byP[f.p.id] && (byP[f.p.id][1] || byP[f.p.id][2] || byP[f.p.id][3]);
       return '<div class="pl ' + f.status + '"><div class="pl-r"><button class="pl-n" data-exp="' + key + '" aria-expanded="' + (S.open === key) + '"><b>' + esc(f.p.name) + '</b><small>' + (ROLE[f.p.pos] || '') + (off ? '' : ' · ' + Math.round(f.expMin) + "' attesi · " + f1(s.mean) + ' attesi') + '</small></button>' + cell(f, 1) + cell(f, 2) + cell(f, 3) + '</div>' +
-        '<button class="stt ' + f.status + (f.status === 'tit' && !f.sure ? ' prob' : '') + '" data-cyc="' + esc(f.p.id) + '" aria-label="Cambia stato di ' + esc(f.p.name) + '">' + (f.status === 'tit' && !f.sure ? 'Titolare probabile' : STT[f.status]) + '</button>' +
+        '<button class="stt ' + f.status + (f.status === 'tit' && !f.sure ? ' prob' : '') + '" data-cyc="' + esc(f.p.id) + '" aria-label="Cambia stato di ' + esc(f.p.name) + '">' + (f.status === 'tit' && !f.sure ? 'Titolare probabile' : f.status === 'out' && f.p.miss ? (f.p.miss === 's' ? 'Squalificato' : 'Infortunato') : STT[f.status]) + '</button>' +
         (S.open === key && !off ? why(key, EXT ? Core.explainExtra(S.m, S.tf, f, k) : (o1 ? extraWhy(o1) : []).concat(Core.explainPlayer(S.m, S.tf, f, k, lu.src))) : '') + '</div>';
     }).join('') + '</div>';
     if (hidden > 0 && !S.more) h += '<button class="btn wide" data-act="more">Mostra anche gli altri ' + hidden + ' in rosa</button>';

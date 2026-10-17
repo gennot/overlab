@@ -270,15 +270,18 @@ var Core = (function () {
     return pl;
   }
   // formazione: ufficiale se disponibile, altrimenti probabile (chi ha giocato titolare più di recente)
-  function lineup(squad, official, team) {
-    var st = {}, ids = Object.keys(squad), src = 'probabile';
+  function lineup(squad, official, team, miss) {
+    var st = {}, ids = Object.keys(squad), src = 'probabile', away = {};
+    // squalificati (s) e infortunati (i) segnalati per questa partita: fuori dalla formazione probabile, al loro posto il successivo
+    (miss || []).forEach(function (x) { if (squad[x[0]]) { away[x[0]] = 1; squad[x[0]].miss = x[1]; } });
     if (official && official.off) {
       var any = false;
       official.P.forEach(function (r) { if (r[0] !== team) return; any = true; if (!squad[r[1]]) squad[r[1]] = { id: r[1], name: r[2], pos: r[3] || 'M', jersey: r[11], apps: 0, squad: 0, nSt: 0, minSt: 0, nBench: 0, minSub: 0, score: 0, lastSquad: 0, y: { sh: 0, sot: 0, fc: 0, fs: 0 }, e: { sh: 0, sot: 0, fc: 0, fs: 0 }, m90: 0, yc: 0, last: [] }; st[r[1]] = r[4] ? 'tit' : 'pan'; });
       if (any) { Object.keys(squad).forEach(function (id) { if (!st[id]) st[id] = 'out'; }); return { st: st, src: 'ufficiale' }; }
     }
-    var gk = ids.filter(function (i) { return squad[i].pos === 'G'; }).sort(function (a, b) { return squad[b].score - squad[a].score; });
-    var of = ids.filter(function (i) { return squad[i].pos !== 'G'; }).sort(function (a, b) { return squad[b].score - squad[a].score || squad[b].nSt - squad[a].nSt; });
+    ids.forEach(function (i) { if (away[i]) st[i] = 'out'; });
+    var gk = ids.filter(function (i) { return squad[i].pos === 'G' && !away[i]; }).sort(function (a, b) { return squad[b].score - squad[a].score; });
+    var of = ids.filter(function (i) { return squad[i].pos !== 'G' && !away[i]; }).sort(function (a, b) { return squad[b].score - squad[a].score || squad[b].nSt - squad[a].nSt; });
     if (gk[0]) st[gk[0]] = 'tit';
     of.slice(0, 10).forEach(function (i) { st[i] = 'tit'; });
     ids.forEach(function (i) { if (!st[i]) st[i] = squad[i].lastSquad <= 2 ? 'pan' : 'out'; });
@@ -330,7 +333,7 @@ var Core = (function () {
         [m.h, m.a].forEach(function (t) {
           var mine = ok.filter(function (s) { return s.T[t]; });
           res.squads[t] = buildSquad(t, mine);
-          res.lu[t] = lineup(res.squads[t], official, t);
+          res.lu[t] = lineup(res.squads[t], official, t, m.miss);
         });
         return res;
       });

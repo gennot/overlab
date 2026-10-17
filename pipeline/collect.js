@@ -120,6 +120,21 @@ async function byIds(ids) {
   // 3) formazioni ufficiali delle partite che iniziano a breve
   const soon = allFx().filter(m => !DONE[m.s] && !GONE[m.s] && m.d > now - 15 * 6e4 && m.d < now + 80 * 6e4 && !m.lu).map(m => m.id);
   if (soon.length) await byIds(soon);
+  // 3b) assenti (squalificati e infortunati) delle partite dei prossimi 4 giorni: chi è fuori non entra nella formazione probabile.
+  //     Una richiesta per giorno; per i giorni scaricati l'elenco si rifà da capo (chi rientra torna disponibile).
+  const romeYmd = t => new Date(t).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
+  const upIdx = {}; allFx().forEach(m => { if (!DONE[m.s] && !GONE[m.s] && m.d > now - 3 * 36e5 && m.d < now + 5 * DAY) upIdx[m.id] = m; });
+  const missNew = {}, daysOk = {};
+  for (let k = 0; k < 4 && !stop; k++) {
+    const day = romeYmd(now + k * DAY), r = await api('/injuries?date=' + day + '&timezone=Europe/Rome');
+    if (!r || r.err) continue; daysOk[day] = 1;
+    r.res.forEach(x => {
+      const fid = String(x.fixture && x.fixture.id), p = x.player || {}; if (!upIdx[fid] || p.id == null || p.type !== 'Missing Fixture') return;
+      (missNew[fid] = missNew[fid] || []).push([String(p.id), /suspend|card|red|yellow/i.test(p.reason || '') ? 's' : 'i']);
+    });
+  }
+  let nMiss = 0; Object.values(upIdx).forEach(m => { if (!daysOk[romeYmd(m.d)]) return; if (missNew[m.id]) { m.miss = missNew[m.id]; nMiss += m.miss.length; } else delete m.miss; });
+  if (Object.keys(daysOk).length) note('assenti (squalificati e infortunati) nelle prossime partite: ' + nMiss);
   await byIds(need().filter(m => m.d > now - 10 * DAY).map(m => m.id));
   // 4) storico: elenco partite per stagione, poi i dettagli un po' alla volta
   for (const l of LEAGUES) {
