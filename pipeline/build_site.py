@@ -63,7 +63,8 @@ INFO = '''<template id="info-tpl">
 '''
 body = re.sub(r'<template id="info-tpl">.*?</template>\n', INFO, body, flags=re.S)
 js = lambda f: rd(f)
-boot1 = 'window.OVERLAB_SNAPSHOT = true;\nwindow.OVERLAB_PLAY = true;\n'
+REPO = os.environ.get('GITHUB_REPOSITORY', 'gennot/overlab')
+boot1 = 'window.OVERLAB_SNAPSHOT = true;\nwindow.OVERLAB_PLAY = true;\nwindow.OVERLAB_LIVE = "https://raw.githubusercontent.com/' + REPO + '/live/live.json";\n'
 boot2 = '''Core.store.noLocal = true;
 Core.setFetch(function () { return Promise.reject(new Error('offline')); });
 window.OverLabReload = function () {
@@ -133,7 +134,7 @@ PRIV = page('Privacy', f"""<h1>Informativa privacy</h1>
 <h2>Titolare del trattamento</h2>
 <p>{TITOLARE} – email: {MAIL}</p>
 <h2>In breve</h2>
-<ul><li>Non serve registrarsi e non ci sono account.</li><li>Nessuna pubblicità, nessuno strumento di statistica sui visitatori, nessuna profilazione.</li><li>Nessun cookie di terze parti. Caratteri, stemmi delle squadre e foto dei giocatori sono ospitati sul sito stesso: il tuo browser non contatta altri servizi.</li></ul>
+<ul><li>Non serve registrarsi e non ci sono account.</li><li>Nessuna pubblicità, nessuno strumento di statistica sui visitatori, nessuna profilazione.</li><li>Nessun cookie di terze parti. Caratteri, stemmi delle squadre e foto dei giocatori sono ospitati sul sito stesso; i risultati in diretta si leggono da raw.githubusercontent.com, cioè da GitHub, lo stesso fornitore che ospita il sito: il tuo browser non contatta altri servizi.</li></ul>
 <h2>Dati di navigazione (hosting)</h2>
 <p>Il sito è ospitato su GitHub Pages, servizio di GitHub, Inc. (Stati Uniti). Quando apri una pagina, il server riceve i dati tecnici che ogni browser invia, come indirizzo IP, tipo di browser, data e ora della richiesta. Servono solo a consegnarti le pagine e a proteggere il servizio da abusi; il titolare non li riceve e non li usa. Base giuridica: legittimo interesse a far funzionare il sito in modo sicuro (art. 6.1.f GDPR). GitHub tratta questi dati come fornitore di hosting e li trasferisce negli Stati Uniti con le garanzie previste dal GDPR (Data Privacy Framework UE-USA e clausole contrattuali standard): vedi l'<a href="https://docs.github.com/it/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">informativa di GitHub</a>.</p>
 <h2>Dati salvati sul tuo dispositivo</h2>

@@ -11,7 +11,18 @@
   var SNAP = !!window.OVERLAB_SNAPSHOT, PLAY = !!window.OVERLAB_PLAY, R = '';
   if (PLAY) document.documentElement.classList.add('play');
   function cur() { return SNAP ? R : location.hash.replace(/^#/, ''); }
-  function nav(r) { if (SNAP) { R = r; route(); } else if (cur() === r) route(); else location.hash = r; }
+  var Y = {};   // posizione di scorrimento per pagina: tornando all'elenco si riparte da dove eri
+  function nav(r) {
+    var from = cur(); Y[from] = window.scrollY;
+    if (!SNAP) { if (from === r) route(); else if (from.indexOf('m/') === 0 && r.indexOf('m/') === 0) location.replace('#' + r); else location.hash = r; return; }
+    try {
+      if (r === '' && history.state && history.state.ol) { history.back(); return; }   // "Partite": come il tasto indietro
+      if (from.indexOf('m/') === 0 && r.indexOf('m/') === 0) history.replaceState({ ol: 1, r: r }, '');   // da partita a partita: indietro torna all'elenco
+      else if (r !== '' && from !== r) history.pushState({ ol: 1, r: r }, '');
+    } catch (e) {}
+    R = r; route();
+  }
+  window.addEventListener('popstate', function (e) { if (!SNAP) return; Y[R] = window.scrollY; R = (e.state && e.state.r) || ''; route(); });
   var ROLE = { G: 'POR', D: 'DIF', M: 'CEN', F: 'ATT' };
   var PSHORT = { sh: 'Tiri', sot: 'In porta', fc: 'Falli fatti', fs: 'Falli subiti', yc: 'Giallo', gl: 'Gol' };
   var STT = { tit: 'Titolare', pan: 'Panchina', out: 'Assente' };
@@ -70,9 +81,38 @@
   function hm(d) { return new Date(d).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
 
   /* ---------- schermata iniziale ---------- */
+  /* Risultati in diretta: live.json, aggiornato ogni 5 minuti circa da GitHub (ramo "live"), letto ogni minuto mentre ci sono
+     partite in corso. Si aggiornano solo orario/minuto e punteggio nelle righe e nell'intestazione della partita, senza ridisegnare. */
+  var LV = { d: null, busy: false }, LVM = {}, DONEST = { FT: 1, AET: 1, PEN: 1 };
+  function liveOf(m) { var x = LV.d && LV.d.m && LV.d.m[m.id]; if (!x || x[0] == null) return null; return { g: [x[0], x[1]], s: x[2], el: x[3], ex: x[4], fin: !!DONEST[x[2]] }; }
+  function liveMin(L) { return L.fin ? (L.s === 'PEN' ? 'Fin. rig.' : L.s === 'AET' ? 'Fin. supp.' : 'Finale') : L.s === 'HT' ? 'Intervallo' : L.s === 'BT' ? 'Pausa' : L.s === 'P' ? 'Rigori' : L.s === 'INT' || L.s === 'SUSP' ? 'Sospesa' : L.el ? L.el + (L.ex ? '+' + L.ex : '') + '\'' : 'LIVE'; }
+  function rowTm(m) { var L = liveOf(m); return L ? '<span class="' + (L.fin ? 'fin' : 'live') + '">' + esc(liveMin(L)) + '</span>' : m.st === 'in' ? '<span class="live">LIVE</span>' : hm(m.d); }
+  function scIn(m) { var L = liveOf(m); return L ? L.g[0] + '-' + L.g[1] : ''; }
+  function rowSc(m) { var L = liveOf(m); return L ? '<b>' + L.g[0] + '</b><b>' + L.g[1] + '</b>' : ''; }
+  function mhC(m, c) {
+    var L = liveOf(m), upd = LV.d ? new Date(LV.d.t).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : '';
+    if (!L) return '<i class="vs">VS</i><span>' + esc(dayLabel(m.d)) + ' · ' + hm(m.d) + '</span><span>' + esc(c ? c.name : '') + '</span>';
+    return '<b class="lsc">' + L.g[0] + ' - ' + L.g[1] + '</b><span class="lmin ' + (L.fin ? 'fin' : 'live') + '">' + (L.fin ? '' : '<i></i>') + esc(liveMin(L)) + '</span><span>' + esc(c ? c.name : '') + '</span>' + (upd ? '<small class="lupd">aggiornato alle ' + upd + '</small>' : '');
+  }
+  function applyLive() {
+    [].forEach.call(document.querySelectorAll('[data-lvt]'), function (el) { var m = LVM[el.getAttribute('data-lvt')]; if (m) el.innerHTML = rowTm(m); });
+    [].forEach.call(document.querySelectorAll('[data-lvs]'), function (el) { var m = LVM[el.getAttribute('data-lvs')]; if (m) el.innerHTML = rowSc(m); });
+    [].forEach.call(document.querySelectorAll('[data-lvg]'), function (el) { var m = LVM[el.getAttribute('data-lvg')]; if (m) el.textContent = scIn(m); });
+    [].forEach.call(document.querySelectorAll('[data-lvh]'), function (el) { var m = LVM[el.getAttribute('data-lvh')]; if (m) el.innerHTML = mhC(m, Core.comp(m.lg)); });
+    var kb = document.querySelector('.kob'); if (kb && S.m && liveOf(S.m)) kb.remove();
+  }
+  function liveWanted() { var now = Date.now(), near = function (m) { return m && m.d < now + 5 * 6e4 && m.d > now - 3.5 * 36e5; }; return near(S.m) || (S.up || []).some(near); }
+  function pollLive() {
+    var url = window.OVERLAB_LIVE; if (!url || LV.busy || document.hidden || !liveWanted() || Date.now() - (LV.last || 0) < 25000) return;
+    LV.busy = true; LV.last = Date.now();
+    fetch(url + '?t=' + Math.floor(Date.now() / 6e4), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) { LV.busy = false; if (d && d.m) { LV.d = d; applyLive(); } }, function () { LV.busy = false; });
+  }
+  setInterval(pollLive, 60000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) pollLive(); });
   function loadHome(force) {
     S.loading = true; S.err = null; render();
-    Core.loadUpcoming(force).then(function (up) { S.up = up; S.loading = false; render(); },
+    Core.loadUpcoming(force).then(function (up) { S.up = up; S.loading = false; render(); pollLive(); },
       function () { S.loading = false; S.err = 'Non riesco a leggere le partite. Controlla la connessione e riprova.'; render(); });
   }
   /* Bandiere tonde per la barra delle nazioni: semplici forme SVG, nessuna immagine esterna */
@@ -151,7 +191,8 @@
         var c = Core.comp(lg), k = dl + '|' + lg, closed = isClosed(k, lg);
         h += '<section class="lgrp' + (closed ? ' closed' : '') + '"><button class="lgh" data-act="coll" data-k="' + esc(k) + '" aria-expanded="' + !closed + '">' + (c ? flag(c.grp) : '') + '<b>' + esc(c ? c.name : lg) + '</b><span>' + byLg[lg].length + '</span>' + ic('down') + '</button>';
         byLg[lg].forEach(function (m) {
-          h += '<button class="mrow" data-nav="m/' + m.lg + '/' + esc(m.id) + '"><span class="tm' + (m.st === 'in' ? ' live' : '') + '">' + (m.st === 'in' ? 'LIVE' : hm(m.d)) + '</span><span class="tn"><span class="row">' + logo(m.h) + '<span>' + esc(tn(m.h)) + '</span></span><span class="row">' + logo(m.a) + '<span>' + esc(tn(m.a)) + '</span></span></span>' + ic('chev') + '</button>';
+          LVM[m.id] = m;
+          h += '<button class="mrow" data-nav="m/' + m.lg + '/' + esc(m.id) + '"><span class="tm" data-lvt="' + esc(m.id) + '">' + rowTm(m) + '</span><span class="tn"><span class="row">' + logo(m.h) + '<span>' + esc(tn(m.h)) + '</span></span><span class="row">' + logo(m.a) + '<span>' + esc(tn(m.a)) + '</span></span></span><span class="lsr" data-lvs="' + esc(m.id) + '">' + rowSc(m) + '</span>' + ic('chev') + '</button>';
         });
         h += '</section>';
       });
@@ -451,9 +492,11 @@
     if (S.merr) return h + '<div class="note err">' + esc(S.merr) + ' <button class="btn" data-act="retry">Riprova</button></div>';
     if (!m) return h + '<div class="note">Carico la partita…</div>' + skel(4);
     var c = Core.comp(m.lg);
-    if (m.d > Date.now() && m.d - Date.now() < 7 * 864e5) h += '<div class="kob">' + ic('clock') + '<span>Calcio d\'inizio tra <b data-ko="' + m.d + '">' + koTxt(m.d - Date.now()) + '</b></span></div>';
+    LVM[m.id] = m; if (LV.d === null || !liveOf(m)) pollLive();
+    if (m.d > Date.now() && m.d - Date.now() < 7 * 864e5 && !liveOf(m)) h += '<div class="kob">' + ic('clock') + '<span>Calcio d\'inizio tra <b data-ko="' + m.d + '">' + koTxt(m.d - Date.now()) + '</b></span></div>';
     h += '<div class="favs">' + [m.h, m.a].map(function (t) { return '<button class="chip' + (FAV[t] ? ' on' : '') + '" data-act="fav" data-team="' + esc(t) + '" aria-pressed="' + !!FAV[t] + '">' + ic('heart') + (FAV[t] ? 'Segui già ' : 'Segui ') + esc(tn(t)) + '</button>'; }).join('') + '</div>';
-    h += '<header class="mh"><div class="mh-t">' + logo(m.h) + '<b>' + esc(tn(m.h)) + '</b></div><div class="mh-c"><i class="vs">VS</i><span>' + esc(dayLabel(m.d)) + ' · ' + hm(m.d) + '</span><span>' + esc(c ? c.name : '') + '</span></div><div class="mh-t">' + logo(m.a) + '<b>' + esc(tn(m.a)) + '</b></div></header>';
+    h += otherMatches(m, c);
+    h += '<header class="mh"><div class="mh-t">' + logo(m.h) + '<b>' + esc(tn(m.h)) + '</b></div><div class="mh-c" data-lvh="' + esc(m.id) + '">' + mhC(m, c) + '</div><div class="mh-t">' + logo(m.a) + '<b>' + esc(tn(m.a)) + '</b></div></header>';
     if (!S.tf) return h + '<div class="note">Analizzo lo storico della competizione…</div>' + skel(5);
     if (c && c.nat) h += '<div class="note">Nazionali: poche partite all\'anno, quindi stime più incerte rispetto ai campionati.</div>';
     h += bar1x2() + '<h2 class="sec-h">' + ic('trend') + 'Analisi di OverLab</h2>' + heroHtml() + pitchHtml();
@@ -462,6 +505,15 @@
     return h;
   }
 
+  /* Altre partite della stessa competizione (stessa giornata, entro 3 giorni): si passa dall'una all'altra senza tornare all'elenco */
+  function otherMatches(m, c) {
+    var list = (S.up || []).filter(function (x) { return x.lg === m.lg && Math.abs(x.d - m.d) < 3 * 864e5; }).sort(function (a, b) { return a.d - b.d; });
+    if (list.length < 2) return '';
+    return '<div class="mnx-w"><small class="mnx-h">' + esc(c ? c.name : '') + ': altre partite</small><div class="mnx">' + list.map(function (x) {
+      LVM[x.id] = x; var sn = function (t) { return T[t] ? T[t].s : tn(t); };
+      return '<button class="mnc' + (x.id === m.id ? ' on' : '') + '" data-nav="m/' + x.lg + '/' + esc(x.id) + '"' + (x.id === m.id ? ' aria-current="true"' : '') + '><span class="mnc-l">' + logo(x.h) + logo(x.a) + '</span><span class="mnc-t"><b>' + esc(sn(x.h)) + '</b><b>' + esc(sn(x.a)) + '</b></span><span class="mnc-s"><span data-lvt="' + esc(x.id) + '">' + rowTm(x) + '</span><b data-lvg="' + esc(x.id) + '">' + scIn(x) + '</b></span></button>';
+    }).join('') + '</div></div>';
+  }
   // barra 1X2: casa, pareggio e trasferta in un'unica striscia
   function bar1x2() {
     var r = S.tf && S.tf.res; if (!r) return '';
@@ -890,6 +942,7 @@
     document.body.dataset.view = r.indexOf('m/') === 0 ? 'match' : r === 'info' ? 'info' : 'home';
     if (S.up || S.err || r !== '') hideSplash();
     [].forEach.call(document.querySelectorAll('.bnav button'), function (b) { var on = r === 'info' ? b.dataset.bn === 'info' : b.dataset.hv === S.hv; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    var mx = document.querySelector('.mnx'), mo = mx && mx.querySelector('.on'); if (mo) mx.scrollLeft = Math.max(0, mo.offsetLeft - (mx.clientWidth - mo.offsetWidth) / 2);
     var nz = document.querySelector('.nazs'); if (nz) { nz.scrollLeft = S.nazX || 0; var on = nz.querySelector('.on'); if (on && (on.offsetLeft < nz.scrollLeft || on.offsetLeft + on.offsetWidth > nz.scrollLeft + nz.clientWidth)) nz.scrollLeft = on.offsetLeft - 16; }
     if (render.keep) { window.scrollTo(0, y); render.keep = false; }
   }
@@ -902,6 +955,7 @@
     S.token++;
     if (r !== 'info' && !S.up && !S.loading) { loadHome(false); return; }
     render();
+    if (Y[r]) window.scrollTo(0, Y[r]);
   }
 
   document.addEventListener('click', function (e) {

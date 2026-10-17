@@ -8,7 +8,7 @@ const LEAGUES = require('./leagues');
 const KEY = process.env.APISPORTS_KEY || '';
 const BASE = process.env.API_BASE || 'https://v3.football.api-sports.io';
 let MAX_CALLS = +process.env.MAX_CALLS || 60;
-const RESERVE = +process.env.RESERVE || 4;
+let RESERVE = +process.env.RESERVE || 4;
 let GAP = process.env.API_BASE ? 0 : 6500;              // 10 richieste al minuto sul piano gratis; col piano a pagamento si accelera da solo
 const ROOT = path.join(__dirname, '..', 'store');
 const DAY = 864e5;
@@ -40,7 +40,7 @@ async function api(q) {
   // piano a pagamento (es. Pro: 7.500 al giorno): più richieste per giro e meno attesa, restando sotto il limite giornaliero (8 giri al giorno)
   const lim = +(r.headers.get('x-ratelimit-requests-limit') || 0);
   if (lim >= 1000) paid = true;
-  if (lim >= 1000 && !process.env.API_BASE && GAP > 300) { GAP = 300; MAX_CALLS = Math.max(MAX_CALLS, Math.floor(lim / 8) - 40); note('piano con ' + lim + ' richieste al giorno: fino a ' + MAX_CALLS + ' per giro'); }
+  if (lim >= 1000 && !process.env.API_BASE && GAP > 300) { GAP = 300; MAX_CALLS = Math.max(MAX_CALLS, Math.floor(lim / 8) - 110); RESERVE = Math.max(RESERVE, 350);   // restano richieste per i risultati live note('piano con ' + lim + ' richieste al giorno: fino a ' + MAX_CALLS + ' per giro'); }
   const err = j && j.errors && (Array.isArray(j.errors) ? j.errors.length : Object.keys(j.errors).length) ? j.errors : null;
   if (err) {
     const t = JSON.stringify(err); note('API: ' + q + ' -> ' + t);
