@@ -130,7 +130,7 @@ async function byIds(ids) {
     if (!r || r.err) continue; daysOk[day] = 1;
     r.res.forEach(x => {
       const fid = String(x.fixture && x.fixture.id), p = x.player || {}; if (!upIdx[fid] || p.id == null || p.type !== 'Missing Fixture') return;
-      (missNew[fid] = missNew[fid] || []).push([String(p.id), /suspend|card|red|yellow/i.test(p.reason || '') ? 's' : 'i']);
+      const L = missNew[fid] = missNew[fid] || []; if (!L.some(z => z[0] === String(p.id))) L.push([String(p.id), /suspend|card|red|yellow/i.test(p.reason || '') ? 's' : 'i']);
     });
   }
   let nMiss = 0; Object.values(upIdx).forEach(m => { if (!daysOk[romeYmd(m.d)]) return; if (missNew[m.id]) { m.miss = missNew[m.id]; nMiss += m.miss.length; } else delete m.miss; });
