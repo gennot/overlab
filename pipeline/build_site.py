@@ -13,6 +13,8 @@ def rep(s, a, b):
 head = src[src.index('<head>') + 6:src.index('<style>')]
 head = re.sub(r'<link rel="(apple-touch-icon|icon)"[^>]*>\n?', '', head)
 head = re.sub(r'<link rel="(preconnect|stylesheet)" href="https://fonts\.(googleapis|gstatic)\.com[^>]*>\n?', '', head)
+# se il telefono riapre una vecchia copia in http (pagina in memoria, icona sulla schermata home) si passa subito a https
+head = "<script>if(location.protocol==='http:'&&!/^(localhost|127\\.|\\[)/.test(location.hostname))location.replace('https://'+location.host+location.pathname+location.search+location.hash)</script>\n" + head
 head += '<link rel="stylesheet" href="fonts/fonts.css">\n'
 head += '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" href="icon-192.png">\n<link rel="apple-touch-icon" href="icon-192.png">\n'
 css = src[src.index('<style>'):src.index('</style>') + 8]
