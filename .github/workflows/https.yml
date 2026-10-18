@@ -1,4 +1,4 @@
-# Controlla dominio, certificato e impostazioni di GitHub Pages; il risultato compare come annotazione del job.
+# (verifica) Controlla dominio, certificato e impostazioni di GitHub Pages; il risultato compare come annotazione del job.
 # ("Enforce HTTPS" non si può attivare da qui: il token delle Actions non ha i permessi; va spuntato in Settings > Pages.)
 name: Controllo HTTPS
 on:
