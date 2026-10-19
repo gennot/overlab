@@ -23,7 +23,12 @@ body = src[src.index('<body>') + 6:src.index('<script>')]
 # niente quote: restano Partite, Schedina IA (solo probabilità, senza quote né importi) e Info
 body = re.sub(r'<button data-hv="sure">.*?</button>\n', '', body, flags=re.S)
 # avvertenze sempre visibili in fondo a ogni pagina (gioco responsabile, ADM, nessuna scommessa)
-LEGAL = ('\n<footer class="legal" role="contentinfo">'
+# pagina di sostegno (Ko-fi o simili): finché è vuota il tasto non compare
+SUPPORT = os.environ.get('OVERLAB_SUPPORT', '').strip()
+PP = 'paypal.me' in SUPPORT.lower()   # PayPal.Me: contributo singolo (il mensile automatico di PayPal richiede un conto Business)
+if PP and not re.search(r'/\d', SUPPORT): SUPPORT = SUPPORT.rstrip('/') + '/3.99EUR'
+SUP_BTN = ('<a class="sost" href="' + SUPPORT + '" target="_blank" rel="noopener"><span class="sost-i" aria-hidden="true">\u2665</span><span><b>Sostieni OverLab</b><small>' + ('Offrimi un caffè da 3,99 € con PayPal' if PP else '3,99 € al mese per tenerlo gratis e senza pubblicità') + '</small></span></a>') if SUPPORT else ''
+LEGAL = ('\n<footer class="legal" role="contentinfo">' + SUP_BTN +
   '<div class="legal-b"><span class="l18">18+</span><b>Gioca responsabile</b><a href="tel:800558822">Telefono Verde 800 558 822</a></div>'
   '<p class="legal-w"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.8 19.5h18.4z"/><path d="M12 10v4.2"/><circle cx="12" cy="16.8" r=".6" fill="currentColor" stroke="none"/></svg>'
   '<span>OverLab non è un bookmaker e non accetta scommesse. Statistiche e probabilità a solo scopo informativo. Consulta le probabilità di vincita sul sito <a href="https://www.adm.gov.it" rel="noopener">www.adm.gov.it</a>. Vietato ai minori di 18 anni.</span></p>'
@@ -34,7 +39,10 @@ CSS_LEGAL = ('.wrap{padding-bottom:18px}'
   '.legal-b b{font-weight:600}.legal-b a{color:var(--muted);text-decoration:none;flex-basis:100%}'
   '.l18{display:inline-grid;place-items:center;min-width:30px;height:24px;padding:0 6px;border-radius:999px;background:#c62828;color:#fff;font:800 12px/1 var(--num)}'
   '.legal-w{display:flex;gap:8px;margin:0;font-size:13px;line-height:1.5;color:var(--muted)}.legal-w .ic{flex:none;width:18px;height:18px;color:var(--gold);margin-top:1px}'
-  '.legal-w a,.legal-l a{color:var(--accent-ink)}.legal-l{margin:0;font-size:13px;color:var(--muted)}')
+  '.legal-w a,.legal-l a{color:var(--accent-ink)}.legal-l{margin:0;font-size:13px;color:var(--muted)}'
+  '.sost{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid rgba(245,187,69,.45);background:radial-gradient(120% 120% at 0% 0%,rgba(245,187,69,.16),transparent 60%),var(--surface);color:var(--fg);text-decoration:none}'
+  '.sost-i{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--gold);color:#1a1200;font-size:18px}'
+  '.sost b{display:block;font:700 15px/1.2 var(--body)}.sost small{display:block;margin-top:2px;font-size:12.5px;color:var(--muted)}.info .sost{margin:8px 0 4px}')
 css = css.replace('</style>', CSS_LEGAL + '</style>')
 body = rep(body, '<main class="wrap" id="app"></main>', '<main class="wrap" id="app"><div class="note">Carico i dati…</div></main>' + LEGAL)
 INFO = '''<template id="info-tpl">
@@ -57,7 +65,7 @@ INFO = '''<template id="info-tpl">
 <li>Non tiene conto di infortuni e squalifiche se non sono già nelle formazioni.</li>
 <li>Nei campionati con pochi dati le stime sono più incerte.</li>
 </ul>
-<h2>Avvertenze</h2>
+''' + (('<h2>Sostieni OverLab</h2>\n<p>OverLab è gratis e senza pubblicità. Se ti è utile puoi sostenerlo ' + ('con un contributo da 3,99 € su PayPal, quando vuoi' if PP else 'con 3,99 € al mese, che disdici quando vuoi') + ': è un contributo volontario e non sblocca funzioni in più.</p>\n' + SUP_BTN + '\n') if SUPPORT else '') + '''<h2>Avvertenze</h2>
 <p>OverLab offre statistiche e probabilità a scopo informativo. Non è un bookmaker, non accetta scommesse e non ha legami con operatori di gioco. Vietato ai minori di 18 anni. Se giochi, fallo in modo responsabile: per aiuto c'è il Telefono Verde nazionale per i problemi legati al gioco d'azzardo, 800 558 822.</p>
 <p>Dati delle partite: API-Football. <a href="privacy.html">Privacy</a> · <a href="termini.html">Termini d'uso</a></p>
 </div>
@@ -131,6 +139,8 @@ def page(title, body):
             'nav{display:flex;gap:16px;margin-bottom:22px;font-weight:600}</style></head><body><main><nav><a href="./">← OverLab</a><a href="privacy.html">Privacy</a><a href="termini.html">Termini</a></nav>'
             + body + '<p><small>Ultimo aggiornamento: ' + AGG + '</small></p></main></body></html>\n')
 MAIL = ('<a href="mailto:' + EMAIL + '">' + EMAIL + '</a>') if EMAIL else 'indirizzo in pubblicazione a breve'
+SUP_PRIV = ('<h2>Se sostieni OverLab</h2>\n<p>Il contributo si paga ' + ('su PayPal (PayPal Europe S.à r.l. et Cie, S.C.A.)' if PP else 'sulla piattaforma di sostegno (Ko-fi) e con i suoi fornitori di pagamento') + ': i dati della carta o del conto restano a loro e noi non li vediamo. Riceviamo solo il nome o soprannome e l&#39;email che ci comunichi lì, usati per ringraziarti e per gestire il contributo (art. 6.1.b GDPR) e conservati per il tempo richiesto dalle norme fiscali. Il trattamento dei dati da parte della piattaforma è regolato dalla sua informativa.</p>\n') if SUPPORT else ''
+SUP_TERM = ('<h2>Sostegno volontario</h2>\n<p>Il sostegno è un contributo volontario per tenere OverLab gratuito e senza pubblicità: non dà accesso a funzioni o contenuti in più e non garantisce alcun risultato. ' + ('Si fa una volta sola su PayPal, quando vuoi.' if PP else 'Costa 3,99 € al mese e si rinnova finché non lo disdici sulla piattaforma di sostegno, dove puoi farlo in qualsiasi momento.') + '</p>\n') if SUPPORT else ''
 PRIV = page('Privacy', f"""<h1>Informativa privacy</h1>
 <p>Questa pagina spiega quali dati vengono trattati quando usi OverLab (sito e app), come previsto dal Regolamento UE 2016/679 (GDPR).</p>
 <h2>Titolare del trattamento</h2>
@@ -143,7 +153,7 @@ PRIV = page('Privacy', f"""<h1>Informativa privacy</h1>
 <p>OverLab salva sul tuo telefono o computer, nella memoria del browser, solo le tue preferenze (per esempio le squadre che segui) e una copia dei file dell'app per aprirla anche senza rete. Questi dati restano sul tuo dispositivo, non vengono inviati a nessuno e puoi cancellarli in qualsiasi momento dalle impostazioni del browser. Sono strumenti tecnici necessari al funzionamento e non richiedono consenso (art. 122 del Codice privacy e Linee guida del Garante sui cookie).</p>
 <h2>Se ci scrivi</h2>
 <p>Se mandi un'email, il tuo indirizzo e il messaggio vengono usati solo per risponderti e conservati per il tempo necessario, al massimo 12 mesi. Base giuridica: la tua richiesta (art. 6.1.b GDPR).</p>
-<h2>I tuoi diritti</h2>
+{SUP_PRIV}<h2>I tuoi diritti</h2>
 <p>Puoi chiedere in ogni momento di accedere ai tuoi dati, correggerli, cancellarli, limitarne l'uso, opporti al trattamento o riceverli in un formato leggibile (artt. 15-22 GDPR), scrivendo a {MAIL}. Puoi anche presentare reclamo al <a href="https://www.garanteprivacy.it" rel="noopener">Garante per la protezione dei dati personali</a>.</p>
 <h2>Minori</h2>
 <p>OverLab è vietato ai minori di 18 anni e non raccoglie consapevolmente dati di minori.</p>
@@ -162,7 +172,7 @@ TERM = page('Termini', f"""<h1>Termini d'uso e note legali</h1>
 <p>Il servizio è riservato ai maggiorenni.</p>
 <h2>Gioco responsabile</h2>
 <p>Il gioco può causare dipendenza. Se scegli di giocare, fallo solo con operatori autorizzati dall'Agenzia delle Dogane e dei Monopoli e con somme che puoi permetterti di perdere. Per aiuto: Telefono Verde Nazionale per le problematiche legate al gioco d'azzardo dell'Istituto Superiore di Sanità, <a href="tel:800558822">800 558 822</a>, gratuito e anonimo.</p>
-<h2>Dati, nomi e marchi</h2>
+{SUP_TERM}<h2>Dati, nomi e marchi</h2>
 <p>Dati delle partite forniti da API-Football (API-Sports). Nomi, loghi e marchi di squadre, campionati e competizioni e le foto dei giocatori appartengono ai rispettivi titolari e sono usati solo per identificare partite e giocatori. Chi ne detiene i diritti può chiederne la rimozione scrivendo all'indirizzo indicato sopra. OverLab non è affiliato, sponsorizzato o approvato da UEFA, leghe, federazioni o club.</p>
 <h2>Contenuti di OverLab</h2>
 <p>Testi, grafica, codice e modello di OverLab appartengono al gestore. I caratteri Public Sans e Saira sono usati secondo la licenza SIL Open Font License 1.1.</p>
