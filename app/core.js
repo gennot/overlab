@@ -181,7 +181,9 @@ var Core = (function () {
       // coppe: in Champions ed Europa League i favoriti vincono più spesso che in campionato (divario gol più largo, tarato
       // su metà delle partite e confermato sull'altra metà), in Conference no; tiri, corner e falli variano di più
       if (c.cup) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gStretch = c.str || 1.5; par.r = { sh: 12, sot: 16, co: 8, fo: 90, yc: 1e9 }; par.rTot = { sh: 60, sot: 60, co: 30, fo: 90, yc: 22 }; }
-      if (c.gonly) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gMix = 1; }   // senza tiri in porta i gol attesi vengono solo dai gol
+      // senza tiri in porta i gol attesi vengono solo dai gol. Test in avanti su 11.306 partite di serie minori (ott 2025 - ott 2026):
+      // divario non allargato (gStretch 1) e stime più vicine alla media per chi ha poche partite (k 8) erano più precise e meno ottimiste
+      if (c.gonly) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gMix = 1; par.gStretch = 1; par.k.g = 8; }
       if (c.nat) { par = JSON.parse(JSON.stringify(Model.PAR)); Model.STATS.forEach(function (s) { par.half[s] = 540; par.k[s] = Math.max(par.k[s], 6); }); par.half.g = 700; par.k.g = 6; par.newTeam = { att: 1, def: 1 }; }
       if (!played.length) throw new Error('Partita senza dati: lo storico di questa competizione è in arrivo, riprova tra qualche ora.');
       var now = Date.now(), fit = Model.fitAll(played, now, par);
@@ -440,7 +442,7 @@ var Core = (function () {
   // si propongono solo come over / "almeno". Nelle coppe del 13-15/10/2026 gli under sui gol uscivano il 66% contro il 76%
   // stimato, quelli su falli e cartellini l'83-92%.
   var NO_UNDER = true, UNDER_OK = { fo: 1, yc: 1 };
-  function noUnder(o) { return NO_UNDER && isUnder(o) && !(o.kind === 'team' && UNDER_OK[o.stat]); }
+  function noUnder(o) { return (NO_UNDER && isUnder(o) && !(o.kind === 'team' && UNDER_OK[o.stat])) || o.stat === '12' || o.key === '12' || /^CB12\+/.test(o.stat || ''); }   // anche niente doppia chance 12
   function isUnder(o) { return o.dir === 'U' || /^(un|tu)\d|^(un|tu)[HA]/.test(o.fam || '') || /\bunder\b|: meno di \d/i.test(o.label || ''); }
   /* ---------- quote del bookmaker ---------- */
   var BOOK = null;
@@ -452,7 +454,8 @@ var Core = (function () {
   // tiri e tiri in porta si giocano solo nei campionati maggiori (Francia esclusa) e con le nazionali: altrove non si propongono
   var SHOTS_OK = { 'ita.1': 1, 'eng.1': 1, 'esp.1': 1, 'ger.1': 1, 'uefa.nations': 1, 'uefa.champions': 1, 'uefa.europa': 1 };
   function shotsOk(lg) { return !!SHOTS_OK[lg]; }
-  function statOk(lg, s) { var c = comp(lg); if (c && c.gonly) return false; return (s !== 'sot' && s !== 'sh') || shotsOk(lg); }   // gonly: campionato con i soli risultati   // mercati giocatore in cui il bookmaker conta anche il sostituto
+  function lowTier(lg) { return /\.[2-9]$/.test(lg || ''); }   // Serie B, Championship, LaLiga 2... e serie inferiori
+  function statOk(lg, s) { var c = comp(lg); if (c && c.gonly) return false; if (s === 'co' && lowTier(lg)) return false; return (s !== 'sot' && s !== 'sh') || shotsOk(lg); }   // gonly: campionato con i soli risultati   // mercati giocatore in cui il bookmaker conta anche il sostituto
   // tutte le giocate che il bookmaker offre davvero per la partita, con la probabilità stimata dal modello
   /* Quando c'è la quota, la stima finale è una media tra il modello e la probabilità che la quota stessa indica
      (tolta la commissione): i bookmaker sanno cose che il modello non sa (formazioni, infortuni, notizie). */
@@ -522,11 +525,11 @@ var Core = (function () {
     [['H', hn], ['A', an]].forEach(function (y) { [[1, 2], [1, 3], [2, 3], [2, 4]].forEach(function (z) { out.mgT.push({ side: y[0], key: y[0] + z.join('-'), label: 'Multigol ' + y[1] + ' ' + z[0] + '-' + z[1], p: sum(function (i, j) { var g = y[0] === 'H' ? i : j; return g >= z[0] && g <= z[1]; }) }); }); });
     var RES = [['1', function (i, j) { return i > j; }], ['X', function (i, j) { return i === j; }], ['2', function (i, j) { return i < j; }], ['1X', function (i, j) { return i >= j; }], ['X2', function (i, j) { return i <= j; }], ['12', function (i, j) { return i !== j; }]];
     var UO = [['Over 1,5', function (i, j) { return i + j > 1.5; }], ['Over 2,5', function (i, j) { return i + j > 2.5; }], ['Under 2,5', function (i, j) { return i + j < 2.5; }], ['Under 3,5', function (i, j) { return i + j < 3.5; }], ['Over 3,5', function (i, j) { return i + j > 3.5; }], ['Under 4,5', function (i, j) { return i + j < 4.5; }]];
-    RES.forEach(function (a) { UO.forEach(function (b) { if (NO_UNDER && b[0].indexOf('Under') === 0) return; out.combo.push({ key: a[0] + '+' + b[0], label: a[0] + ' + ' + b[0], p: sum(function (i, j) { return a[1](i, j) && b[1](i, j); }) }); }); });
+    RES.forEach(function (a) { UO.forEach(function (b) { if ((NO_UNDER && b[0].indexOf('Under') === 0) || a[0] === '12') return; out.combo.push({ key: a[0] + '+' + b[0], label: a[0] + ' + ' + b[0], p: sum(function (i, j) { return a[1](i, j) && b[1](i, j); }) }); }); });
     // le combo con goal/no goal sono state tolte: nel test su 26.396 partite non reggevano (72% previsto, 50% reale)
     // corner: differenza tra i corner delle due squadre
     var par = tf.par || Model.PAR, mh = tf.pr.H.co, ma = tf.pr.A.co;
-    if (mh > 0 && ma > 0) {
+    if (mh > 0 && ma > 0 && statOk(m.lg, 'co')) {
       var ph = [], pa = [], k, d = {}; for (k = 0; k <= 30; k++) { ph.push(Model.nbPmf(k, mh, par.r.co)); pa.push(Model.nbPmf(k, ma, par.r.co)); }
       ph.forEach(function (x, i) { pa.forEach(function (y, j) { d[i - j] = (d[i - j] || 0) + x * y; }); });
       var gt = function (h) { var t = 0; for (var z in d) if (+z > h) t += d[z]; return t; };
@@ -910,7 +913,7 @@ var Core = (function () {
       var gT = lh + la, gw = gT >= 3.1 ? 'una partita da gol' : gT <= 2.2 ? 'una partita bloccata, con pochi gol' : 'una partita con un numero di gol nella media';
       P.push('Secondo ' + (src === 'quote' ? 'modello e quote' : 'il modello') + ' ' + fav + ': 1 ' + al(R.h) + ', X ' + al(R.d) + ', 2 ' + al(R.a) + '. Gol attesi ' + f1x(lh) + ' - ' + f1x(la) + ', quindi ' + gw + ' (over 2,5 ' + al(R.over[2]) + ', goal ' + al(R.gg) + '). Risultati più probabili: ' + R.scores.map(function (s) { return s[0] + '-' + s[1] + ' (' + pc(s[2]) + ')'; }).join(', ') + '.');
     }
-    if (!(comp(m.lg) || {}).gonly) P.push('Numeri attesi: ' + (shotsOk(m.lg) ? 'tiri ' + f1x(exp.sh[0]) + ' - ' + f1x(exp.sh[1]) + ', tiri in porta ' + f1x(exp.sot[0]) + ' - ' + f1x(exp.sot[1]) + ', ' : '') + 'corner ' + f1x(exp.co[0]) + ' - ' + f1x(exp.co[1]) + ' (totale ' + f1x(exp.co[2]) + '), falli ' + f1x(exp.fo[0]) + ' - ' + f1x(exp.fo[1]) + ', gialli ' + f1x(exp.yc[0]) + ' - ' + f1x(exp.yc[1]) + '.');
+    if (!(comp(m.lg) || {}).gonly) P.push('Numeri attesi: ' + (shotsOk(m.lg) ? 'tiri ' + f1x(exp.sh[0]) + ' - ' + f1x(exp.sh[1]) + ', tiri in porta ' + f1x(exp.sot[0]) + ' - ' + f1x(exp.sot[1]) + ', ' : '') + (statOk(m.lg, 'co') ? 'corner ' + f1x(exp.co[0]) + ' - ' + f1x(exp.co[1]) + ' (totale ' + f1x(exp.co[2]) + '), ' : '') + 'falli ' + f1x(exp.fo[0]) + ' - ' + f1x(exp.fo[1]) + ', gialli ' + f1x(exp.yc[0]) + ' - ' + f1x(exp.yc[1]) + '.');
     P.push(h2h.length ? 'Precedenti recenti: ' + h2h.map(function (x) { return tn(x.h) + ' - ' + tn(x.a) + ' ' + x.sc[0] + '-' + x.sc[1]; }).join('; ') + '.' : 'Nessun precedente tra le due squadre negli ultimi due anni di dati.');
     return { H: H, A: A, h2h: h2h, exp: exp, res: R, text: P };
   }

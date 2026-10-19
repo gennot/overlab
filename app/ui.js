@@ -427,7 +427,7 @@
     var key = 't:res', opts = Core.resOptions(S.m, S.tf), byK = {}; (of || []).forEach(function (o) { if (o.kind === 'res') byK[o.stat] = o; });
     var P = function (k, pm) { return byK[k] ? byK[k].p : pm; }, chip = function (lab, k, pm) { var o = byK[k], p = P(k, pm); return '<span class="ln ' + cls(p) + (o && o.p * o.odds >= 1 ? ' val' : '') + '"><small>' + lab + '</small><b>' + pct(p) + '</b>' + (o ? '<small class="od">' + q2(o.odds) + '</small>' : '') + '</span>'; };
     var h = '<section class="card"><h3>' + ic('res') + 'Risultato e gol</h3><div class="trow"><button class="trow-h" data-exp="' + key + '" aria-expanded="' + (S.open === key) + '"><span>' + esc(tn(S.m.h)) + ' - ' + esc(tn(S.m.a)) + '</span><span class="exp">gol attesi <b>' + f1(r.lh) + ' - ' + f1(r.la) + '</b></span></button>' +
-      '<div class="lines">' + chip('1', '1', r.h) + chip('X', 'X', r.d) + chip('2', '2', r.a) + chip('1X', '1X', r.h + r.d) + chip('12', '12', r.h + r.a) + chip('X2', 'X2', r.a + r.d) + '</div>' +
+      '<div class="lines">' + chip('1', '1', r.h) + chip('X', 'X', r.d) + chip('2', '2', r.a) + chip('1X', '1X', r.h + r.d) + chip('X2', 'X2', r.a + r.d) + '</div>' +
       '<div class="lines" style="margin-top:6px">' + chip('goal', 'GG', r.gg) + chip('no goal', 'NG', 1 - r.gg) + [0, 1, 2, 3].map(function (k) { return chip('over ' + ln(k + 0.5), 'O' + k, r.over[k]); }).join('') + '</div>';
     if (S.open === key) h += '<div class="why"><b>Perché</b><ul>' + Core.explainRes(S.cd, S.m, S.tf).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + (of ? '<li>Con le quote la percentuale è una media tra modello e quote.</li>' : '') + '</ul><table class="qt"><tr><th>Giocata</th><th>Prob.</th><th class="qm">minima</th>' + (of ? '<th>Quota</th>' : '') + '</tr>' +
       opts.map(function (o) { var b = byK[o.key], p = b ? b.p : o.p; return (of && !b) ? '' : '<tr><td>' + esc(o.label) + '</td><td>' + pct(p) + '</td><td class="qm">' + quota(p) + '</td>' + (of ? '<td>' + q2(b.odds) + '</td>' : '') + '</tr>'; }).join('') + '</table></div>';
@@ -437,7 +437,7 @@
   function teamsHtml() {
     var ob = obOn(), of = ob ? Core.offers(S.m, S.tf, S.pf) : null, h = obBar() + resCard(of), missing = [];
     if (gonly()) h += '<div class="note">Per questo campionato ci sono solo i risultati delle partite, senza tiri, corner, falli e cartellini: restano esito e gol.</div>';
-    else if (!Core.shotsOk(S.m.lg)) h += '<div class="note">In questo campionato tiri e tiri in porta non si possono giocare: li ho tolti. Restano risultato, gol, corner, falli e cartellini.</div>';
+    else if (!Core.shotsOk(S.m.lg)) h += '<div class="note">In questo campionato ' + (Core.statOk(S.m.lg, 'co') ? 'tiri e tiri in porta non si possono giocare: li ho tolti. Restano risultato, gol, corner, falli e cartellini.' : 'tiri, tiri in porta e corner non li propongo. Restano risultato, gol, falli e cartellini.') + '</div>';
     Model.STATS.forEach(function (s) {
       if (!Core.statOk(S.m.lg, s)) return;
       var st = S.tf.stats[s], body = '';
@@ -897,7 +897,7 @@
     // numeri attesi
     var R = a.res, bar = function (lab, p, cl) { return '<div class="pb"><span>' + lab + '</span><div class="pb-t"><i class="' + cl + '" style="width:' + Math.round(p * 100) + '%"></i></div><b>' + pct(p) + '</b></div>'; };
     if (R) h += '<section class="an"><h2 class="an-h">' + ic('target') + 'Cosa dicono i numeri</h2>' + bar('1 ' + esc(T[S.m.h] ? T[S.m.h].s : ''), R.h, 'g1') + bar('X', R.d, 'g2') + bar('2 ' + esc(T[S.m.a] ? T[S.m.a].s : ''), R.a, 'g3') + bar('Over 2,5', R.over[2], 'g1') + bar('Goal', R.gg, 'g2') +
-      '<div class="xg"><div><small>Gol attesi</small><b>' + f1(a.exp.gH) + ' - ' + f1(a.exp.gA) + '</b></div><div><small>Risultato più probabile</small><b>' + R.scores[0][0] + '-' + R.scores[0][1] + '</b></div>' + (gonly() ? '' : '<div><small>Corner attesi</small><b>' + f1(a.exp.co[2]) + '</b></div>') + '</div>' +
+      '<div class="xg"><div><small>Gol attesi</small><b>' + f1(a.exp.gH) + ' - ' + f1(a.exp.gA) + '</b></div><div><small>Risultato più probabile</small><b>' + R.scores[0][0] + '-' + R.scores[0][1] + '</b></div>' + (gonly() || !Core.statOk(S.m.lg, 'co') ? '' : '<div><small>Corner attesi</small><b>' + f1(a.exp.co[2]) + '</b></div>') + '</div>' +
       '<p class="foot">' + (a.exp.src === 'quote' ? 'Risultato e gol: stima che combina modello e quote del bookmaker, che nei test sono state la previsione migliore.' : 'Stima del modello.') + '</p></section>';
     // giocate suggerite
     var ob = obOn(), list = (ob ? Core.occasions(S.m, S.tf, S.pf) : []).slice(0, 3); if (list.length < 3) list = list.concat(Core.picks(S.m, S.tf, S.pf, ob).filter(function (p) { return list.indexOf(p) < 0; }).slice(0, 3 - list.length));
