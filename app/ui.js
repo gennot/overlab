@@ -147,6 +147,11 @@
       'Cile': R(0, 0, 24, 12, '#fff') + R(0, 12, 24, 12, '#d52b1e') + R(0, 0, 10, 12, '#0039a6') + '<circle cx="5" cy="6" r="2" fill="#fff"/>',
       'Uruguay': R(0, 0, 24, 24, '#fff') + R(0, 5.3, 24, 2.7, '#0038a8') + R(0, 10.7, 24, 2.7, '#0038a8') + R(0, 16, 24, 2.7, '#0038a8') + R(0, 21.3, 24, 2.7, '#0038a8') + R(0, 0, 10, 10, '#fff') + '<circle cx="5" cy="5" r="2.6" fill="#fcd116"/>',
       'Paraguay': H('#d52b1e', '#fff', '#0038a8'),
+      'Canada': R(0, 0, 24, 24, '#fff') + R(0, 0, 6, 24, '#d80621') + R(18, 0, 6, 24, '#d80621') + '<path d="M12 6l1.4 3 2.4-.8-.9 3.3 2-.3-1.5 2.3 1.2 1-3.6.4.1 2.6h-2.2l.1-2.6-3.6-.4 1.2-1L7.1 11.2l2 .3-.9-3.3 2.4.8z" fill="#d80621"/>',
+      'Costa Rica': R(0, 0, 24, 24, '#002b7f') + R(0, 4, 24, 4, '#fff') + R(0, 8, 24, 8, '#ce1126') + R(0, 16, 24, 4, '#fff'),
+      'Guatemala': V('#4997d0', '#fff', '#4997d0'),
+      'Honduras': H('#0073cf', '#fff', '#0073cf') + '<circle cx="12" cy="12" r="1.1" fill="#0073cf"/>',
+      'El Salvador': H('#0047ab', '#fff', '#0047ab'),
       'Ecuador': R(0, 0, 24, 12, '#ffd100') + R(0, 12, 24, 6, '#034ea2') + R(0, 18, 24, 6, '#ed1c24') + '<circle cx="12" cy="12" r="2.6" fill="#7a5c2e"/>',
       'Perù': V('#d91023', '#fff', '#d91023'),
       'Bolivia': H('#d52b1e', '#f9e300', '#007934'),
@@ -159,7 +164,7 @@
   function inSel(m) { if (S.comp !== 'all' && m.lg !== S.comp) return false; if (!S.naz) return true; var c = Core.comp(m.lg); return !!c && c.grp === S.naz; }
   // serie minori: chiuse di partenza nell'elenco di tutte le nazioni (si aprono con un tocco)
   var MINOR = { 'ita.3': 1, 'ita.4': 1, 'eng.5': 1, 'eng.6': 1, 'esp.3': 1, 'esp.4': 1, 'ger.3': 1, 'fra.3': 1, 'ned.2': 1, 'por.2': 1, 'bel.2': 1, 'tur.2': 1, 'sco.2': 1, 'sui.2': 1, 'aut.2': 1, 'den.2': 1, 'nor.2': 1, 'swe.2': 1, 'bra.2': 1, 'arg.2': 1, 'usa.2': 1, 'mex.2': 1 };
-  function isClosed(k, lg) { return S.coll[k] != null ? !!S.coll[k] : !S.naz && S.comp === 'all' && !!MINOR[lg]; }
+  function isClosed(k, lg) { return S.coll[k] != null ? !!S.coll[k] : !S.naz && S.comp === 'all' && (!!MINOR[lg] || /\.[2-9]$/.test(lg)); }
   function homeHtml() {
     var have = {}; (S.up || []).forEach(function (m) { have[m.lg] = 1; });
     var csAll = SNAP && S.up ? Core.COMPS.filter(function (c) { return have[c.id]; }) : Core.COMPS;

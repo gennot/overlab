@@ -77,5 +77,23 @@ module.exports = [
   { lg: 'bol.1', country: 'Bolivia', name: '^(Primera Divisi[oó]n|Divisi[oó]n Profesional)$', type: 'cal' },
   { lg: 'ven.1', country: 'Venezuela', name: '^Primera Divisi[oó]n$', type: 'cal' },
   { lg: 'conmebol.lib', country: 'World', kind: 'Cup', name: '^CONMEBOL Libertadores$', type: 'cal' },
-  { lg: 'conmebol.sud', country: 'World', kind: 'Cup', name: '^CONMEBOL Sudamericana$', type: 'cal' }
+  { lg: 'conmebol.sud', country: 'World', kind: 'Cup', name: '^CONMEBOL Sudamericana$', type: 'cal' },
+  // serie minori delle Americhe (quelle che si trovano di solito sui bookmaker) e Centro America
+  { lg: 'bra.3', country: 'Brazil', name: '^Serie C$', type: 'cal' },
+  { lg: 'bra.4', country: 'Brazil', name: '^Serie D$', type: 'cal' },
+  { lg: 'arg.3', country: 'Argentina', name: '^Primera B Metropolitana$', type: 'cal' },
+  { lg: 'arg.4', country: 'Argentina', name: '^Torneo Federal A$', type: 'cal' },
+  { lg: 'col.2', country: 'Colombia', name: '^Primera B$', type: 'cal' },
+  { lg: 'chi.2', country: 'Chile', name: '^Primera B$', type: 'cal' },
+  { lg: 'uru.2', country: 'Uruguay', name: '^Segunda Divisi[oó]n$', type: 'cal' },
+  { lg: 'par.2', country: 'Paraguay', name: '^Divisi[oó]n Intermedia$', type: 'cal' },
+  { lg: 'ecu.2', country: 'Ecuador', name: '^Serie B$', type: 'cal' },
+  { lg: 'per.2', country: 'Peru', name: '^(Segunda Divisi[oó]n|Liga 2)$', type: 'cal' },
+  { lg: 'usa.3', country: 'USA', name: '^USL League One$', type: 'cal' },
+  { lg: 'usa.4', country: 'USA', name: '^MLS Next Pro$', type: 'cal' },
+  { lg: 'can.1', country: 'Canada', name: '^Canadian Premier League$', type: 'cal' },
+  { lg: 'crc.1', country: 'Costa-Rica', name: '^Primera Divisi[oó]n$', type: 'eu' },
+  { lg: 'gua.1', country: 'Guatemala', name: '^Liga Nacional$', type: 'eu' },
+  { lg: 'hon.1', country: 'Honduras', name: '^Liga Nacional$', type: 'eu' },
+  { lg: 'slv.1', country: 'El-Salvador', name: '^Primera Divisi[oó]n$', type: 'eu' }
 ];
