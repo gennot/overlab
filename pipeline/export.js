@@ -15,12 +15,12 @@ const T = {}; Object.keys(teamsRaw).forEach(id => { const n = Core.itName(teamsR
 // stemmi serviti dal sito stesso (scaricati da collect.js): il browser non contatta altri server
 const logos = {}; fs.mkdirSync(path.join(OUT, 'logos'), { recursive: true });
 // foto dei giocatori (per le card): stesse regole degli stemmi
-const PHD = path.join(STORE, 'players'), photos = []; fs.mkdirSync(path.join(OUT, 'players'), { recursive: true });
+const PHD = path.join(STORE, 'players'), photos = [], validPh = {}; fs.mkdirSync(path.join(OUT, 'players'), { recursive: true });
 // chi non ha la foto riceve da API-Football la stessa sagoma grigia: le immagini identiche ripetute 5+ volte non si usano (resta l'iniziale)
 if (fs.existsSync(PHD)) {
   const crypto = require('crypto'), files = fs.readdirSync(PHD).filter(f => /^[1-9]\d*\.png$/.test(f)), hash = {}, cnt = {};
   files.forEach(f => { const h = crypto.createHash('md5').update(fs.readFileSync(path.join(PHD, f))).digest('hex'); hash[f] = h; cnt[h] = (cnt[h] || 0) + 1; });
-  files.forEach(f => { if (cnt[hash[f]] >= 5) return; fs.copyFileSync(path.join(PHD, f), path.join(OUT, 'players', f)); photos.push(f.slice(0, -4)); });
+  files.forEach(f => { if (cnt[hash[f]] < 5) validPh[f.slice(0, -4)] = 1; });
 }
 Object.keys(teamsRaw).forEach(id => { const f = path.join(STORE, 'logos', id + '.png'); if (fs.existsSync(f)) { fs.copyFileSync(f, path.join(OUT, 'logos', id + '.png')); logos[id] = 'logos/' + id + '.png'; } });
 
@@ -90,6 +90,9 @@ if (CUPS.length) {
 }
 fs.mkdirSync(OUT, { recursive: true });
 fs.readdirSync(OUT).filter(f => /^c-.*\.json$/.test(f)).forEach(f => fs.unlinkSync(path.join(OUT, f)));
+// sul sito vanno solo le foto dei giocatori delle squadre in programma (quelle che le card possono mostrare): il sito resta leggero
+{ const need = {}; Object.keys(mem).forEach(k => { if (k.startsWith('sm:')) (mem[k].P || []).forEach(r => { if (r[4] === 1) need[r[1]] = 1; }); });
+  Object.keys(need).forEach(id => { if (validPh[id]) { fs.copyFileSync(path.join(PHD, id + '.png'), path.join(OUT, 'players', id + '.png')); photos.push(id); } }); }
 fs.writeFileSync(path.join(OUT, 'data.json'), JSON.stringify({ t: state.t || now, mem: base, logos: logos, ph: photos.join(',') }));
 let tot = 0; Object.keys(comp).forEach(c => { const s = JSON.stringify({ mem: comp[c] }); fs.writeFileSync(path.join(OUT, 'c-' + c + '.json'), s); tot += s.length; });
 const nUp = Object.values(base).reduce((s, b) => s + b.m.length, 0) / 3;
