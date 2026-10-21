@@ -87,7 +87,7 @@ module.exports = [
   { lg: 'chi.2', country: 'Chile', name: '^Primera B$', type: 'cal' },
   { lg: 'uru.2', country: 'Uruguay', name: '^Segunda Divisi[oó]n$', type: 'cal' },
   { lg: 'par.2', country: 'Paraguay', name: '^Divisi[oó]n Intermedia$', type: 'cal' },
-  { lg: 'ecu.2', country: 'Ecuador', name: '^Serie B$', type: 'cal' },
+  { lg: 'ecu.2', country: 'Ecuador', name: '^(Liga Pro )?Serie B$', type: 'cal' },
   { lg: 'per.2', country: 'Peru', name: '^(Segunda Divisi[oó]n|Liga 2)$', type: 'cal' },
   { lg: 'usa.3', country: 'USA', name: '^USL League One$', type: 'cal' },
   { lg: 'usa.4', country: 'USA', name: '^MLS Next Pro$', type: 'cal' },
