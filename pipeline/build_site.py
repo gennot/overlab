@@ -95,7 +95,7 @@ function expandX(mem) {
   return out;
 }
 Core.setCompLoader(function (id) {
-  var c = Core.comp(id), files = c && c.cup ? ['c-coppe.json', 'c-' + id + '.json'] : ['c-' + id + '.json'];
+  var c = Core.comp(id), files = c && c.cup ? ['c-' + (c.cf || 'coppe') + '.json', 'c-' + id + '.json'] : ['c-' + id + '.json'];
   return Promise.all(files.map(function (f) {
     return CL[f] || (CL[f] = getJ(f).then(function (d) { Core.store.preload(expandX(d.mem)); }).catch(function (e) { delete CL[f]; throw e; }));
   }));

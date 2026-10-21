@@ -116,9 +116,8 @@ async function byIds(ids) {
   const fresh = l => { const x = state.lids[l.lg]; return x && x.ids && x.ids.length && now - Date.parse(x.d) < 7 * DAY; };
   for (const c of [...new Set(LEAGUES.filter(l => !l.id && !fresh(l)).map(l => l.country))]) {
     const r = await api('/leagues?country=' + encodeURIComponent(c)); if (!r || r.err) continue;
-    const lgs = r.res.filter(x => x.league && x.league.type === 'League');
     LEAGUES.filter(l => !l.id && l.country === c).forEach(l => {
-      const re = new RegExp(l.name, 'i'), hit = lgs.filter(x => re.test(x.league.name));
+      const lgs = r.res.filter(x => x.league && x.league.type === (l.kind || 'League')), re = new RegExp(l.name, 'i'), hit = lgs.filter(x => re.test(x.league.name));
       state.lids[l.lg] = { d: today, ids: hit.map(x => x.league.id), names: hit.map(x => x.league.name) };
       if (!hit.length) state.lids[l.lg].tutti = lgs.map(x => x.league.id + ' ' + x.league.name).slice(0, 60);
       note('campionato ' + l.lg + ': ' + (hit.length ? hit.map(x => x.league.id + ' ' + x.league.name).join(', ') : 'non trovato'));

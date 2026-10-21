@@ -64,5 +64,18 @@ module.exports = [
   { lg: 'cze.1', country: 'Czech-Republic', name: '^(Czech Liga|1\\. Liga|Chance Liga|Fortuna Liga)$', type: 'eu' },
   { lg: 'cro.1', country: 'Croatia', name: '^(HNL|Prva HNL|SuperSport HNL)$', type: 'eu' },
   { lg: 'srb.1', country: 'Serbia', name: '^Super Liga$', type: 'eu' },
-  { lg: 'rou.1', country: 'Romania', name: '^(Liga I|SuperLiga)$', type: 'eu' }
+  { lg: 'rou.1', country: 'Romania', name: '^(Liga I|SuperLiga)$', type: 'eu' },
+  // Americhe (partite di sera e di notte in Italia)
+  { lg: 'mex.1', country: 'Mexico', name: '^Liga MX$', type: 'eu' },
+  { lg: 'mex.2', country: 'Mexico', name: '^Liga de Expansi[oó]n MX$', type: 'eu' },
+  { lg: 'col.1', country: 'Colombia', name: '^Primera A$', type: 'cal' },
+  { lg: 'chi.1', country: 'Chile', name: '^Primera Divisi[oó]n$', type: 'cal' },
+  { lg: 'uru.1', country: 'Uruguay', name: '^Primera Divisi[oó]n( - .*)?$', type: 'cal' },
+  { lg: 'par.1', country: 'Paraguay', name: '^Divisi[oó]n Profesional( - .*)?$', type: 'cal' },
+  { lg: 'ecu.1', country: 'Ecuador', name: '^(Liga Pro|Serie A)$', type: 'cal' },
+  { lg: 'per.1', country: 'Peru', name: '^Primera Divisi[oó]n$', type: 'cal' },
+  { lg: 'bol.1', country: 'Bolivia', name: '^(Primera Divisi[oó]n|Divisi[oó]n Profesional)$', type: 'cal' },
+  { lg: 'ven.1', country: 'Venezuela', name: '^Primera Divisi[oó]n$', type: 'cal' },
+  { lg: 'conmebol.lib', country: 'World', kind: 'Cup', name: '^CONMEBOL Libertadores$', type: 'cal' },
+  { lg: 'conmebol.sud', country: 'World', kind: 'Cup', name: '^CONMEBOL Sudamericana$', type: 'cal' }
 ];

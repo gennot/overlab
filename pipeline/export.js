@@ -77,17 +77,19 @@ Object.keys(mem).forEach(k => {
   const c = lg2c[lg]; if (!c) return; (comp[c] = comp[c] || {})[k] = mem[k]; mem[k].m.forEach(m => { id2c[m.id] = c; });
 });
 Object.keys(mem).forEach(k => { if (!k.startsWith('sm:')) return; const c = id2c[k.slice(3)]; if (c) (comp[c] = comp[c] || {})[k] = mem[k]; });
-// coppe europee: un file comune (coppe complete + campionati in forma compatta) e uno per coppa con i giocatori
-if (CUPS.length) {
-  const shared = {}, ok = m => m.done && m.H && m.A && m.sc && m.H.fo + m.A.fo >= 6 && m.H.sh + m.A.sh >= 5 && m.H.sot <= m.H.sh && m.A.sot <= m.A.sh;
+// coppe (europee, sudamericane): per ogni gruppo un file comune (coppe complete + campionati in forma compatta) e uno per coppa con i giocatori
+const cupG = {}; CUPS.forEach(c => { const g = c.cf || 'coppe'; (cupG[g] = cupG[g] || { pool: c.pool, xpool: c.xpool || [], cups: [] }).cups.push(c); });
+const okSt = m => m.done && m.H && m.A && m.sc && m.H.fo + m.A.fo >= 6 && m.H.sh + m.A.sh >= 5 && m.H.sot <= m.H.sh && m.A.sot <= m.A.sh;
+Object.keys(cupG).forEach(g => {
+  const G = cupG[g], shared = {};
   Object.keys(mem).forEach(k => {
     if (!k.startsWith('sb:')) return; const [, lg, when] = k.split(':'); if (when.length !== 4) return;
-    if (CUPL.indexOf(lg) >= 0) shared[k] = mem[k];
-    else if (DOML.indexOf(lg) >= 0) { const v = mem[k]; shared['sx:' + lg + ':' + when] = { t: v.t, tm: v.tm, r: v.m.filter(ok).map(m => [m.id, Math.round(m.d / 6e4), m.h, m.a, m.sc[0], m.sc[1], m.H.sh, m.H.sot, m.H.co, m.H.fo, m.H.yc, m.A.sh, m.A.sot, m.A.co, m.A.fo, m.A.yc]) }; }
+    if (G.pool.indexOf(lg) >= 0) shared[k] = mem[k];
+    else if (G.xpool.indexOf(lg) >= 0) { const v = mem[k]; shared['sx:' + lg + ':' + when] = { t: v.t, tm: v.tm, r: v.m.filter(okSt).map(m => [m.id, Math.round(m.d / 6e4), m.h, m.a, m.sc[0], m.sc[1], m.H.sh, m.H.sot, m.H.co, m.H.fo, m.H.yc, m.A.sh, m.A.sot, m.A.co, m.A.fo, m.A.yc]) }; }
   });
-  comp.coppe = shared;
-  CUPS.forEach(c => { const o = comp[c.id] = {}; Object.keys(cupSum[c.id] || {}).forEach(id => { if (mem['sm:' + id]) o['sm:' + id] = mem['sm:' + id]; }); });
-}
+  comp[g] = shared;
+  G.cups.forEach(c => { const o = comp[c.id] = {}; Object.keys(cupSum[c.id] || {}).forEach(id => { if (mem['sm:' + id]) o['sm:' + id] = mem['sm:' + id]; }); });
+});
 fs.mkdirSync(OUT, { recursive: true });
 fs.readdirSync(OUT).filter(f => /^c-.*\.json$/.test(f)).forEach(f => fs.unlinkSync(path.join(OUT, f)));
 // sul sito vanno solo le foto dei giocatori delle squadre in programma (quelle che le card possono mostrare): il sito resta leggero

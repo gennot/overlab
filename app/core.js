@@ -5,6 +5,8 @@ var Core = (function () {
   /* Coppe europee: le squadre arrivano da campionati diversi, quindi la forza si stima insieme su coppe, preliminari
      e tutti i campionati dell'app (test su 1.952 partite di coppa: gol stimati meglio del 50% rispetto alle sole coppe) */
   var CUP_L = ['uefa.champions', 'uefa.europa', 'uefa.europa.conf', 'uefa.champions_qual', 'uefa.europa_qual', 'uefa.europa.conf_qual'];
+  // coppe sudamericane: stesso schema delle europee (coppe + campionati di provenienza in un unico calcolo)
+  var SA_CUP_L = ['conmebol.lib', 'conmebol.sud'], SA_L = ['bra.1', 'arg.1', 'col.1', 'chi.1', 'uru.1', 'par.1', 'ecu.1', 'per.1', 'bol.1', 'ven.1', 'bra.2', 'arg.2', 'mex.1'];
   var DOM_L = ['ita.1', 'ita.2', 'eng.1', 'eng.2', 'eng.3', 'eng.4', 'esp.1', 'esp.2', 'ger.1', 'ger.2', 'fra.1', 'fra.2', 'ned.1', 'por.1', 'bel.1', 'tur.1', 'sco.1', 'gre.1', 'aut.1', 'den.1', 'nor.1', 'swe.1', 'bra.1', 'arg.1', 'usa.1', 'sui.1', 'pol.1', 'cze.1', 'cro.1', 'srb.1', 'rou.1'];
   var COMPS = [
     { id: 'ita.1', name: 'Serie A', grp: 'Italia', pool: ['ita.1'] },
@@ -60,6 +62,18 @@ var Core = (function () {
     { id: 'bra.2', name: 'Série B (Brasile)', grp: 'Brasile', pool: ['bra.2'] },
     { id: 'arg.1', name: 'Liga Profesional (Argentina)', grp: 'Argentina', pool: ['arg.1'] },
     { id: 'arg.2', name: 'Primera Nacional (Argentina)', grp: 'Argentina', pool: ['arg.2'] },
+    { id: 'conmebol.lib', name: 'Copa Libertadores', grp: 'Coppe sudamericane', cup: true, cf: 'coppe-sa', str: 1.5, pool: SA_CUP_L, xpool: SA_L },
+    { id: 'conmebol.sud', name: 'Copa Sudamericana', grp: 'Coppe sudamericane', cup: true, cf: 'coppe-sa', str: 1.3, pool: SA_CUP_L, xpool: SA_L },
+    { id: 'mex.1', name: 'Liga MX (Messico)', grp: 'Messico', pool: ['mex.1'] },
+    { id: 'mex.2', name: 'Liga de Expansión (Messico)', grp: 'Messico', pool: ['mex.2'] },
+    { id: 'col.1', name: 'Primera A (Colombia)', grp: 'Colombia', pool: ['col.1'] },
+    { id: 'chi.1', name: 'Primera División (Cile)', grp: 'Cile', pool: ['chi.1'] },
+    { id: 'uru.1', name: 'Primera División (Uruguay)', grp: 'Uruguay', pool: ['uru.1'] },
+    { id: 'par.1', name: 'División Profesional (Paraguay)', grp: 'Paraguay', pool: ['par.1'] },
+    { id: 'ecu.1', name: 'Liga Pro (Ecuador)', grp: 'Ecuador', pool: ['ecu.1'] },
+    { id: 'per.1', name: 'Liga 1 (Perù)', grp: 'Perù', pool: ['per.1'] },
+    { id: 'bol.1', name: 'División Profesional (Bolivia)', grp: 'Bolivia', pool: ['bol.1'] },
+    { id: 'ven.1', name: 'Liga FUTVE (Venezuela)', grp: 'Venezuela', pool: ['ven.1'] },
     { id: 'usa.1', name: 'MLS (Stati Uniti)', grp: 'Stati Uniti', pool: ['usa.1'] },
     { id: 'usa.2', name: 'USL Championship (Stati Uniti)', grp: 'Stati Uniti', pool: ['usa.2'] },
     { id: 'uefa.nations', name: 'Nations League', grp: 'Nazionali', nat: true, pool: ['uefa.nations', 'fifa.worldq.uefa', 'fifa.world', 'fifa.friendly'] }

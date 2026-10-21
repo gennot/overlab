@@ -141,6 +141,16 @@
       'Argentina': H('#74acdf', '#fff', '#74acdf') + '<circle cx="12" cy="12" r="2.3" fill="#f6b40e"/>',
       'Stati Uniti': R(0, 0, 24, 24, '#fff') + R(0, 0, 24, 3.4, '#b22234') + R(0, 6.9, 24, 3.4, '#b22234') + R(0, 13.7, 24, 3.4, '#b22234') + R(0, 20.6, 24, 3.4, '#b22234') + R(0, 0, 11, 12, '#3c3b6e'),
       'Coppe europee': R(0, 0, 24, 24, '#003399') + stars,
+      'Coppe sudamericane': R(0, 0, 24, 24, '#0b2a4a') + '<circle cx="12" cy="12" r="6.5" fill="none" stroke="#f2c14e" stroke-width="2"/><circle cx="12" cy="12" r="2.4" fill="#f2c14e"/>',
+      'Messico': V('#006847', '#fff', '#ce1126') + '<circle cx="12" cy="12" r="2.6" fill="#8c5a2b"/>',
+      'Colombia': R(0, 0, 24, 12, '#fcd116') + R(0, 12, 24, 6, '#003893') + R(0, 18, 24, 6, '#ce1126'),
+      'Cile': R(0, 0, 24, 12, '#fff') + R(0, 12, 24, 12, '#d52b1e') + R(0, 0, 10, 12, '#0039a6') + '<circle cx="5" cy="6" r="2" fill="#fff"/>',
+      'Uruguay': R(0, 0, 24, 24, '#fff') + R(0, 5.3, 24, 2.7, '#0038a8') + R(0, 10.7, 24, 2.7, '#0038a8') + R(0, 16, 24, 2.7, '#0038a8') + R(0, 21.3, 24, 2.7, '#0038a8') + R(0, 0, 10, 10, '#fff') + '<circle cx="5" cy="5" r="2.6" fill="#fcd116"/>',
+      'Paraguay': H('#d52b1e', '#fff', '#0038a8'),
+      'Ecuador': R(0, 0, 24, 12, '#ffd100') + R(0, 12, 24, 6, '#034ea2') + R(0, 18, 24, 6, '#ed1c24') + '<circle cx="12" cy="12" r="2.6" fill="#7a5c2e"/>',
+      'Perù': V('#d91023', '#fff', '#d91023'),
+      'Bolivia': H('#d52b1e', '#f9e300', '#007934'),
+      'Venezuela': H('#ffcc00', '#00247d', '#cf142b') + '<circle cx="12" cy="12" r="1.2" fill="#fff"/><circle cx="8.5" cy="13" r="1" fill="#fff"/><circle cx="15.5" cy="13" r="1" fill="#fff"/>',
       'Nazionali': R(0, 0, 24, 24, '#1565c0') + '<circle cx="12" cy="12" r="7.5" fill="none" stroke="#fff" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="3.4" ry="7.5" fill="none" stroke="#fff" stroke-width="1.2"/><path d="M4.5 12H19.5" stroke="#fff" stroke-width="1.2"/>'
     };
   })();
@@ -148,7 +158,7 @@
   // filtro competizione + nazione
   function inSel(m) { if (S.comp !== 'all' && m.lg !== S.comp) return false; if (!S.naz) return true; var c = Core.comp(m.lg); return !!c && c.grp === S.naz; }
   // serie minori: chiuse di partenza nell'elenco di tutte le nazioni (si aprono con un tocco)
-  var MINOR = { 'ita.3': 1, 'ita.4': 1, 'eng.5': 1, 'eng.6': 1, 'esp.3': 1, 'esp.4': 1, 'ger.3': 1, 'fra.3': 1, 'ned.2': 1, 'por.2': 1, 'bel.2': 1, 'tur.2': 1, 'sco.2': 1, 'sui.2': 1, 'aut.2': 1, 'den.2': 1, 'nor.2': 1, 'swe.2': 1, 'bra.2': 1, 'arg.2': 1, 'usa.2': 1 };
+  var MINOR = { 'ita.3': 1, 'ita.4': 1, 'eng.5': 1, 'eng.6': 1, 'esp.3': 1, 'esp.4': 1, 'ger.3': 1, 'fra.3': 1, 'ned.2': 1, 'por.2': 1, 'bel.2': 1, 'tur.2': 1, 'sco.2': 1, 'sui.2': 1, 'aut.2': 1, 'den.2': 1, 'nor.2': 1, 'swe.2': 1, 'bra.2': 1, 'arg.2': 1, 'usa.2': 1, 'mex.2': 1 };
   function isClosed(k, lg) { return S.coll[k] != null ? !!S.coll[k] : !S.naz && S.comp === 'all' && !!MINOR[lg]; }
   function homeHtml() {
     var have = {}; (S.up || []).forEach(function (m) { have[m.lg] = 1; });
