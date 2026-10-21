@@ -28,6 +28,8 @@ jobs:
         with:
           node-version: 20
       - name: Scarica i dati da API-Football
+        continue-on-error: true   # se API-Football non risponde si pubblica lo stesso con i dati del giro prima
+        timeout-minutes: 20
         env:
           APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
           MAX_CALLS: '40'
@@ -37,6 +39,7 @@ jobs:
           node pipeline/export.js
           python3 pipeline/build_site.py
       - name: Salva lo storico scaricato
+        continue-on-error: true   # un problema nel salvataggio non deve bloccare la pubblicazione
         run: |
           git config user.name "overlab-bot"
           git config user.email "overlab-bot@users.noreply.github.com"
