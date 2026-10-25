@@ -20,6 +20,41 @@ head += '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" hre
 css = src[src.index('<style>'):src.index('</style>') + 8]
 css = css.replace('.bnav-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}', '.bnav-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}')
 body = src[src.index('<body>') + 6:src.index('<script>')]
+# accesso VIP: con il segreto OVERLAB_VIP i dati sono cifrati (pipeline/lock.js) e il sito si apre solo con il codice
+VIP_ON = bool(os.environ.get('OVERLAB_VIP', '').strip())
+VIP = json.load(open(os.path.join(ROOT, 'pipeline', 'vip.json')))
+if VIP_ON:
+    css += '''<style>
+.vip{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto;background:radial-gradient(120% 70% at 50% 0%,rgba(245,187,69,.18),transparent 62%),var(--bg)}
+.vip[hidden]{display:none}
+body.vip-on{overflow:hidden}
+.vip-card{width:100%;max-width:380px;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:30px 22px 22px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.vip-ic{width:60px;height:60px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,#ffd36e,#e08a1e);color:#2a1a04;box-shadow:0 8px 28px rgba(245,187,69,.35)}
+.vip h1{font-size:27px;margin:0 0 8px;letter-spacing:-.02em;color:var(--fg)}
+.vip h1 span{background:linear-gradient(135deg,#ffd36e,#f5a623);-webkit-background-clip:text;background-clip:text;color:transparent}
+.vip p{color:var(--muted);margin:0 0 20px;line-height:1.45;font-size:15px}
+.vip ul{list-style:none;padding:0;margin:0 0 20px;text-align:left;display:grid;gap:8px;font-size:14px;color:var(--fg)}
+.vip li:before{content:"\\2605";color:var(--gold);margin-right:8px}
+.vip input[type=password]{width:100%;box-sizing:border-box;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--fg);font-size:16px;text-align:center;letter-spacing:.06em;outline:none}
+.vip input[type=password]:focus{border-color:var(--gold)}
+.vip label{display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0 16px;font-size:14px;color:var(--muted)}
+.vip input[type=checkbox]{accent-color:#f5bb45;width:18px;height:18px}
+.vip button{width:100%;padding:14px;border:0;border-radius:12px;font-weight:800;font-size:16px;background:linear-gradient(135deg,#ffd36e,#e08a1e);color:#2a1a04;cursor:pointer}
+.vip button:disabled{opacity:.6}
+.vip-e{min-height:20px;margin-top:10px;color:var(--err);font-size:14px}
+.vip small{display:block;margin-top:12px;color:var(--muted);font-size:12px}
+</style>'''
+    body = '''<div id="vip" class="vip" hidden><div class="vip-card">
+<div class="vip-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-2 11H5L3 7zm2 13h14v2H5z"/></svg></div>
+<h1>OverLab <span>VIP</span></h1>
+<p>Questa sezione è riservata ai membri VIP.</p>
+<ul><li>Pronostici e analisi di ogni partita</li><li>Schedine IA</li><li>Risultati live e statistiche dei giocatori</li></ul>
+<form id="vip-f" autocomplete="on"><input id="vip-c" name="password" type="password" autocomplete="current-password" placeholder="Codice VIP" aria-label="Codice VIP" required>
+<label><input type="checkbox" id="vip-r" checked> Ricorda su questo dispositivo</label>
+<button type="submit" id="vip-b">Sblocca VIP</button><div id="vip-e" class="vip-e" role="alert"></div></form>
+<small>Accesso su invito</small>
+</div></div>
+''' + body
 # niente quote: restano Partite, Schedina IA (solo probabilità, senza quote né importi) e Info
 body = re.sub(r'<button data-hv="sure">.*?</button>\n', '', body, flags=re.S)
 # avvertenze sempre visibili in fondo a ogni pagina (gioco responsabile, ADM, nessuna scommessa)
@@ -74,15 +109,22 @@ INFO = '''<template id="info-tpl">
 body = re.sub(r'<template id="info-tpl">.*?</template>\n', INFO, body, flags=re.S)
 js = lambda f: rd(f)
 REPO = os.environ.get('GITHUB_REPOSITORY', 'gennot/overlab')
-boot1 = 'window.OVERLAB_SNAPSHOT = true;\nwindow.OVERLAB_PLAY = true;\nwindow.OVERLAB_LIVE = "https://raw.githubusercontent.com/' + REPO + '/live/live.json";\n'
+boot1 = ('window.OVERLAB_VIP = ' + json.dumps({'s': VIP['salt'], 'n': VIP['it']}) + ';\n' if VIP_ON else '') + 'window.OVERLAB_SNAPSHOT = true;\nwindow.OVERLAB_PLAY = true;\nwindow.OVERLAB_LIVE = "https://raw.githubusercontent.com/' + REPO + '/live/live.json";\n'
 boot2 = '''Core.store.noLocal = true;
 Core.setFetch(function () { return Promise.reject(new Error('offline')); });
 window.OverLabReload = function () {
-  return fetch('data.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  return getJ('data.json')
     .then(function (d) { Core.store.preload(d.mem); window.OVERLAB_T = d.t; window.OVERLAB_LOGOS = d.logos || {}; window.OVERLAB_PH = {}; (d.ph || '').split(',').forEach(function (x) { if (x) window.OVERLAB_PH[x] = 1; }); Core.setBook(null); CL = {}; });
 };
 var CL = {};
-function getJ(f) { return fetch(f, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
+var VIP = window.OVERLAB_VIP || null, VK = null;
+function hexU8(h) { var u = new Uint8Array(h.length / 2); for (var i = 0; i < u.length; i++) u[i] = parseInt(h.substr(i * 2, 2), 16); return u; }
+// file cifrati: 12 byte di IV + dati compressi e cifrati (AES-GCM)
+function vipDec(buf) {
+  return crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(buf, 0, 12) }, VK, new Uint8Array(buf, 12))
+    .then(function (p) { return new Response(new Blob([p]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text(); }).then(JSON.parse);
+}
+function getJ(f) { return fetch(f, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return VIP ? r.arrayBuffer().then(vipDec) : r.json(); }); }
 // campionati in forma compatta (solo partite giocate) usati dalle coppe: non sostituiscono i dati completi già caricati
 function expandX(mem) {
   var out = {};
@@ -101,10 +143,33 @@ Core.setCompLoader(function (id) {
   }));
 });
 '''
-boot3 = '''window.OverLabReload().then(window.OverLabStart, function () {
-  document.getElementById('app').innerHTML = '<div class="note err">Non riesco a caricare i dati. Controlla la connessione e riapri l\\'app.</div>';
-});
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+boot3 = '''function olFail() { document.getElementById('app').innerHTML = '<div class="note err">Non riesco a caricare i dati. Controlla la connessione e riapri l\\'app.</div>'; }
+''' + ('''(function () {
+  var box = document.getElementById('vip'), f = document.getElementById('vip-f'), inp = document.getElementById('vip-c'), btn = document.getElementById('vip-b'), err = document.getElementById('vip-e');
+  var b64 = function (u) { var s = ''; u = new Uint8Array(u); for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
+  var unb64 = function (s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
+  var show = function () { box.hidden = false; document.body.classList.add('vip-on'); setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50); };
+  var hide = function () { box.hidden = true; document.body.classList.remove('vip-on'); };
+  var bad = function (e) { return e && (e.name === 'OperationError' || e instanceof SyntaxError); };
+  if (!window.crypto || !crypto.subtle || typeof DecompressionStream === 'undefined') { show(); err.textContent = 'Aggiorna il browser per usare OverLab.'; btn.disabled = true; return; }
+  var saved = null; try { saved = localStorage.getItem('overlab_vip'); } catch (e) {}
+  (saved ? crypto.subtle.importKey('raw', unb64(saved), 'AES-GCM', true, ['decrypt']).then(function (k) { VK = k; return window.OverLabReload(); }) : Promise.reject({ name: 'OperationError' }))
+    .then(window.OverLabStart, function (e) { if (bad(e)) { VK = null; try { localStorage.removeItem('overlab_vip'); } catch (x) {} show(); } else olFail(); });
+  f.addEventListener('submit', function (ev) {
+    ev.preventDefault(); var code = inp.value.trim(); if (!code) return;
+    btn.disabled = true; btn.textContent = 'Controllo\\u2026'; err.textContent = '';
+    var enc = new TextEncoder();
+    crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveKey'])
+      .then(function (k) { return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: hexU8(VIP.s), iterations: VIP.n, hash: 'SHA-256' }, k, { name: 'AES-GCM', length: 256 }, true, ['decrypt']); })
+      .then(function (k) { VK = k; return window.OverLabReload(); })
+      .then(function () {
+        if (document.getElementById('vip-r').checked) crypto.subtle.exportKey('raw', VK).then(function (raw) { try { localStorage.setItem('overlab_vip', b64(raw)); } catch (e) {} });
+        inp.value = ''; hide(); window.OverLabStart();
+      }, function (e) { VK = null; btn.disabled = false; btn.textContent = 'Sblocca VIP'; err.textContent = bad(e) ? 'Codice non valido. Riprova.' : 'Non riesco a caricare i dati. Controlla la connessione.'; });
+  });
+})();
+''' if VIP_ON else '''window.OverLabReload().then(window.OverLabStart, olFail);
+''') + '''if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
 '''
 html = ('<!doctype html>\n<html lang="it" data-theme="dark">\n<head>\n' + head + css + '\n</head>\n<body>\n' + body + '<script>\n' + boot1 + js('model.js') + '\n' + js('core.js') + '\n' + boot2 + js('ui.js') + '\n' + boot3 + '</script>\n</body>\n</html>\n')
 html = html.replace('<title>OverLab</title>', '<title>OverLab</title>')

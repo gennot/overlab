@@ -35,9 +35,12 @@ jobs:
           MAX_CALLS: '40'
         run: node pipeline/collect.js
       - name: Prepara i file dell'app
+        env:
+          OVERLAB_VIP: ${{ secrets.OVERLAB_VIP }}   # codice di accesso VIP: se c'è, i dati del sito vengono cifrati
         run: |
           node pipeline/export.js
           python3 pipeline/build_site.py
+          node pipeline/lock.js
       - name: Salva lo storico scaricato
         continue-on-error: true   # un problema nel salvataggio non deve bloccare la pubblicazione
         run: |
