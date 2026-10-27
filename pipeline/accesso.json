@@ -1,5 +1,10 @@
 {
   "chiuso": true,
   "nota": "chiuso = sito offline per tutti tranne i dispositivi qui sotto (codici generati su overlabcalcio.it/#attiva). Per rimetterlo online: chiuso false.",
-  "dispositivi": []
+  "dispositivi": [
+    {
+      "nome": "telefono di Gennaro (27/10/2026)",
+      "chiave": "OLDEV1:MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEBcah4RkTHtVD9bn4wnQzVYqI5MqmfioX1n9OGSgVwmyB9xLgrNgk0o/9kRmlg93fAQs4Rf7/H0LFgv/3xs9dHA=="
+    }
+  ]
 }
