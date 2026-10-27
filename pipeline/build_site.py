@@ -20,31 +20,47 @@ head += '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" hre
 css = src[src.index('<style>'):src.index('</style>') + 8]
 css = css.replace('.bnav-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}', '.bnav-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}')
 body = src[src.index('<body>') + 6:src.index('<script>')]
-# accesso VIP: con il segreto OVERLAB_VIP i dati sono cifrati (pipeline/lock.js) e il sito si apre solo con il codice
-VIP_ON = bool(os.environ.get('OVERLAB_VIP', '').strip())
+# accesso riservato (pipeline/accesso.json e pipeline/lock.js): con "chiuso" i dati sono cifrati e il sito si apre solo
+# sui dispositivi autorizzati (attivati da #attiva) o, se c'è il segreto OVERLAB_VIP, con il codice VIP
+ACC = json.load(open(os.path.join(ROOT, 'pipeline', 'accesso.json')))
 VIP = json.load(open(os.path.join(ROOT, 'pipeline', 'vip.json')))
-if VIP_ON:
-    css += '''<style>
-.vip{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto;background:radial-gradient(120% 70% at 50% 0%,rgba(245,187,69,.18),transparent 62%),var(--bg)}
-.vip[hidden]{display:none}
+CODE_ON = bool(os.environ.get('OVERLAB_VIP', '').strip())
+LOCK = bool(ACC.get('chiuso')) or CODE_ON
+if LOCK:
+    css += """<style>
+.vip{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto;background:radial-gradient(120% 70% at 50% 0%,rgba(52,227,160,.10),transparent 62%),var(--bg)}
+.vip[hidden],.vip [hidden]{display:none!important}
 body.vip-on{overflow:hidden}
 .vip-card{width:100%;max-width:380px;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:30px 22px 22px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
 .vip-ic{width:60px;height:60px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,#ffd36e,#e08a1e);color:#2a1a04;box-shadow:0 8px 28px rgba(245,187,69,.35)}
-.vip h1{font-size:27px;margin:0 0 8px;letter-spacing:-.02em;color:var(--fg)}
+.vip-ic.off{background:var(--surface2);color:var(--muted);box-shadow:none;border:1px solid var(--line)}
+.vip-ic.dev{background:linear-gradient(135deg,var(--g1),var(--g2));color:#04140e;box-shadow:0 8px 28px rgba(52,227,160,.3)}
+.vip h1{font-size:26px;margin:0 0 8px;letter-spacing:-.02em;color:var(--fg)}
 .vip h1 span{background:linear-gradient(135deg,#ffd36e,#f5a623);-webkit-background-clip:text;background-clip:text;color:transparent}
-.vip p{color:var(--muted);margin:0 0 20px;line-height:1.45;font-size:15px}
+.vip p{color:var(--muted);margin:0 0 18px;line-height:1.5;font-size:15px}
 .vip ul{list-style:none;padding:0;margin:0 0 20px;text-align:left;display:grid;gap:8px;font-size:14px;color:var(--fg)}
 .vip li:before{content:"\\2605";color:var(--gold);margin-right:8px}
 .vip input[type=password]{width:100%;box-sizing:border-box;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--fg);font-size:16px;text-align:center;letter-spacing:.06em;outline:none}
 .vip input[type=password]:focus{border-color:var(--gold)}
 .vip label{display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0 16px;font-size:14px;color:var(--muted)}
 .vip input[type=checkbox]{accent-color:#f5bb45;width:18px;height:18px}
-.vip button{width:100%;padding:14px;border:0;border-radius:12px;font-weight:800;font-size:16px;background:linear-gradient(135deg,#ffd36e,#e08a1e);color:#2a1a04;cursor:pointer}
+.vip button{width:100%;padding:14px;border:0;border-radius:12px;font-weight:800;font-size:16px;background:linear-gradient(135deg,#ffd36e,#e08a1e);color:#2a1a04;cursor:pointer;margin-top:8px}
+.vip button.dv{background:linear-gradient(135deg,var(--g1),var(--g2));color:#04140e}
 .vip button:disabled{opacity:.6}
+.vip textarea{width:100%;box-sizing:border-box;height:96px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--fg);font:12px/1.4 ui-monospace,monospace;resize:none;word-break:break-all}
 .vip-e{min-height:20px;margin-top:10px;color:var(--err);font-size:14px}
-.vip small{display:block;margin-top:12px;color:var(--muted);font-size:12px}
-</style>'''
-    body = '''<div id="vip" class="vip" hidden><div class="vip-card">
+.vip-ok{color:var(--g1)}
+.vip small{display:block;margin-top:14px;color:var(--muted);font-size:12px}
+.vip small a{color:var(--muted)}
+</style>"""
+    body = """<div id="vip" class="vip" hidden><div class="vip-card">
+<div id="g-off" hidden>
+<div class="vip-ic off"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v9"/><path d="M6.4 6.4a8 8 0 1 0 11.2 0"/></svg></div>
+<h1>OverLab</h1>
+<p>Il sito è momentaneamente offline.<br>Torneremo presto.</p>
+<div id="g-off-e" class="vip-e"></div>
+</div>
+<div id="g-vip" hidden>
 <div class="vip-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-2 11H5L3 7zm2 13h14v2H5z"/></svg></div>
 <h1>OverLab <span>VIP</span></h1>
 <p>Questa sezione è riservata ai membri VIP.</p>
@@ -53,8 +69,19 @@ body.vip-on{overflow:hidden}
 <label><input type="checkbox" id="vip-r" checked> Ricorda su questo dispositivo</label>
 <button type="submit" id="vip-b">Sblocca VIP</button><div id="vip-e" class="vip-e" role="alert"></div></form>
 <small>Accesso su invito</small>
+</div>
+<div id="g-dev" hidden>
+<div class="vip-ic dev"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></svg></div>
+<h1>Attiva questo dispositivo</h1>
+<p id="dv-t">Genera il codice di questo dispositivo e invialo all'amministratore. Funziona solo su questo telefono o computer, quindi non è un problema se qualcuno lo vede.</p>
+<textarea id="dv-k" readonly hidden aria-label="Codice del dispositivo"></textarea>
+<button type="button" class="dv" id="dv-g">Genera codice</button>
+<button type="button" class="dv" id="dv-c" hidden>Copia codice</button>
+<div id="dv-s" class="vip-e" role="status"></div>
+<small><a href="./">Vai al sito</a></small>
+</div>
 </div></div>
-''' + body
+""" + body
 # niente quote: restano Partite, Schedina IA (solo probabilità, senza quote né importi) e Info
 body = re.sub(r'<button data-hv="sure">.*?</button>\n', '', body, flags=re.S)
 # avvertenze sempre visibili in fondo a ogni pagina (gioco responsabile, ADM, nessuna scommessa)
@@ -109,7 +136,7 @@ INFO = '''<template id="info-tpl">
 body = re.sub(r'<template id="info-tpl">.*?</template>\n', INFO, body, flags=re.S)
 js = lambda f: rd(f)
 REPO = os.environ.get('GITHUB_REPOSITORY', 'gennot/overlab')
-boot1 = ('window.OVERLAB_VIP = ' + json.dumps({'s': VIP['salt'], 'n': VIP['it']}) + ';\n' if VIP_ON else '') + 'window.OVERLAB_SNAPSHOT = true;\nwindow.OVERLAB_PLAY = true;\nwindow.OVERLAB_LIVE = "https://raw.githubusercontent.com/' + REPO + '/live/live.json";\n'
+boot1 = ('window.OVERLAB_ACC = ' + json.dumps({'vip': CODE_ON, 's': VIP['salt'], 'n': VIP['it']}) + ';\n' if LOCK else '') + 'window.OVERLAB_SNAPSHOT = true;\nwindow.OVERLAB_PLAY = true;\nwindow.OVERLAB_LIVE = "https://raw.githubusercontent.com/' + REPO + '/live/live.json";\n'
 boot2 = '''Core.store.noLocal = true;
 Core.setFetch(function () { return Promise.reject(new Error('offline')); });
 window.OverLabReload = function () {
@@ -117,14 +144,14 @@ window.OverLabReload = function () {
     .then(function (d) { Core.store.preload(d.mem); window.OVERLAB_T = d.t; window.OVERLAB_LOGOS = d.logos || {}; window.OVERLAB_PH = {}; (d.ph || '').split(',').forEach(function (x) { if (x) window.OVERLAB_PH[x] = 1; }); Core.setBook(null); CL = {}; });
 };
 var CL = {};
-var VIP = window.OVERLAB_VIP || null, VK = null;
+var ACC = window.OVERLAB_ACC || null, VK = null;
 function hexU8(h) { var u = new Uint8Array(h.length / 2); for (var i = 0; i < u.length; i++) u[i] = parseInt(h.substr(i * 2, 2), 16); return u; }
 // file cifrati: 12 byte di IV + dati compressi e cifrati (AES-GCM)
 function vipDec(buf) {
   return crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(buf, 0, 12) }, VK, new Uint8Array(buf, 12))
     .then(function (p) { return new Response(new Blob([p]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text(); }).then(JSON.parse);
 }
-function getJ(f) { return fetch(f, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return VIP ? r.arrayBuffer().then(vipDec) : r.json(); }); }
+function getJ(f) { return fetch(f, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return ACC ? r.arrayBuffer().then(vipDec) : r.json(); }); }
 // campionati in forma compatta (solo partite giocate) usati dalle coppe: non sostituiscono i dati completi già caricati
 function expandX(mem) {
   var out = {};
@@ -145,30 +172,74 @@ Core.setCompLoader(function (id) {
 '''
 boot3 = '''function olFail() { document.getElementById('app').innerHTML = '<div class="note err">Non riesco a caricare i dati. Controlla la connessione e riapri l\\'app.</div>'; }
 ''' + ('''(function () {
-  var box = document.getElementById('vip'), f = document.getElementById('vip-f'), inp = document.getElementById('vip-c'), btn = document.getElementById('vip-b'), err = document.getElementById('vip-e');
+  var $ = function (id) { return document.getElementById(id); };
+  var box = $('vip'), attiva = /^#attiva/.test(location.hash);
   var b64 = function (u) { var s = ''; u = new Uint8Array(u); for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
   var unb64 = function (s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
-  var show = function () { box.hidden = false; document.body.classList.add('vip-on'); setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50); };
+  var hex = function (u) { return Array.prototype.map.call(new Uint8Array(u), function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); };
+  var NOKEY = { name: 'OperationError' }, bad = function (e) { return e && (e.name === 'OperationError' || e instanceof SyntaxError); };
+  var panel = function (id) { ['g-off', 'g-vip', 'g-dev'].forEach(function (x) { $(x).hidden = x !== id; }); box.hidden = false; document.body.classList.add('vip-on'); };
   var hide = function () { box.hidden = true; document.body.classList.remove('vip-on'); };
-  var bad = function (e) { return e && (e.name === 'OperationError' || e instanceof SyntaxError); };
-  if (!window.crypto || !crypto.subtle || typeof DecompressionStream === 'undefined') { show(); err.textContent = 'Aggiorna il browser per usare OverLab.'; btn.disabled = true; return; }
-  var saved = null; try { saved = localStorage.getItem('overlab_vip'); } catch (e) {}
-  (saved ? crypto.subtle.importKey('raw', unb64(saved), 'AES-GCM', true, ['decrypt']).then(function (k) { VK = k; return window.OverLabReload(); }) : Promise.reject({ name: 'OperationError' }))
-    .then(window.OverLabStart, function (e) { if (bad(e)) { VK = null; try { localStorage.removeItem('overlab_vip'); } catch (x) {} show(); } else olFail(); });
-  f.addEventListener('submit', function (ev) {
-    ev.preventDefault(); var code = inp.value.trim(); if (!code) return;
-    btn.disabled = true; btn.textContent = 'Controllo\\u2026'; err.textContent = '';
-    var enc = new TextEncoder();
-    crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveKey'])
-      .then(function (k) { return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: hexU8(VIP.s), iterations: VIP.n, hash: 'SHA-256' }, k, { name: 'AES-GCM', length: 256 }, true, ['decrypt']); })
-      .then(function (k) { VK = k; return window.OverLabReload(); })
+  var locked = function () { if (attiva) devPanel(); else if (ACC.vip) { panel('g-vip'); setTimeout(function () { try { $('vip-c').focus(); } catch (e) {} }, 50); } else panel('g-off'); };
+  if (!window.crypto || !crypto.subtle || typeof DecompressionStream === 'undefined' || !window.indexedDB) { panel('g-off'); $('g-off-e').textContent = 'Aggiorna il browser per usare OverLab.'; return; }
+  // chiave del dispositivo conservata nel browser (la parte segreta non si può esportare)
+  var db = function () { return new Promise(function (res, rej) { var r = indexedDB.open('overlab', 1); r.onupgradeneeded = function () { r.result.createObjectStore('k'); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); }; }); };
+  var dbGet = function (k) { return db().then(function (d) { return new Promise(function (res, rej) { var q = d.transaction('k').objectStore('k').get(k); q.onsuccess = function () { res(q.result); }; q.onerror = function () { rej(q.error); }; }); }); };
+  var dbSet = function (k, v) { return db().then(function (d) { return new Promise(function (res, rej) { var t = d.transaction('k', 'readwrite'); t.objectStore('k').put(v, k); t.oncomplete = function () { res(); }; t.onerror = function () { rej(t.error); }; }); }); };
+  var keys = null, getKeys = function () { return keys || (keys = fetch('k.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).catch(function (e) { keys = null; throw e; })); };
+  var open = function (wk, e) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(e.i) }, wk, unb64(e.w)).then(function (raw) { return crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']); }); };
+  var byDevice = function () {
+    return Promise.all([getKeys(), dbGet('dev')]).then(function (x) {
+      var K = x[0], dev = x[1], e = dev && (K.k || []).filter(function (y) { return y.t === 'd' && y.f === dev.f; })[0]; if (!e) throw NOKEY;
+      return crypto.subtle.importKey('spki', unb64(e.e), { name: 'ECDH', namedCurve: 'P-256' }, false, [])
+        .then(function (eph) { return crypto.subtle.deriveBits({ name: 'ECDH', public: eph }, dev.priv, 256); })
+        .then(function (sh) { return crypto.subtle.digest('SHA-256', sh); })
+        .then(function (h) { return crypto.subtle.importKey('raw', h, 'AES-GCM', false, ['decrypt']); })
+        .then(function (wk) { return open(wk, e); });
+    });
+  };
+  var byCode = function (ck) { return getKeys().then(function (K) { var e = (K.k || []).filter(function (y) { return y.t === 'c'; })[0]; if (!e) throw NOKEY; return open(ck, e); }); };
+  var savedCode = function () { var s = null; try { s = localStorage.getItem('overlab_vip'); } catch (e) {} if (!s || !ACC.vip) return Promise.reject(NOKEY); return crypto.subtle.importKey('raw', unb64(s), 'AES-GCM', true, ['decrypt']).then(byCode); };
+  var start = function (k) { VK = k; return window.OverLabReload().then(function () { if (!attiva) { hide(); window.OverLabStart(); } else devPanel(); }); };
+  byDevice().catch(function (e) { if (bad(e)) return savedCode(); throw e; }).then(start)
+    .catch(function (e) { VK = null; if (bad(e)) { try { if (ACC.vip) localStorage.removeItem('overlab_vip'); } catch (x) {} locked(); } else if (attiva) devPanel(); else olFail(); });
+  // attivazione del dispositivo (overlabcalcio.it/#attiva)
+  function showKey(dev) { $('dv-k').value = 'OLDEV1:' + dev.pub; $('dv-k').hidden = false; $('dv-g').hidden = true; $('dv-c').hidden = false; }
+  function devPanel() {
+    panel('g-dev'); $('dv-s').className = 'vip-e'; $('dv-s').textContent = '';
+    dbGet('dev').then(function (dev) {
+      if (!dev) return;
+      showKey(dev);
+      byDevice().then(function () { $('dv-t').textContent = 'Questo dispositivo è già attivo: il sito qui funziona.'; $('dv-s').className = 'vip-e vip-ok'; $('dv-s').textContent = '\\u2713 Dispositivo autorizzato'; },
+        function () { $('dv-t').textContent = 'Codice già generato: invialo all\\'amministratore. Dopo l\\'attivazione (circa 10 minuti) il sito si apre da solo su questo dispositivo.'; });
+    });
+  }
+  $('dv-g').addEventListener('click', function () {
+    $('dv-g').disabled = true;
+    crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']).then(function (kp) {
+      return crypto.subtle.exportKey('spki', kp.publicKey).then(function (spki) { return crypto.subtle.digest('SHA-256', spki).then(function (h) { return { priv: kp.privateKey, pub: b64(spki), f: hex(h).slice(0, 16) }; }); });
+    }).then(function (dev) { return dbSet('dev', dev).then(function () { showKey(dev); $('dv-t').textContent = 'Ecco il codice di questo dispositivo: copialo e invialo all\\'amministratore. Dopo l\\'attivazione (circa 10 minuti) il sito si apre da solo.'; }); })
+      .catch(function () { $('dv-g').disabled = false; $('dv-s').textContent = 'Non riesco a generare il codice su questo browser.'; });
+  });
+  $('dv-c').addEventListener('click', function () {
+    var t = $('dv-k').value, ok = function () { $('dv-s').className = 'vip-e vip-ok'; $('dv-s').textContent = '\\u2713 Codice copiato'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, function () { $('dv-k').select(); document.execCommand('copy'); ok(); });
+    else { $('dv-k').select(); document.execCommand('copy'); ok(); }
+  });
+  window.addEventListener('hashchange', function () { attiva = /^#attiva/.test(location.hash); if (attiva) devPanel(); });
+  if (ACC.vip) $('vip-f').addEventListener('submit', function (ev) {
+    ev.preventDefault(); var code = $('vip-c').value.trim(), btn = $('vip-b'), err = $('vip-e'); if (!code) return;
+    btn.disabled = true; btn.textContent = 'Controllo\\u2026'; err.textContent = ''; var ck;
+    crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey'])
+      .then(function (k) { return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: hexU8(ACC.s), iterations: ACC.n, hash: 'SHA-256' }, k, { name: 'AES-GCM', length: 256 }, true, ['decrypt']); })
+      .then(function (k) { ck = k; return byCode(k); }).then(start)
       .then(function () {
-        if (document.getElementById('vip-r').checked) crypto.subtle.exportKey('raw', VK).then(function (raw) { try { localStorage.setItem('overlab_vip', b64(raw)); } catch (e) {} });
-        inp.value = ''; hide(); window.OverLabStart();
+        if ($('vip-r').checked) crypto.subtle.exportKey('raw', ck).then(function (raw) { try { localStorage.setItem('overlab_vip', b64(raw)); } catch (e) {} });
+        $('vip-c').value = '';
       }, function (e) { VK = null; btn.disabled = false; btn.textContent = 'Sblocca VIP'; err.textContent = bad(e) ? 'Codice non valido. Riprova.' : 'Non riesco a caricare i dati. Controlla la connessione.'; });
   });
 })();
-''' if VIP_ON else '''window.OverLabReload().then(window.OverLabStart, olFail);
+''' if LOCK else '''window.OverLabReload().then(window.OverLabStart, olFail);
 ''') + '''if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
 '''
 html = ('<!doctype html>\n<html lang="it" data-theme="dark">\n<head>\n' + head + css + '\n</head>\n<body>\n' + body + '<script>\n' + boot1 + js('model.js') + '\n' + js('core.js') + '\n' + boot2 + js('ui.js') + '\n' + boot3 + '</script>\n</body>\n</html>\n')
@@ -182,7 +253,7 @@ manifest = {"name": "OverLab", "short_name": "OverLab", "description": "Statisti
 json.dump(manifest, open(os.path.join(OUT, 'manifest.webmanifest'), 'w'), ensure_ascii=False, indent=1)
 
 SW = '''// cache dell'app per aprirla anche senza rete; i dati si prendono sempre freschi quando c'è connessione
-var C = 'overlab-v1', SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+var C = 'overlab-v2', SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(C).then(function (c) { return c.addAll(SHELL); })); self.skipWaiting(); });
 self.addEventListener('activate', function (e) { e.waitUntil(caches.keys().then(function (k) { return Promise.all(k.filter(function (x) { return x !== C; }).map(function (x) { return caches.delete(x); })); })); self.clients.claim(); });
 self.addEventListener('fetch', function (e) {
