@@ -173,7 +173,7 @@ Core.setCompLoader(function (id) {
 boot3 = '''function olFail() { document.getElementById('app').innerHTML = '<div class="note err">Non riesco a caricare i dati. Controlla la connessione e riapri l\\'app.</div>'; }
 ''' + ('''(function () {
   var $ = function (id) { return document.getElementById(id); };
-  var box = $('vip'), attiva = /^#attiva/.test(location.hash);
+  var box = $('vip'), isAtt = function () { return /^#attiva/i.test(location.hash) || /[?&]attiva\\b/i.test(location.search); }, attiva = isAtt();
   var b64 = function (u) { var s = ''; u = new Uint8Array(u); for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
   var unb64 = function (s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
   var hex = function (u) { return Array.prototype.map.call(new Uint8Array(u), function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); };
@@ -226,7 +226,9 @@ boot3 = '''function olFail() { document.getElementById('app').innerHTML = '<div 
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, function () { $('dv-k').select(); document.execCommand('copy'); ok(); });
     else { $('dv-k').select(); document.execCommand('copy'); ok(); }
   });
-  window.addEventListener('hashchange', function () { attiva = /^#attiva/.test(location.hash); if (attiva) devPanel(); });
+  window.addEventListener('hashchange', function () { attiva = isAtt(); if (attiva) devPanel(); });
+  // 5 tocchi sul simbolo di accensione della pagina offline: apre l'attivazione del dispositivo
+  var taps = 0, tt = 0; $('g-off').querySelector('.vip-ic').addEventListener('click', function () { var n = Date.now(); taps = n - tt < 1500 ? taps + 1 : 1; tt = n; if (taps >= 5) { taps = 0; attiva = true; devPanel(); } });
   if (ACC.vip) $('vip-f').addEventListener('submit', function (ev) {
     ev.preventDefault(); var code = $('vip-c').value.trim(), btn = $('vip-b'), err = $('vip-e'); if (!code) return;
     btn.disabled = true; btn.textContent = 'Controllo\\u2026'; err.textContent = ''; var ck;
