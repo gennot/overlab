@@ -9,7 +9,11 @@ const fs = require('fs'), path = require('path'), crypto = require('crypto'), zl
 const A = require('./accesso.json'), V = require('./vip.json'), OUT = path.join(__dirname, '..', 'site');
 const code = (process.env.OVERLAB_VIP || '').trim();
 if (!A.chiuso && !code) { console.log('::notice::sito aperto a tutti'); process.exit(0); }
-const dk = crypto.randomBytes(32);
+// chiave dei dati stabile tra un giro e l'altro (ricavata da un segreto che c'è già su GitHub): così chi ha il sito aperto
+// durante un aggiornamento continua a leggere i file nuovi. La chiave non compare mai nei file pubblicati.
+const seed = (process.env.OVERLAB_KEYSEED || '').trim();
+const dk = seed ? crypto.createHmac('sha256', seed).update('overlab-dati-v1').digest() : crypto.randomBytes(32);
+if (!seed) console.log('::warning::manca OVERLAB_KEYSEED: chiave dei dati casuale a ogni giro');
 const seal = (key, data) => { const iv = crypto.randomBytes(12), c = crypto.createCipheriv('aes-256-gcm', key, iv); return { iv, ct: Buffer.concat([c.update(data), c.final(), c.getAuthTag()]) }; };
 let n = 0, tot = 0;
 fs.readdirSync(OUT).filter(f => f === 'data.json' || /^c-.*\.json$/.test(f)).forEach(f => {

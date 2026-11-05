@@ -37,6 +37,7 @@ jobs:
       - name: Prepara i file dell'app
         env:
           OVERLAB_VIP: ${{ secrets.OVERLAB_VIP }}   # codice di accesso VIP: se c'è, i dati del sito vengono cifrati
+          OVERLAB_KEYSEED: ${{ secrets.APISPORTS_KEY }}   # da qui si ricava la chiave (stabile) dei dati cifrati
         run: |
           node pipeline/export.js
           python3 pipeline/build_site.py

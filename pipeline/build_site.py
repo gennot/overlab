@@ -151,7 +151,7 @@ function vipDec(buf) {
   return crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(buf, 0, 12) }, VK, new Uint8Array(buf, 12))
     .then(function (p) { return new Response(new Blob([p]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text(); }).then(JSON.parse);
 }
-function getJ(f) { return fetch(f, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return ACC ? r.arrayBuffer().then(vipDec) : r.json(); }); }
+function getJ(f) { return fetch(f, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return ACC ? r.arrayBuffer().then(function (b) { return vipDec(b).catch(function (e) { if (e && e.name === 'OperationError' && window.OL_REKEY) return window.OL_REKEY().then(function () { return vipDec(b); }); throw e; }); }) : r.json(); }); }
 // campionati in forma compatta (solo partite giocate) usati dalle coppe: non sostituiscono i dati completi già caricati
 function expandX(mem) {
   var out = {};
@@ -186,7 +186,7 @@ boot3 = '''function olFail() { document.getElementById('app').innerHTML = '<div 
   var db = function () { return new Promise(function (res, rej) { var r = indexedDB.open('overlab', 1); r.onupgradeneeded = function () { r.result.createObjectStore('k'); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); }; }); };
   var dbGet = function (k) { return db().then(function (d) { return new Promise(function (res, rej) { var q = d.transaction('k').objectStore('k').get(k); q.onsuccess = function () { res(q.result); }; q.onerror = function () { rej(q.error); }; }); }); };
   var dbSet = function (k, v) { return db().then(function (d) { return new Promise(function (res, rej) { var t = d.transaction('k', 'readwrite'); t.objectStore('k').put(v, k); t.oncomplete = function () { res(); }; t.onerror = function () { rej(t.error); }; }); }); };
-  var keys = null, getKeys = function () { return keys || (keys = fetch('k.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).catch(function (e) { keys = null; throw e; })); };
+  var keys = null, getKeys = function () { return keys || (keys = fetch('k.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).catch(function (e) { keys = null; throw e; })); };
   var open = function (wk, e) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(e.i) }, wk, unb64(e.w)).then(function (raw) { return crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']); }); };
   var byDevice = function () {
     return Promise.all([getKeys(), dbGet('dev')]).then(function (x) {
@@ -200,6 +200,7 @@ boot3 = '''function olFail() { document.getElementById('app').innerHTML = '<div 
   };
   var byCode = function (ck) { return getKeys().then(function (K) { var e = (K.k || []).filter(function (y) { return y.t === 'c'; })[0]; if (!e) throw NOKEY; return open(ck, e); }); };
   var savedCode = function () { var s = null; try { s = localStorage.getItem('overlab_vip'); } catch (e) {} if (!s || !ACC.vip) return Promise.reject(NOKEY); return crypto.subtle.importKey('raw', unb64(s), 'AES-GCM', true, ['decrypt']).then(byCode); };
+  window.OL_REKEY = function () { keys = null; return byDevice().catch(function (e) { if (bad(e)) return savedCode(); throw e; }).then(function (k) { VK = k; }); };
   var start = function (k) { VK = k; return window.OverLabReload().then(function () { if (!attiva) { hide(); window.OverLabStart(); } else devPanel(); }); };
   byDevice().catch(function (e) { if (bad(e)) return savedCode(); throw e; }).then(start)
     .catch(function (e) { VK = null; if (bad(e)) { try { if (ACC.vip) localStorage.removeItem('overlab_vip'); } catch (x) {} locked(); } else if (attiva) devPanel(); else olFail(); });
