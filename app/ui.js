@@ -1026,6 +1026,8 @@
   window.addEventListener('hashchange', route);
   $('#refresh').addEventListener('click', function () {
     var r = cur(), p = r.split('/'), again = function () { if (p[0] === 'm') openMatch(p[1], p[2]); else loadHome(true); };
+    // sito chiuso: si ricarica la pagina intera, così arrivano insieme codice e dati nuovi
+    if (SNAP && window.OVERLAB_ACC) { location.reload(); return; }
     if (SNAP) { S.up = null; S.err = null; render(); window.OverLabReload().then(function () { Core.resetCache(); again(); }, function () { S.err = 'Non riesco a ricaricare i dati. Riprova tra poco.'; render(); }); return; }
     if (p[0] === 'm') Core.loadComp(p[1], true).then(again, again); else again();
   });
