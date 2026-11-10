@@ -152,6 +152,7 @@
       'Guatemala': V('#4997d0', '#fff', '#4997d0'),
       'Honduras': H('#0073cf', '#fff', '#0073cf') + '<circle cx="12" cy="12" r="1.1" fill="#0073cf"/>',
       'El Salvador': H('#0047ab', '#fff', '#0047ab'),
+      'Calcio femminile': R(0, 0, 24, 24, '#8e24aa') + '<circle cx="12" cy="9" r="4.2" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 13.2v6.6M9 17h6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>',
       'Ecuador': R(0, 0, 24, 12, '#ffd100') + R(0, 12, 24, 6, '#034ea2') + R(0, 18, 24, 6, '#ed1c24') + '<circle cx="12" cy="12" r="2.6" fill="#7a5c2e"/>',
       'Perù': V('#d91023', '#fff', '#d91023'),
       'Bolivia': H('#d52b1e', '#f9e300', '#007934'),
@@ -163,7 +164,7 @@
   // filtro competizione + nazione
   function inSel(m) { if (S.comp !== 'all' && m.lg !== S.comp) return false; if (!S.naz) return true; var c = Core.comp(m.lg); return !!c && c.grp === S.naz; }
   // serie minori: chiuse di partenza nell'elenco di tutte le nazioni (si aprono con un tocco)
-  var MINOR = { 'ita.3': 1, 'ita.4': 1, 'eng.5': 1, 'eng.6': 1, 'esp.3': 1, 'esp.4': 1, 'ger.3': 1, 'fra.3': 1, 'ned.2': 1, 'por.2': 1, 'bel.2': 1, 'tur.2': 1, 'sco.2': 1, 'sui.2': 1, 'aut.2': 1, 'den.2': 1, 'nor.2': 1, 'swe.2': 1, 'bra.2': 1, 'arg.2': 1, 'usa.2': 1, 'mex.2': 1 };
+  var MINOR = { 'eng.w1': 1, 'esp.w1': 1, 'ger.w1': 1, 'fra.w1': 1, 'ita.w1': 1, 'ita.3': 1, 'ita.4': 1, 'eng.5': 1, 'eng.6': 1, 'esp.3': 1, 'esp.4': 1, 'ger.3': 1, 'fra.3': 1, 'ned.2': 1, 'por.2': 1, 'bel.2': 1, 'tur.2': 1, 'sco.2': 1, 'sui.2': 1, 'aut.2': 1, 'den.2': 1, 'nor.2': 1, 'swe.2': 1, 'bra.2': 1, 'arg.2': 1, 'usa.2': 1, 'mex.2': 1 };
   function isClosed(k, lg) { return S.coll[k] != null ? !!S.coll[k] : !S.naz && S.comp === 'all' && (!!MINOR[lg] || /\.[2-9]$/.test(lg)); }
   function homeHtml() {
     var have = {}; (S.up || []).forEach(function (m) { have[m.lg] = 1; });

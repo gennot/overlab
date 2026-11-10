@@ -26,6 +26,7 @@ var Core = (function () {
     { id: 'esp.2', name: 'LaLiga 2', grp: 'Spagna', pool: ['esp.2'] },
     { id: 'esp.3', name: 'Primera Federación', grp: 'Spagna', pool: ['esp.3'] },
     { id: 'esp.4', name: 'Segunda Federación', grp: 'Spagna', pool: ['esp.4'] },
+    { id: 'esp.cdr', name: 'Copa del Rey', grp: 'Spagna', cup: true, gres: true, cf: 'coppa-esp', pool: ['esp.cdr'], xpool: ['esp.1', 'esp.2', 'esp.3', 'esp.4'], tiers: { 'esp.1': 1, 'esp.2': 2, 'esp.3': 3, 'esp.4': 4 }, tx: 5 },
     { id: 'ger.1', name: 'Bundesliga', grp: 'Germania', pool: ['ger.1'] },
     { id: 'ger.2', name: '2. Bundesliga', grp: 'Germania', pool: ['ger.2'] },
     { id: 'ger.3', name: '3. Liga', grp: 'Germania', pool: ['ger.3'] },
@@ -46,6 +47,7 @@ var Core = (function () {
     { id: 'sui.2', name: 'Challenge League (Svizzera)', grp: 'Svizzera', pool: ['sui.2'] },
     { id: 'aut.1', name: 'Bundesliga (Austria)', grp: 'Austria', pool: ['aut.1'] },
     { id: 'aut.2', name: '2. Liga (Austria)', grp: 'Austria', pool: ['aut.2'] },
+    { id: 'aut.cup', name: "Coppa d'Austria (ÖFB-Cup)", grp: 'Austria', cup: true, gres: true, cf: 'coppa-aut', pool: ['aut.cup'], xpool: ['aut.1', 'aut.2'], tiers: { 'aut.1': 1, 'aut.2': 2 }, tx: 3 },
     { id: 'gre.1', name: 'Super League (Grecia)', grp: 'Grecia', pool: ['gre.1'] },
     { id: 'den.1', name: 'Superliga (Danimarca)', grp: 'Danimarca', pool: ['den.1'] },
     { id: 'den.2', name: '1. Division (Danimarca)', grp: 'Danimarca', pool: ['den.2'] },
@@ -88,6 +90,12 @@ var Core = (function () {
     { id: 'gua.1', name: 'Liga Nacional (Guatemala)', grp: 'Guatemala', pool: ['gua.1'] },
     { id: 'hon.1', name: 'Liga Nacional (Honduras)', grp: 'Honduras', pool: ['hon.1'] },
     { id: 'slv.1', name: 'Primera División (El Salvador)', grp: 'El Salvador', pool: ['slv.1'] },
+    { id: 'uefa.wcl', name: 'Champions League femminile', grp: 'Calcio femminile', cup: true, gres: true, cf: 'coppe-f', pool: ['uefa.wcl'], xpool: ['eng.w1', 'esp.w1', 'ger.w1', 'fra.w1', 'ita.w1'] },
+    { id: 'eng.w1', name: 'WSL (Inghilterra, femminile)', grp: 'Calcio femminile', pool: ['eng.w1'] },
+    { id: 'esp.w1', name: 'Liga F (Spagna, femminile)', grp: 'Calcio femminile', pool: ['esp.w1'] },
+    { id: 'ger.w1', name: 'Frauen-Bundesliga (Germania)', grp: 'Calcio femminile', pool: ['ger.w1'] },
+    { id: 'fra.w1', name: 'Première Ligue (Francia, femminile)', grp: 'Calcio femminile', pool: ['fra.w1'] },
+    { id: 'ita.w1', name: 'Serie A femminile', grp: 'Calcio femminile', pool: ['ita.w1'] },
     { id: 'can.1', name: 'Canadian Premier League', grp: 'Canada', pool: ['can.1'] },
     { id: 'usa.1', name: 'MLS (Stati Uniti)', grp: 'Stati Uniti', pool: ['usa.1'] },
     { id: 'usa.2', name: 'USL Championship (Stati Uniti)', grp: 'Stati Uniti', pool: ['usa.2'] },
@@ -206,6 +214,8 @@ var Core = (function () {
       // serie minori senza statistiche (tiri, corner, falli): si usano i soli risultati e si stimano solo esito e gol
       var z = { sh: 0, sot: 0, co: 0, fo: 0, yc: 0 };
       c.gonly = !c.cup && !c.nat && gOnly.length >= 20 && played.filter(function (m) { return m.lg === id; }).length < 0.3 * (gOnly.length + played.length);
+      // coppe nazionali e calcio femminile: tante squadre senza statistiche, si usano i risultati di coppa e campionati insieme
+      if (c.gres) { c.gonly = true; played = []; gOnly = all.filter(function (m) { return m.done && m.sc && isFinite(m.sc[0]) && isFinite(m.sc[1]); }); }
       if (c.gonly) played = played.concat(gOnly.map(function (m) { return { id: m.id, d: m.d, lg: m.lg, h: m.h, a: m.a, done: true, st: m.st, nm: m.nm, sc: m.sc, H: Object.assign({ g: m.sc[0] }, z), A: Object.assign({ g: m.sc[1] }, z) }; }));
       played.sort(function (a, b) { return a.d - b.d; });
       var par = Model.PAR;
@@ -218,7 +228,21 @@ var Core = (function () {
       if (c.nat) { par = JSON.parse(JSON.stringify(Model.PAR)); Model.STATS.forEach(function (s) { par.half[s] = 540; par.k[s] = Math.max(par.k[s], 6); }); par.half.g = 700; par.k.g = 6; par.newTeam = { att: 1, def: 1 }; }
       if (!played.length) throw new Error('Partita senza dati: lo storico di questa competizione è in arrivo, riprova tra qualche ora.');
       var now = Date.now(), fit = Model.fitAll(played, now, par);
+      if (c.tiers) tierAdj(fit, all, c);
       return (compCache[id] = { t: Date.now(), comp: c, played: played, all: all, fit: fit, par: par });
+    });
+  }
+
+  // coppe nazionali: le squadre di serie diverse non si incontrano in campionato, quindi la forza stimata vale dentro la propria serie.
+  // Ogni categoria in meno: gol fatti x0,77 e gol subiti x1,26 (circa 0,6 a 2,6 tra prima e quarta serie, come nei primi turni di coppa).
+  // Chi non gioca in nessuna delle serie seguite (dilettanti) prende la categoria tx.
+  var TIER_A = 0.77, TIER_D = 1.26;
+  function tierAdj(fit, all, c) {
+    var last = {}, seen = {}, f = fit.g; if (!f) return;
+    all.forEach(function (m) { seen[m.h] = seen[m.a] = 1; var t = c.tiers[m.lg]; if (!t) return; [m.h, m.a].forEach(function (x) { if (!last[x] || m.d > last[x].d) last[x] = { d: m.d, t: t }; }); });
+    Object.keys(seen).forEach(function (x) {
+      var t = last[x] ? last[x].t : c.tx;
+      f.A[x] = (f.A[x] != null ? f.A[x] : 1) * Math.pow(TIER_A, t - 1); f.D[x] = (f.D[x] != null ? f.D[x] : 1) * Math.pow(TIER_D, t - 1);
     });
   }
 

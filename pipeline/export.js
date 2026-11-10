@@ -85,6 +85,7 @@ Object.keys(cupG).forEach(g => {
   Object.keys(mem).forEach(k => {
     if (!k.startsWith('sb:')) return; const [, lg, when] = k.split(':'); if (when.length !== 4) return;
     if (G.pool.indexOf(lg) >= 0) shared[k] = mem[k];
+    else if (G.xpool.indexOf(lg) >= 0 && G.cups.some(c => c.gres)) { const v = mem[k]; shared['sr:' + lg + ':' + when] = { t: v.t, tm: v.tm, r: v.m.filter(m => m.done && m.sc).map(m => [m.id, Math.round(m.d / 6e4), m.h, m.a, m.sc[0], m.sc[1]]) }; }   // coppe con i soli risultati
     else if (G.xpool.indexOf(lg) >= 0) { const v = mem[k]; shared['sx:' + lg + ':' + when] = { t: v.t, tm: v.tm, r: v.m.filter(okSt).map(m => [m.id, Math.round(m.d / 6e4), m.h, m.a, m.sc[0], m.sc[1], m.H.sh, m.H.sot, m.H.co, m.H.fo, m.H.yc, m.A.sh, m.A.sot, m.A.co, m.A.fo, m.A.yc]) }; }
   });
   comp[g] = shared;

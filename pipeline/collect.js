@@ -130,7 +130,8 @@ async function byIds(ids) {
   if (full && !stop) state.calFull = today;
   // 2) dettagli delle partite finite che non li hanno ancora (prima le più recenti, prima i campionati principali)
   const ord = {}; LEAGUES.forEach((l, i) => { ord[l.lg] = i; });
-  const need = () => allFx().filter(m => DONE[m.s] && !m.det && m.d > now - 2 * 366 * DAY).sort((a, b) => (b.d > now - 10 * DAY) - (a.d > now - 10 * DAY) || ord[a.lg] - ord[b.lg] || b.d - a.d);
+  const NOSTAT = {}; LEAGUES.forEach(l => { if (l.nostat) NOSTAT[l.lg] = 1; });
+  const need = () => allFx().filter(m => DONE[m.s] && !m.det && !NOSTAT[m.lg] && m.d > now - 2 * 366 * DAY).sort((a, b) => (b.d > now - 10 * DAY) - (a.d > now - 10 * DAY) || ord[a.lg] - ord[b.lg] || b.d - a.d);
   // 3) formazioni ufficiali delle partite che iniziano a breve
   const soon = allFx().filter(m => !DONE[m.s] && !GONE[m.s] && m.d > now - 15 * 6e4 && m.d < now + 80 * 6e4 && !m.lu).map(m => m.id);
   if (soon.length) await byIds(soon);

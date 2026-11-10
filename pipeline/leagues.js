@@ -95,5 +95,14 @@ module.exports = [
   { lg: 'crc.1', country: 'Costa-Rica', name: '^Primera Divisi[oó]n$', type: 'eu' },
   { lg: 'gua.1', country: 'Guatemala', name: '^Liga Nacional$', type: 'eu' },
   { lg: 'hon.1', country: 'Honduras', name: '^Liga Nacional$', type: 'eu' },
-  { lg: 'slv.1', country: 'El-Salvador', name: '^Primera Divisi[oó]n$', type: 'eu' }
+  { lg: 'slv.1', country: 'El-Salvador', name: '^Primera Divisi[oó]n$', type: 'eu' },
+  // coppe nazionali e calcio femminile: si usano i soli risultati (nostat: niente download delle statistiche partita per partita)
+  { lg: 'esp.cdr', country: 'Spain', kind: 'Cup', name: '^Copa del Rey$', type: 'eu', nostat: true },
+  { lg: 'aut.cup', country: 'Austria', kind: 'Cup', name: '^[ÖO]FB[- ]?Cup$', type: 'eu', nostat: true },
+  { lg: 'uefa.wcl', country: 'World', kind: 'Cup', name: '^UEFA Champions League Women$', type: 'eu', nostat: true },
+  { lg: 'eng.w1', country: 'England', name: "^(FA )?WSL$|^Women'?s Super League$", type: 'eu', nostat: true },
+  { lg: 'esp.w1', country: 'Spain', name: '^(Liga F|Primera Divisi[oó]n Femenina)$', type: 'eu', nostat: true },
+  { lg: 'ger.w1', country: 'Germany', name: '^Frauen[- ]Bundesliga$', type: 'eu', nostat: true },
+  { lg: 'fra.w1', country: 'France', name: '^(Feminine Division 1|Premi[eè]re Ligue|D1 Arkema|Division 1 F[eé]minine)$', type: 'eu', nostat: true },
+  { lg: 'ita.w1', country: 'Italy', name: '^Serie A (Women|Femminile)$', type: 'eu', nostat: true }
 ];
