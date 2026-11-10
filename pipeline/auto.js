@@ -3,7 +3,7 @@
 'use strict';
 const DAY = 864e5;
 // escluse: amichevoli tra club, giovanili e squadre riserve (gli Europei e i Mondiali Under 21 restano)
-const EXCL = /friendlies clubs|club friendl|youth|junior|juvenil|reserve|primavera|\bU-?1[0-9]\b|\bU-?2[0-3]\b/i;
+const EXCL = /friendlies clubs|club friendl|youth|junior|juvenil|reserve|primavera|\bU-?1[0-9]\b|\bU-?2[0-3]\b|premier league 2|premier league (international )?cup|professional development|development league|elite development/i;
 const KEEP_YOUTH = /U-?21.*(euro|championship|qualif)|euro.*U-?21|world cup.*U-?20|U-?20.*world cup/i;
 const excluded = name => EXCL.test(name || '') && !KEEP_YOUTH.test(name || '');
 // nazionali (non club): si stimano tutte insieme, perché le stesse squadre giocano qualificazioni, tornei e amichevoli
