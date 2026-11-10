@@ -141,7 +141,7 @@ boot2 = '''Core.store.noLocal = true;
 Core.setFetch(function () { return Promise.reject(new Error('offline')); });
 window.OverLabReload = function () {
   return getJ('data.json')
-    .then(function (d) { Core.store.preload(d.mem); window.OVERLAB_T = d.t; window.OVERLAB_LOGOS = d.logos || {}; window.OVERLAB_PH = {}; (d.ph || '').split(',').forEach(function (x) { if (x) window.OVERLAB_PH[x] = 1; }); Core.setBook(null); CL = {}; });
+    .then(function (d) { if (d.auto) Core.addComps(d.auto); Core.store.preload(d.mem); window.OVERLAB_T = d.t; window.OVERLAB_LOGOS = d.logos || {}; window.OVERLAB_PH = {}; (d.ph || '').split(',').forEach(function (x) { if (x) window.OVERLAB_PH[x] = 1; }); Core.setBook(null); CL = {}; });
 };
 var CL = {};
 var ACC = window.OVERLAB_ACC || null, VK = null;

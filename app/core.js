@@ -174,6 +174,8 @@ var Core = (function () {
   // statistiche credibili: nei preliminari delle coppe a volte i tiri sono solo i gol e falli e corner sono a zero
   function statsOk(m) { return m.H.fo + m.A.fo >= 6 && m.H.sh + m.A.sh >= 5 && m.H.sot <= m.H.sh && m.A.sot <= m.A.sh; }
   function comp(id) { for (var i = 0; i < COMPS.length; i++) if (COMPS[i].id === id) return COMPS[i]; return null; }
+  // competizioni trovate da sole (arrivano con i dati): si aggiungono all'elenco
+  function addComps(list) { (list || []).forEach(function (c) { if (!comp(c.id)) COMPS.push(c); }); }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
   // prossime partite: tabellone del mese (leggero), tutte le competizioni
@@ -226,6 +228,8 @@ var Core = (function () {
       // divario non allargato (gStretch 1) e stime più vicine alla media per chi ha poche partite (k 8) erano più precise e meno ottimiste
       if (c.gonly) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gMix = 1; par.gStretch = 1; par.k.g = 8; }
       if (c.nat) { par = JSON.parse(JSON.stringify(Model.PAR)); Model.STATS.forEach(function (s) { par.half[s] = 540; par.k[s] = Math.max(par.k[s], 6); }); par.half.g = 700; par.k.g = 6; par.newTeam = { att: 1, def: 1 }; }
+      if (c.nat && c.gonly) { par.gMix = 1; par.gStretch = 1; }   // nazionali con i soli risultati
+      if (c.gres && played.length < 8) played = [];
       if (!played.length) throw new Error('Partita senza dati: lo storico di questa competizione è in arrivo, riprova tra qualche ora.');
       var now = Date.now(), fit = Model.fitAll(played, now, par);
       if (c.tiers) tierAdj(fit, all, c);
@@ -1029,7 +1033,7 @@ var Core = (function () {
   }
 
   return { COMPS: COMPS, STAT_IT: STAT_IT, PST: PST, PST_IT: PST_IT, teams: teams, comp: comp, store: store, setFetch: setFetch,
-    parseEvent: parseEvent, parseSummary: parseSummary, loadUpcoming: loadUpcoming, loadComp: loadComp, resetCache: resetCache, itName: itName, teamForecast: teamForecast,
+    addComps: addComps, parseEvent: parseEvent, parseSummary: parseSummary, loadUpcoming: loadUpcoming, loadComp: loadComp, resetCache: resetCache, itName: itName, teamForecast: teamForecast,
     loadPlayers: loadPlayers, playersForecast: playersForecast, occasions: occasions, occAcross: occAcross, picks: picks, surePicks: surePicks, sureAcross: sureAcross, resOptions: resOptions, explainRes: explainRes, explainTeam: explainTeam, explainPlayer: explainPlayer,
     lastN: lastN, f1: f1, pct: pct, posGroup: posGroup, buildSquad: buildSquad, lineup: lineup, playerForecast: playerForecast, psOf: psOf, pPlayer: pPlayer, setCompLoader: setCompLoader, setBook: setBook, bookOf: bookOf, bookInfo: bookInfo, offers: offers, bestOf: bestOf, slipCandidates: slipCandidates, analysis: analysis, shotsOk: shotsOk, statOk: statOk, buildSlip: buildSlip, optSlip: optSlip, mainPick: mainPick, extraMarkets: extraMarkets, simScore: simScore, isUnder: isUnder, explainExtra: explainExtra, grpOf: function (c) { return GRP[c] || (NOMAIN[c] ? 'f' : 'p'); }, modelOffers: modelOffers, allOffers: allOffers, legKey: legKey, CAT_IT: CAT_IT, DUO: DUO };
 })();

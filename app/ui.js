@@ -160,12 +160,14 @@
       'Nazionali': R(0, 0, 24, 24, '#1565c0') + '<circle cx="12" cy="12" r="7.5" fill="none" stroke="#fff" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="3.4" ry="7.5" fill="none" stroke="#fff" stroke-width="1.2"/><path d="M4.5 12H19.5" stroke="#fff" stroke-width="1.2"/>'
     };
   })();
-  function flag(g) { var f = FLAGS[g]; return f ? '<span class="flg" aria-hidden="true"><svg viewBox="0 0 24 24" preserveAspectRatio="none">' + f + '</svg></span>' : ''; }
+  // nazioni senza bandiera disegnata (competizioni trovate da sole): un mappamondo
+  var GLOBE = '<rect width="24" height="24" fill="#1d2632"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8fa3b5" stroke-width="1.6"/><path d="M5 12h14M12 5c2.4 2.2 2.4 11.8 0 14M12 5c-2.4 2.2-2.4 11.8 0 14" fill="none" stroke="#8fa3b5" stroke-width="1.4"/>';
+  function flag(g) { var f = FLAGS[g] || GLOBE; return '<span class="flg" aria-hidden="true"><svg viewBox="0 0 24 24" preserveAspectRatio="none">' + f + '</svg></span>'; }
   // filtro competizione + nazione
   function inSel(m) { if (S.comp !== 'all' && m.lg !== S.comp) return false; if (!S.naz) return true; var c = Core.comp(m.lg); return !!c && c.grp === S.naz; }
   // serie minori: chiuse di partenza nell'elenco di tutte le nazioni (si aprono con un tocco)
   var MINOR = { 'eng.w1': 1, 'esp.w1': 1, 'ger.w1': 1, 'fra.w1': 1, 'ita.w1': 1, 'ita.3': 1, 'ita.4': 1, 'eng.5': 1, 'eng.6': 1, 'esp.3': 1, 'esp.4': 1, 'ger.3': 1, 'fra.3': 1, 'ned.2': 1, 'por.2': 1, 'bel.2': 1, 'tur.2': 1, 'sco.2': 1, 'sui.2': 1, 'aut.2': 1, 'den.2': 1, 'nor.2': 1, 'swe.2': 1, 'bra.2': 1, 'arg.2': 1, 'usa.2': 1, 'mex.2': 1 };
-  function isClosed(k, lg) { return S.coll[k] != null ? !!S.coll[k] : !S.naz && S.comp === 'all' && (!!MINOR[lg] || /\.[2-9]$/.test(lg)); }
+  function isClosed(k, lg) { return S.coll[k] != null ? !!S.coll[k] : !S.naz && S.comp === 'all' && (!!MINOR[lg] || /\.[2-9]$/.test(lg) || /^auto\./.test(lg)); }
   function homeHtml() {
     var have = {}; (S.up || []).forEach(function (m) { have[m.lg] = 1; });
     var csAll = SNAP && S.up ? Core.COMPS.filter(function (c) { return have[c.id]; }) : Core.COMPS;

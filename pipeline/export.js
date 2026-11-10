@@ -11,6 +11,8 @@ const DAY = 864e5, now = Date.now(), Y = new Date(now).getUTCFullYear();
 const DONE = { FT: 1, AET: 1, PEN: 1 }, LIVE = { '1H': 1, HT: 1, '2H': 1, ET: 1, BT: 1, P: 1, LIVE: 1, INT: 1 }, GONE = { PST: 1, CANC: 1, ABD: 1, AWD: 1, WO: 1, SUSP: 1 };
 
 const teamsRaw = readJ('teams.json', {}), state = readJ('state.json', {});
+// competizioni trovate da sole nel calendario (pipeline/auto.js)
+const Auto = require('./auto'), ALL_L = LEAGUES.concat(Auto.leagues(state));
 const T = {}; Object.keys(teamsRaw).forEach(id => { const n = Core.itName(teamsRaw[id].n); T[id] = { n: n, s: n, l: '' }; });
 // stemmi serviti dal sito stesso (scaricati da collect.js): il browser non contatta altri server
 const logos = {}; fs.mkdirSync(path.join(OUT, 'logos'), { recursive: true });
@@ -31,17 +33,18 @@ function toApp(m) {
   if (o.done) { o.sc = m.sc || null; if (m.H && m.A) { o.H = m.H; o.A = m.A; } else { o.H = o.A = null; } }
   return o;
 }
-const fxBy = {}; LEAGUES.forEach(l => { fxBy[l.lg] = Object.values(readJ('fx/' + l.lg + '.json', {})).filter(m => !GONE[m.s]).sort((a, b) => a.d - b.d); });
+const fxBy = {}; ALL_L.forEach(l => { fxBy[l.lg] = Object.values(readJ('fx/' + l.lg + '.json', {})).filter(m => !GONE[m.s]).sort((a, b) => a.d - b.d); });
 const mem = {};
 const tmOf = list => { const tm = {}; list.forEach(m => { tm[m.h] = T[m.h] || { n: m.h, s: m.h, l: '' }; tm[m.a] = T[m.a] || { n: m.a, s: m.a, l: '' }; }); return tm; };
 // tabelloni per anno solare
-LEAGUES.forEach(l => [Y - 1, Y].forEach(y => {
+ALL_L.forEach(l => [Y - 1, Y].forEach(y => {
   const list = fxBy[l.lg].filter(m => new Date(m.d).getUTCFullYear() === y).map(toApp);
   if (list.length) mem['sb:' + l.lg + ':' + y] = { t: now, m: list, tm: tmOf(list) };
 }));
 // prossime partite per competizione (le chiavi mensili lette all'avvio)
 const months = [0, 1, 2].map(k => { const d = new Date(Date.UTC(Y, new Date(now).getUTCMonth() + k, 1)); return d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, '0'); });
 const sumIds = {}, upSoon = [], cupSum = {};
+const autoC = Auto.comps(state, fxBy, LEAGUES, Core.COMPS, now); Core.addComps(autoC);
 Core.COMPS.forEach(c => {
   const up = (fxBy[c.id] || []).filter(m => !DONE[m.s] && m.d > now - 3 * 36e5 && m.d < now + 45 * DAY).map(toApp);
   months.forEach(k => { mem['sb:' + c.id + ':' + k] = { t: now, m: up, tm: tmOf(up) }; });
@@ -96,7 +99,8 @@ fs.readdirSync(OUT).filter(f => /^c-.*\.json$/.test(f)).forEach(f => fs.unlinkSy
 // sul sito vanno solo le foto dei giocatori delle squadre in programma (quelle che le card possono mostrare): il sito resta leggero
 { const need = {}; Object.keys(mem).forEach(k => { if (k.startsWith('sm:')) (mem[k].P || []).forEach(r => { if (r[4] === 1) need[r[1]] = 1; }); });
   Object.keys(need).forEach(id => { if (validPh[id]) { fs.copyFileSync(path.join(PHD, id + '.png'), path.join(OUT, 'players', id + '.png')); photos.push(id); } }); }
-fs.writeFileSync(path.join(OUT, 'data.json'), JSON.stringify({ t: state.t || now, mem: base, logos: logos, ph: photos.join(',') }));
+fs.writeFileSync(path.join(OUT, 'data.json'), JSON.stringify({ t: state.t || now, mem: base, logos: logos, ph: photos.join(','), auto: autoC }));
 let tot = 0; Object.keys(comp).forEach(c => { const s = JSON.stringify({ mem: comp[c] }); fs.writeFileSync(path.join(OUT, 'c-' + c + '.json'), s); tot += s.length; });
 const nUp = Object.values(base).reduce((s, b) => s + b.m.length, 0) / 3;
+console.log('competizioni trovate da sole mostrate: ' + autoC.length);
 console.log('esportato: ' + Object.keys(comp).length + ' competizioni, ' + Math.round(tot / 1e6 * 10) / 10 + ' MB di storico, ' + Math.round(nUp) + ' prossime partite');

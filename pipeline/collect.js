@@ -23,6 +23,10 @@ const state = readJ('state.json', { seasons: {}, calFull: '', blocked: {}, log: 
 const teams = readJ('teams.json', {});
 const fx = {};                                          // lg -> { id -> partita }
 LEAGUES.forEach(l => { fx[l.lg] = readJ('fx/' + l.lg + '.json', {}); });
+// competizioni trovate da sole nel calendario (pipeline/auto.js): solo risultati, niente statistiche partita per partita
+const Auto = require('./auto');
+state.auto = state.auto || {};
+Auto.leagues(state).forEach(l => { BYID[l.id] = l; ACTIVE.push(l); fx[l.lg] = readJ('fx/' + l.lg + '.json', {}); });
 
 let calls = 0, remaining = null, stop = '', paid = false;
 function note(s) { console.log(s); state.log = (state.log || []).concat(new Date().toISOString().slice(0, 16) + ' ' + s).slice(-60); }
@@ -53,6 +57,7 @@ async function api(q) {
 
 // stagione corrente per tipo di campionato
 function seasonsOf(l, now) {
+  if (l.seasons) return l.seasons;
   const d = new Date(now), y = d.getUTCFullYear(), m = d.getUTCMonth() + 1;
   if (l.type === 'eu') { const s = m >= 7 ? y : y - 1; return [s - 1, s]; }
   return [y - 1, y];
@@ -124,10 +129,33 @@ async function byIds(ids) {
     });
   }
   LEAGUES.filter(l => !l.id).forEach(l => ((state.lids[l.lg] || {}).ids || []).forEach(id => { const e = Object.assign({}, l, { id: id, found: true }); ACTIVE.push(e); BYID[id] = e; }));
+  // una competizione trovata da sola che nel frattempo è entrata nell'elenco fisso non si tiene due volte
+  Object.keys(state.auto).forEach(id => { if (BYID[id] && !BYID[id].auto) { delete state.auto[id]; for (let i = ACTIVE.length - 1; i >= 0; i--) if (ACTIVE[i].auto && String(ACTIVE[i].id) === String(id)) ACTIVE.splice(i, 1); } });
   // 1) calendario: una volta al giorno i prossimi 7 giorni, a ogni giro ieri/oggi/domani
   const full = state.calFull !== today, days = full ? [-1, 0, 1, 2, 3, 4, 5, 6, 7] : [-1, 0, 1];
-  for (const k of days) { const r = await api('/fixtures?date=' + ymd(now + k * DAY) + '&timezone=Europe/Rome'); if (r && r.res) r.res.forEach(base); }
+  //    nel calendario ci sono tutte le partite del mondo: le competizioni che mancano si segnano qui (escluse amichevoli di club e giovanili)
+  const cands = {};
+  const cand = f => {
+    const L = f.league || {}; if (!L.id || BYID[L.id] || Auto.excluded(L.name)) return;
+    const c = cands[L.id] = cands[L.id] || { id: L.id, name: L.name, country: L.country, season: L.season, fx: [], up: Infinity };
+    c.fx.push(f); const t = (f.fixture.timestamp || 0) * 1000; if (t > now - 2 * 36e5) c.up = Math.min(c.up, t);
+  };
+  for (const k of days) {
+    const r = await api('/fixtures?date=' + ymd(now + k * DAY) + '&timezone=Europe/Rome');
+    if (r && r.res) r.res.forEach(f => { const a = state.auto[f.league && f.league.id]; if (a && f.league.season > a.season) a.season = f.league.season; if (!base(f)) cand(f); });
+  }
   if (full && !stop) state.calFull = today;
+  // competizioni nuove: una richiesta per sapere se è campionato o coppa, poi si tengono le partite (lo storico arriva al punto 4)
+  let nNew = 0;
+  for (const c of Object.values(cands).sort((a, b) => a.up - b.up).slice(0, +(process.env.MAX_NEW || 150))) {
+    if (stop) break;
+    const r = await api('/leagues?id=' + c.id); if (!r || r.err) continue;
+    const L = (r.res[0] || {}).league || {}, C = (r.res[0] || {}).country || {}, name = L.name || c.name, country = C.name || c.country;
+    if (Auto.excluded(name)) continue;
+    const a = state.auto[c.id] = { id: c.id, name: name, country: country, season: c.season, cup: L.type === 'Cup', nat: Auto.isNat(name, country), added: today };
+    const l = Auto.leagues({ auto: { [c.id]: a } })[0]; BYID[c.id] = l; ACTIVE.push(l); fx[l.lg] = fx[l.lg] || {}; c.fx.forEach(base); nNew++;
+  }
+  if (nNew) note('competizioni trovate da sole nel calendario: ' + nNew + ' nuove (in tutto ' + Object.keys(state.auto).length + ')');
   // 2) dettagli delle partite finite che non li hanno ancora (prima le più recenti, prima i campionati principali)
   const ord = {}; LEAGUES.forEach((l, i) => { ord[l.lg] = i; });
   const NOSTAT = {}; LEAGUES.forEach(l => { if (l.nostat) NOSTAT[l.lg] = 1; });
@@ -170,6 +198,12 @@ async function byIds(ids) {
     Object.values(fx[l.lg]).forEach(m => { if (m.P && !keep[m.id]) delete m.P; });
   });
   LEAGUES.forEach(l => writeJ('fx/' + l.lg + '.json', fx[l.lg]));
+  // competizioni trovate da sole: senza partite da 40 giorni (né in arrivo) si tolgono
+  for (const id of Object.keys(state.auto)) {
+    const lg = 'auto.' + id, ms = Object.values(fx[lg] || {});
+    if (state.auto[id].added !== today && !ms.some(m => Math.abs(m.d - now) < 40 * DAY)) { delete state.auto[id]; delete fx[lg]; try { fs.unlinkSync(path.join(ROOT, 'fx', lg + '.json')); } catch (e) { } continue; }
+    writeJ('fx/' + lg + '.json', fx[lg] || {});
+  }
   writeJ('teams.json', teams);
   // stemmi: una copia sul sito, così chi apre OverLab non si collega ad altri server (le immagini non contano nel limite di richieste)
   const LOGOS = path.join(ROOT, 'logos'); fs.mkdirSync(LOGOS, { recursive: true }); let nl = 0;

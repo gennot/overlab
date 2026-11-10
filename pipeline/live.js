@@ -7,6 +7,7 @@ const LEAGUES = require('./leagues');
 const KEY = process.env.APISPORTS_KEY || '', BASE = process.env.API_BASE || 'https://v3.football.api-sports.io';
 const state = (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'store', 'state.json'), 'utf8')); } catch (e) { return {}; } })();
 const ids = new Set(); LEAGUES.forEach(l => { if (l.id) ids.add(l.id); (((state.lids || {})[l.lg] || {}).ids || []).forEach(i => ids.add(i)); });
+Object.keys(state.auto || {}).forEach(i => ids.add(+i));   // competizioni trovate da sole
 const LIVE = { '1H': 1, HT: 1, '2H': 1, ET: 1, BT: 1, P: 1, LIVE: 1, INT: 1, SUSP: 1 }, DONE = { FT: 1, AET: 1, PEN: 1 };
 const romeYmd = t => new Date(t).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
 (async () => {
