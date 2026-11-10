@@ -26,6 +26,7 @@ LEAGUES.forEach(l => { fx[l.lg] = readJ('fx/' + l.lg + '.json', {}); });
 // competizioni trovate da sole nel calendario (pipeline/auto.js): solo risultati, niente statistiche partita per partita
 const Auto = require('./auto');
 state.auto = state.auto || {};
+Object.keys(state.auto).forEach(id => { if (Auto.excluded(state.auto[id].name)) { delete state.auto[id]; try { fs.unlinkSync(path.join(ROOT, 'fx', 'auto.' + id + '.json')); } catch (e) { } } });   // escluse dopo (es. giovanili)
 Auto.leagues(state).forEach(l => { BYID[l.id] = l; ACTIVE.push(l); fx[l.lg] = readJ('fx/' + l.lg + '.json', {}); });
 
 let calls = 0, remaining = null, stop = '', paid = false;
