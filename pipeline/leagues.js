@@ -98,7 +98,7 @@ module.exports = [
   { lg: 'slv.1', country: 'El-Salvador', name: '^Primera Divisi[oó]n$', type: 'eu' },
   // coppe nazionali e calcio femminile: si usano i soli risultati (nostat: niente download delle statistiche partita per partita)
   { lg: 'esp.cdr', country: 'Spain', kind: 'Cup', name: '^Copa del Rey$', type: 'eu', nostat: true },
-  { lg: 'aut.cup', country: 'Austria', kind: 'Cup', name: '^[ÖO]FB[- ]?Cup$', type: 'eu', nostat: true },
+  { lg: 'aut.cup', country: 'Austria', kind: 'Cup', name: '^([ÖO]FB[- ]?)?Cup$', type: 'eu', nostat: true },
   { lg: 'uefa.wcl', country: 'World', kind: 'Cup', name: '^UEFA Champions League Women$', type: 'eu', nostat: true },
   { lg: 'eng.w1', country: 'England', name: "^(FA )?WSL$|^Women'?s Super League$", type: 'eu', nostat: true },
   { lg: 'esp.w1', country: 'Spain', name: '^(Liga F|Primera Divisi[oó]n Femenina)$', type: 'eu', nostat: true },
