@@ -56,3 +56,6 @@ jobs:
           path: site
       - id: deploy
         uses: actions/deploy-pages@v4
+        continue-on-error: true   # se GitHub Pages è lento a pubblicare, il giro successivo ripubblica: niente email di errore
+        with:
+          timeout: 1200000
