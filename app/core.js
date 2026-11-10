@@ -234,10 +234,10 @@ var Core = (function () {
   }
 
   // coppe nazionali: le squadre di serie diverse non si incontrano in campionato, quindi la forza stimata vale dentro la propria serie.
-  // Ogni categoria in meno: gol fatti x0,70 e gol subiti x1,40. Test in avanti su 197 partite di Copa del Rey (stima fatta solo con i dati
-  // di prima): senza correzione l'esito più probabile usciva il 41% delle volte, con questa il 66% (logloss da 1,09 a 0,82).
-  // Chi non gioca in nessuna delle serie seguite (dilettanti) prende la categoria tx.
-  var TIER_A = 0.70, TIER_D = 1.40;
+  // Ogni categoria in meno: gol fatti x0,78 e gol subiti x1,38. Test in avanti su 197 partite di Copa del Rey (stima fatta solo con i dati
+  // di prima): senza correzione l'esito più probabile usciva il 41% delle volte, con questa il 67% (logloss da 1,09 a 0,81), gol medi
+  // stimati in linea con quelli veri anche tra squadre lontane di categoria. Chi non gioca nelle serie seguite (dilettanti) prende la categoria tx.
+  var TIER_A = 0.78, TIER_D = 1.38;
   function tierAdj(fit, all, c) {
     var last = {}, seen = {}, f = fit.g; if (!f) return;
     all.forEach(function (m) { seen[m.h] = seen[m.a] = 1; var t = c.tiers[m.lg]; if (!t) return; [m.h, m.a].forEach(function (x) { if (!last[x] || m.d > last[x].d) last[x] = { d: m.d, t: t }; }); });
