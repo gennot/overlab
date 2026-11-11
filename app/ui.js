@@ -167,7 +167,8 @@
   function inSel(m) { if (S.comp !== 'all' && m.lg !== S.comp) return false; if (!S.naz) return true; var c = Core.comp(m.lg); return !!c && c.grp === S.naz; }
   // serie minori: chiuse di partenza nell'elenco di tutte le nazioni (si aprono con un tocco)
   var MINOR = { 'eng.w1': 1, 'esp.w1': 1, 'ger.w1': 1, 'fra.w1': 1, 'ita.w1': 1, 'ita.3': 1, 'ita.4': 1, 'eng.5': 1, 'eng.6': 1, 'esp.3': 1, 'esp.4': 1, 'ger.3': 1, 'fra.3': 1, 'ned.2': 1, 'por.2': 1, 'bel.2': 1, 'tur.2': 1, 'sco.2': 1, 'sui.2': 1, 'aut.2': 1, 'den.2': 1, 'nor.2': 1, 'swe.2': 1, 'bra.2': 1, 'arg.2': 1, 'usa.2': 1, 'mex.2': 1 };
-  function isClosed(k, lg) { return S.coll[k] != null ? !!S.coll[k] : !S.naz && S.comp === 'all' && (!!MINOR[lg] || /\.[2-9]$/.test(lg) || /^auto\./.test(lg)); }
+  // tutte le competizioni partono aperte (si chiudono con un tocco): così nessuna partita resta nascosta
+  function isClosed(k, lg) { return S.coll[k] != null ? !!S.coll[k] : false; }
   function homeHtml() {
     var have = {}; (S.up || []).forEach(function (m) { have[m.lg] = 1; });
     var csAll = SNAP && S.up ? Core.COMPS.filter(function (c) { return have[c.id]; }) : Core.COMPS;

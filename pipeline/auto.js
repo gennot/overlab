@@ -41,7 +41,8 @@ function comps(state, fxBy, LEAGUES, COMPS, now) {
     if (!live(a.lg)) return;
     const nm = NAME_IT[a.name] || a.name;
     if (a.nat) { out.push({ id: a.lg, name: nm, grp: /\bU-?(1[5-9]|2[0-3])\b/i.test(a.name) ? 'Nazionali giovanili' : 'Nazionali', nat: 1, cup: 1, gres: 1, cf: 'naz-x', pool: natPool, xpool: [], auto: 1 }); return; }
-    const grp = a.country === 'World' ? 'Coppe internazionali' : itCountry(a.country), title = a.country === 'World' ? nm : nm + ' (' + itCountry(a.country) + ')';
+    const fem = /women|femen|f[eé]min|femmin|kvinde|frauen|\bdam/i.test(a.name);
+    const grp = a.country === 'World' ? (fem ? 'Calcio femminile' : 'Coppe internazionali') : itCountry(a.country), title = a.country === 'World' ? nm : nm + ' (' + itCountry(a.country) + ')';
     if (a.cup && a.country !== 'World') {
       // coppa nazionale: insieme ai campionati della stessa nazione, con la categoria di ogni squadra
       const pre = PREFIX[a.country], known = pre ? LEAGUES.filter(l => new RegExp('^' + pre + '\\.[1-9]$').test(l.lg)).map(l => l.lg) : [];
