@@ -13,9 +13,9 @@ var Core = (function () {
     { id: 'ita.2', name: 'Serie B', grp: 'Italia', pool: ['ita.2'] },
     { id: 'ita.3', name: 'Serie C', grp: 'Italia', pool: ['ita.3'] },
     { id: 'ita.4', name: 'Serie D', grp: 'Italia', pool: ['ita.4'] },
-    { id: 'uefa.champions', name: 'Champions League', grp: 'Coppe europee', cup: true, str: 1.8, pool: CUP_L, xpool: DOM_L },
-    { id: 'uefa.europa', name: 'Europa League', grp: 'Coppe europee', cup: true, str: 1.8, pool: CUP_L, xpool: DOM_L },
-    { id: 'uefa.europa.conf', name: 'Conference League', grp: 'Coppe europee', cup: true, str: 1.2, pool: CUP_L, xpool: DOM_L },
+    { id: 'uefa.champions', name: 'Champions League', grp: 'Coppe europee', cup: true, str: 1.25, glvl: 1.03, pool: CUP_L, xpool: DOM_L },
+    { id: 'uefa.europa', name: 'Europa League', grp: 'Coppe europee', cup: true, str: 1.25, glvl: 1.03, pool: CUP_L, xpool: DOM_L },
+    { id: 'uefa.europa.conf', name: 'Conference League', grp: 'Coppe europee', cup: true, str: 1.25, glvl: 1.03, pool: CUP_L, xpool: DOM_L },
     { id: 'eng.1', name: 'Premier League', grp: 'Inghilterra', pool: ['eng.1'] },
     { id: 'eng.2', name: 'Championship', grp: 'Inghilterra', pool: ['eng.2'] },
     { id: 'eng.3', name: 'League One', grp: 'Inghilterra', pool: ['eng.3'] },
@@ -64,7 +64,7 @@ var Core = (function () {
     { id: 'bra.2', name: 'Série B (Brasile)', grp: 'Brasile', pool: ['bra.2'] },
     { id: 'arg.1', name: 'Liga Profesional (Argentina)', grp: 'Argentina', pool: ['arg.1'] },
     { id: 'arg.2', name: 'Primera Nacional (Argentina)', grp: 'Argentina', pool: ['arg.2'] },
-    { id: 'conmebol.lib', name: 'Copa Libertadores', grp: 'Coppe sudamericane', cup: true, cf: 'coppe-sa', str: 1.5, pool: SA_CUP_L, xpool: SA_L },
+    { id: 'conmebol.lib', name: 'Copa Libertadores', grp: 'Coppe sudamericane', cup: true, cf: 'coppe-sa', str: 1.25, pool: SA_CUP_L, xpool: SA_L },
     { id: 'conmebol.sud', name: 'Copa Sudamericana', grp: 'Coppe sudamericane', cup: true, cf: 'coppe-sa', str: 1.3, pool: SA_CUP_L, xpool: SA_L },
     { id: 'mex.1', name: 'Liga MX (Messico)', grp: 'Messico', pool: ['mex.1'] },
     { id: 'mex.2', name: 'Liga de Expansión (Messico)', grp: 'Messico', pool: ['mex.2'] },
@@ -223,7 +223,10 @@ var Core = (function () {
       var par = Model.PAR;
       // coppe: in Champions ed Europa League i favoriti vincono più spesso che in campionato (divario gol più largo, tarato
       // su metà delle partite e confermato sull'altra metà), in Conference no; tiri, corner e falli variano di più
-      if (c.cup) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gStretch = c.str || 1.5; par.r = { sh: 12, sot: 16, co: 8, fo: 90, yc: 1e9 }; par.rTot = { sh: 60, sot: 60, co: 30, fo: 90, yc: 22 }; }
+      // coppe: test in avanti su 1.191 partite (ultimi 14 mesi) coppa per coppa. Divario tra le squadre 1,25 (prima 1,8 in Champions ed
+      // Europa League: i favoriti erano sovrastimati, 58% stimato contro 57% vero in Champions, 56% contro 54% in Europa League) e gol +3%
+      // nelle coppe europee: logloss Champions 0,978 -> 0,963, Europa League 1,009 -> 0,993, Conference e Libertadores migliori anch'esse
+      if (c.cup) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gStretch = c.str || 1.5; if (c.glvl) par.gLvl = c.glvl; par.r = { sh: 12, sot: 16, co: 8, fo: 90, yc: 1e9 }; par.rTot = { sh: 60, sot: 60, co: 30, fo: 90, yc: 22 }; }
       // senza tiri in porta i gol attesi vengono solo dai gol. Test in avanti su 11.306 partite di serie minori (ott 2025 - ott 2026):
       // divario non allargato (gStretch 1) e stime più vicine alla media per chi ha poche partite (k 8) erano più precise e meno ottimiste
       if (c.gonly) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gMix = 1; par.gStretch = 1; par.k.g = 8; }
