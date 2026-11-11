@@ -2,13 +2,17 @@
 // quelle che non sono nell'elenco fisso (leagues.js) si aggiungono qui da sole, con i soli risultati (esito e gol).
 'use strict';
 const DAY = 864e5;
-// escluse: amichevoli tra club, giovanili e squadre riserve (gli Europei e i Mondiali Under 21 restano)
+// escluse: amichevoli tra club, giovanili dei club e squadre riserve. Le nazionali giovanili (Under 17, 19, 20, 21...) restano.
 const EXCL = /friendlies clubs|club friendl|youth|junior|juvenil|reserve|primavera|\bU-?1[0-9]\b|\bU-?2[0-3]\b|premier league 2|premier league (international )?cup|professional development|development league|elite development/i;
-const KEEP_YOUTH = /U-?21.*(euro|championship|qualif)|euro.*U-?21|world cup.*U-?20|U-?20.*world cup/i;
-const excluded = name => EXCL.test(name || '') && !KEEP_YOUTH.test(name || '');
+const YOUTH_NAT = /\bU-?(1[5-9]|2[0-3])\b/i, CLUB_YOUTH = /youth league|club|futures|next gen|academy/i;
+const excluded = (name, country) => {
+  name = name || '';
+  if (!EXCL.test(name)) return false;
+  return !(country === 'World' && YOUTH_NAT.test(name) && !CLUB_YOUTH.test(name));   // nazionale giovanile: si tiene
+};
 // nazionali (non club): si stimano tutte insieme, perché le stesse squadre giocano qualificazioni, tornei e amichevoli
 const NAT = /friendl|world cup|nations league|qualif|\beuro\b|euro championship|copa am[eé]rica|asian cup|africa cup|african nations|gold cup|olymp|arab cup|gulf cup|concacaf nations|nations cup/i;
-const NOT_NAT = /club|champions|libertadores|sudamericana|confederation cup|cup winners|recopa|league cup/i;
+const NOT_NAT = /club|champions league|champions cup|libertadores|sudamericana|confederation cup|cup winners|recopa|league cup/i;
 const isNat = (name, country) => country === 'World' && NAT.test(name || '') && !NOT_NAT.test(name || '');
 // nazione -> sigla dei campionati già seguiti (per le coppe nazionali: la categoria di ogni squadra)
 const PREFIX = { Italy: 'ita', England: 'eng', Spain: 'esp', Germany: 'ger', France: 'fra', Netherlands: 'ned', Portugal: 'por', Belgium: 'bel', Turkey: 'tur', Scotland: 'sco', Switzerland: 'sui', Austria: 'aut', Denmark: 'den', Norway: 'nor', Sweden: 'swe', Poland: 'pol', 'Czech-Republic': 'cze', Croatia: 'cro', Serbia: 'srb', Romania: 'rou', Greece: 'gre', Brazil: 'bra', Argentina: 'arg', USA: 'usa', Mexico: 'mex', Colombia: 'col', Chile: 'chi', Uruguay: 'uru', Paraguay: 'par', Ecuador: 'ecu', Peru: 'per', Bolivia: 'bol', Venezuela: 'ven', Canada: 'can', 'Costa-Rica': 'crc', Guatemala: 'gua', Honduras: 'hon', 'El-Salvador': 'slv' };
@@ -36,7 +40,7 @@ function comps(state, fxBy, LEAGUES, COMPS, now) {
   AUTO.forEach(a => {
     if (!live(a.lg)) return;
     const nm = NAME_IT[a.name] || a.name;
-    if (a.nat) { out.push({ id: a.lg, name: nm, grp: 'Nazionali', nat: 1, cup: 1, gres: 1, cf: 'naz-x', pool: natPool, xpool: [], auto: 1 }); return; }
+    if (a.nat) { out.push({ id: a.lg, name: nm, grp: /\bU-?(1[5-9]|2[0-3])\b/i.test(a.name) ? 'Nazionali giovanili' : 'Nazionali', nat: 1, cup: 1, gres: 1, cf: 'naz-x', pool: natPool, xpool: [], auto: 1 }); return; }
     const grp = a.country === 'World' ? 'Coppe internazionali' : itCountry(a.country), title = a.country === 'World' ? nm : nm + ' (' + itCountry(a.country) + ')';
     if (a.cup && a.country !== 'World') {
       // coppa nazionale: insieme ai campionati della stessa nazione, con la categoria di ogni squadra

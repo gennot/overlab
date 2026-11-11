@@ -26,7 +26,7 @@ LEAGUES.forEach(l => { fx[l.lg] = readJ('fx/' + l.lg + '.json', {}); });
 // competizioni trovate da sole nel calendario (pipeline/auto.js): solo risultati, niente statistiche partita per partita
 const Auto = require('./auto');
 state.auto = state.auto || {};
-Object.keys(state.auto).forEach(id => { if (Auto.excluded(state.auto[id].name)) { delete state.auto[id]; try { fs.unlinkSync(path.join(ROOT, 'fx', 'auto.' + id + '.json')); } catch (e) { } } });   // escluse dopo (es. giovanili)
+Object.keys(state.auto).forEach(id => { if (Auto.excluded(state.auto[id].name, state.auto[id].country)) { delete state.auto[id]; try { fs.unlinkSync(path.join(ROOT, 'fx', 'auto.' + id + '.json')); } catch (e) { } } });   // escluse dopo (es. giovanili)
 Auto.leagues(state).forEach(l => { BYID[l.id] = l; ACTIVE.push(l); fx[l.lg] = readJ('fx/' + l.lg + '.json', {}); });
 
 let calls = 0, remaining = null, stop = '', paid = false;
@@ -137,7 +137,7 @@ async function byIds(ids) {
   //    nel calendario ci sono tutte le partite del mondo: le competizioni che mancano si segnano qui (escluse amichevoli di club e giovanili)
   const cands = {};
   const cand = f => {
-    const L = f.league || {}; if (!L.id || BYID[L.id] || Auto.excluded(L.name)) return;
+    const L = f.league || {}; if (!L.id || BYID[L.id] || Auto.excluded(L.name, L.country)) return;
     const c = cands[L.id] = cands[L.id] || { id: L.id, name: L.name, country: L.country, season: L.season, fx: [], up: Infinity };
     c.fx.push(f); const t = (f.fixture.timestamp || 0) * 1000; if (t > now - 2 * 36e5) c.up = Math.min(c.up, t);
   };
@@ -152,7 +152,7 @@ async function byIds(ids) {
     if (stop) break;
     const r = await api('/leagues?id=' + c.id); if (!r || r.err) continue;
     const L = (r.res[0] || {}).league || {}, C = (r.res[0] || {}).country || {}, name = L.name || c.name, country = C.name || c.country;
-    if (Auto.excluded(name)) continue;
+    if (Auto.excluded(name, country)) continue;
     const a = state.auto[c.id] = { id: c.id, name: name, country: country, season: c.season, cup: L.type === 'Cup', nat: Auto.isNat(name, country), added: today };
     const l = Auto.leagues({ auto: { [c.id]: a } })[0]; BYID[c.id] = l; ACTIVE.push(l); fx[l.lg] = fx[l.lg] || {}; c.fx.forEach(base); nNew++;
   }
