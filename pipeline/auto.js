@@ -13,7 +13,7 @@ const excluded = (name, country) => {
 // nazionali (non club): si stimano tutte insieme, perché le stesse squadre giocano qualificazioni, tornei e amichevoli
 const NAT = /friendl|world cup|nations league|qualif|\beuro\b|euro championship|copa am[eé]rica|asian cup|africa cup|african nations|gold cup|olymp|arab cup|gulf cup|concacaf nations|nations cup/i;
 const NOT_NAT = /club|champions league|champions cup|libertadores|sudamericana|confederation cup|cup winners|recopa|league cup/i;
-const isNat = (name, country) => country === 'World' && NAT.test(name || '') && !NOT_NAT.test(name || '');
+const isNat = (name, country) => country === 'World' && (NAT.test(name || '') || /cup of nations|elite league/i.test(name || '') || /\bU-?(1[5-9]|2[0-3])\b/i.test(name || '')) && !NOT_NAT.test(name || '');
 // nazione -> sigla dei campionati già seguiti (per le coppe nazionali: la categoria di ogni squadra)
 const PREFIX = { Italy: 'ita', England: 'eng', Spain: 'esp', Germany: 'ger', France: 'fra', Netherlands: 'ned', Portugal: 'por', Belgium: 'bel', Turkey: 'tur', Scotland: 'sco', Switzerland: 'sui', Austria: 'aut', Denmark: 'den', Norway: 'nor', Sweden: 'swe', Poland: 'pol', 'Czech-Republic': 'cze', Croatia: 'cro', Serbia: 'srb', Romania: 'rou', Greece: 'gre', Brazil: 'bra', Argentina: 'arg', USA: 'usa', Mexico: 'mex', Colombia: 'col', Chile: 'chi', Uruguay: 'uru', Paraguay: 'par', Ecuador: 'ecu', Peru: 'per', Bolivia: 'bol', Venezuela: 'ven', Canada: 'can', 'Costa-Rica': 'crc', Guatemala: 'gua', Honduras: 'hon', 'El-Salvador': 'slv' };
 // nomi delle nazioni in italiano (gli stessi dei gruppi dell'app per quelle già seguite)
