@@ -23,6 +23,8 @@ const IT = { Italy: 'Italia', England: 'Inghilterra', Spain: 'Spagna', Germany: 
 const itCountry = c => IT[c] || String(c || '').replace(/-/g, ' ');
 const NAME_IT = { Friendlies: 'Amichevoli nazionali', 'Friendlies Women': 'Amichevoli nazionali femminili' };
 const KNOWN_NAT_NAMES = { 'fifa.friendly': 'Amichevoli nazionali', 'fifa.world': 'Mondiali', 'fifa.worldq.uefa': 'Qualificazioni Mondiali (Europa)' };
+// gruppo nell'app delle nazionali: le europee (Nations League, qualificazioni, Under UEFA) stanno con le coppe europee
+const natGrp = name => /uefa|\beuro|europ/i.test(name || '') ? 'Coppe europee' : /\bU-?(1[5-9]|2[0-3])\b/i.test(name || '') ? 'Nazionali giovanili' : 'Nazionali';
 
 // definizione per il raccoglitore (collect.js) e l'esportazione
 function leagues(state) {
@@ -36,11 +38,11 @@ function comps(state, fxBy, LEAGUES, COMPS, now) {
   const AUTO = leagues(state), out = [];
   // nazionali: un solo gruppo con tutti i tornei e le amichevoli (anche quelli dell'elenco fisso senza una voce nell'app)
   const natPool = LEAGUES.filter(l => l.type === 'int').map(l => l.lg).concat(AUTO.filter(a => a.nat).map(a => a.lg));
-  LEAGUES.filter(l => l.type === 'int' && !shown[l.lg] && live(l.lg)).forEach(l => out.push({ id: l.lg, name: KNOWN_NAT_NAMES[l.lg] || l.lg, grp: 'Nazionali', nat: 1, cup: 1, gres: 1, cf: 'naz-x', pool: natPool, xpool: [], auto: 1 }));
+  LEAGUES.filter(l => l.type === 'int' && !shown[l.lg] && live(l.lg)).forEach(l => out.push({ id: l.lg, name: KNOWN_NAT_NAMES[l.lg] || l.lg, grp: natGrp(KNOWN_NAT_NAMES[l.lg] || l.lg), nat: 1, cup: 1, gres: 1, cf: 'naz-x', pool: natPool, xpool: [], auto: 1 }));
   AUTO.forEach(a => {
     if (!live(a.lg)) return;
     const nm = NAME_IT[a.name] || a.name;
-    if (a.nat) { out.push({ id: a.lg, name: nm, grp: /\bU-?(1[5-9]|2[0-3])\b/i.test(a.name) ? 'Nazionali giovanili' : 'Nazionali', nat: 1, cup: 1, gres: 1, cf: 'naz-x', pool: natPool, xpool: [], auto: 1 }); return; }
+    if (a.nat) { out.push({ id: a.lg, name: nm, grp: natGrp(a.name), nat: 1, cup: 1, gres: 1, cf: 'naz-x', pool: natPool, xpool: [], auto: 1 }); return; }
     const fem = /women|femen|f[eé]min|femmin|kvinde|frauen|\bdam/i.test(a.name);
     const grp = a.country === 'World' ? (fem ? 'Calcio femminile' : 'Coppe internazionali') : itCountry(a.country), title = a.country === 'World' ? nm : nm + ' (' + itCountry(a.country) + ')';
     if (a.cup && a.country !== 'World') {

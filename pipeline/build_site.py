@@ -273,9 +273,9 @@ EMAIL = os.environ.get('OVERLAB_EMAIL', 'offesia@gmail.com')   # indirizzo di co
 AGG = '14 ottobre 2026'
 def page(title, body):
     return ('<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + ' · OverLab</title>'
-            '<link rel="stylesheet" href="fonts/fonts.css"><style>body{margin:0;background:#111214;color:#e9ecee;font:16px/1.65 "Public Sans",system-ui,sans-serif}'
-            'main{max-width:720px;margin:0 auto;padding:28px 16px 48px}h1{font:800 30px/1.1 "Saira Condensed",sans-serif;letter-spacing:.02em;text-transform:uppercase;margin:0 0 6px}'
-            'h2{font:700 20px/1.2 "Saira Condensed",sans-serif;letter-spacing:.03em;text-transform:uppercase;margin:28px 0 6px;color:#fff}p,li{color:#c9cdd1}a{color:#52e3a0}small{color:#8a9096}'
+            '<link rel="stylesheet" href="fonts/fonts.css"><style>body{margin:0;background:#111214;color:#e9ecee;font:16px/1.65 "Inter",system-ui,sans-serif}'
+            'main{max-width:720px;margin:0 auto;padding:28px 16px 48px}h1{font:800 30px/1.1 "Inter",sans-serif;letter-spacing:.02em;text-transform:uppercase;margin:0 0 6px}'
+            'h2{font:700 20px/1.2 "Inter",sans-serif;letter-spacing:-.01em;margin:28px 0 6px;color:#fff}p,li{color:#c9cdd1}a{color:#52e3a0}small{color:#8a9096}'
             'nav{display:flex;gap:16px;margin-bottom:22px;font-weight:600}</style></head><body><main><nav><a href="./">← OverLab</a><a href="privacy.html">Privacy</a><a href="termini.html">Termini</a></nav>'
             + body + '<p><small>Ultimo aggiornamento: ' + AGG + '</small></p></main></body></html>\n')
 MAIL = ('<a href="mailto:' + EMAIL + '">' + EMAIL + '</a>') if EMAIL else 'indirizzo in pubblicazione a breve'
@@ -315,7 +315,7 @@ TERM = page('Termini', f"""<h1>Termini d'uso e note legali</h1>
 {SUP_TERM}<h2>Dati, nomi e marchi</h2>
 <p>Dati delle partite forniti da API-Football (API-Sports). Nomi, loghi e marchi di squadre, campionati e competizioni e le foto dei giocatori appartengono ai rispettivi titolari e sono usati solo per identificare partite e giocatori. Chi ne detiene i diritti può chiederne la rimozione scrivendo all'indirizzo indicato sopra. OverLab non è affiliato, sponsorizzato o approvato da UEFA, leghe, federazioni o club.</p>
 <h2>Contenuti di OverLab</h2>
-<p>Testi, grafica, codice e modello di OverLab appartengono al gestore. I caratteri Public Sans e Saira sono usati secondo la licenza SIL Open Font License 1.1.</p>
+<p>Testi, grafica, codice e modello di OverLab appartengono al gestore. Il carattere Inter è usato secondo la licenza SIL Open Font License 1.1.</p>
 <h2>Modifiche e disponibilità</h2>
 <p>Il servizio e questi termini possono cambiare o essere sospesi in qualsiasi momento; la versione aggiornata è sempre su questa pagina.</p>
 <h2>Legge applicabile</h2>
@@ -325,7 +325,7 @@ open(os.path.join(OUT, 'termini.html'), 'w', encoding='utf-8').write(TERM)
 import shutil
 FD = os.path.join(ROOT, 'pipeline', 'fonts'); os.makedirs(os.path.join(OUT, 'fonts'), exist_ok=True)
 css = []
-for fam, name, ws in [('public-sans', 'Public Sans', (400, 500, 600, 700)), ('saira-condensed', 'Saira Condensed', (600, 700, 800)), ('saira-semi-condensed', 'Saira Semi Condensed', (600, 700))]:
+for fam, name, ws in [('inter', 'Inter', (400, 500, 600, 700, 800))]:
     for w in ws:
         for sub, rng in (('latin', 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'), ('latin-ext', 'U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF')):
             fn = '%s-%s-%d-normal.woff2' % (fam, sub, w); shutil.copy(os.path.join(FD, fn), os.path.join(OUT, 'fonts', fn))

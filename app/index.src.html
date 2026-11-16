@@ -14,7 +14,7 @@
 <link rel="icon" href="data:image/png;base64,/*ICON*/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Saira+Condensed:wght@600;700;800&family=Saira+Semi+Condensed:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
 /* Impianto: app da telefono con barra di navigazione in basso, striscia dei giorni e partite raggruppate per campionato.
    Grafite scura, accento "erba" che sfuma dal verde all'acqua, oro solo per le occasioni. Titoli stretti e pesanti da tabellone. */
@@ -26,8 +26,8 @@
   --hi-bg:rgba(60,207,138,.13);--ok-bg:rgba(166,214,110,.11);--mid-bg:rgba(241,182,72,.11);--lo-bg:rgba(133,141,152,.10);
   --pitch:rgba(82,227,160,.07);--shadow:0 14px 34px rgba(0,0,0,.6);--glow:0 8px 26px rgba(43,216,147,.32);
   --pro1:#ffd77f;--pro2:#f5a524;--home:#16b5c6;--home-ink:#4fd8e6;--away:#ff6a3d;--away-ink:#ff8f63;
-  --disp:"Saira Condensed","Arial Narrow",system-ui,sans-serif;--num:"Saira Semi Condensed","Arial Narrow",system-ui,sans-serif;
-  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --disp:"Inter",system-ui,sans-serif;--num:"Inter",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   color-scheme:dark;
 }
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--pro1:#c47a00;--pro2:#9a5a00;--home-ink:#0b8796;--away-ink:#d4461e;
@@ -563,6 +563,77 @@ body{background:
 :root:not([data-theme="light"]) .hero-p,:root:not([data-theme="light"]) .hero-a{box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
 .lgh{background:linear-gradient(90deg,rgba(52,227,160,.07),transparent 60%)}
 .mrow:active,.mrow:hover{background:rgba(255,255,255,.03)}
+
+/* ===== Carattere Inter (più leggibile) e pagine più ordinate ===== */
+:root{--disp:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--num:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{letter-spacing:-.006em}
+.brand{font-size:21px;letter-spacing:-.03em;text-transform:none}
+.selw span,.day,.why>b,.qt th,.phead,.sday,.tag,.sum small,.info th,.mt-c,.xc-ev small,.motd-k,.tp-pill{letter-spacing:.04em}
+.day{font-size:12px;font-weight:700}
+.card h3,.sec-h,.info h2,.an-h,.tp-r h4{text-transform:none;letter-spacing:-.01em}
+.card h3{font-size:16px}.sec-h{font-size:18px}.info h2{font-size:18px}
+.mh-t b{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.mh-c b{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.vs{font-size:22px;letter-spacing:-.02em}
+.vh h1{font-size:22px;letter-spacing:-.02em}
+.hero-p b{font-size:25px;font-weight:800;letter-spacing:-.02em}.hero-p b.lng{font-size:20px}
+.hero-k b{font-size:16px}
+.pp{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.mt-t,.mrow .tm{font-size:14px}
+.lsc{font-size:30px}.exp b,.ln b{font-size:16px}.dcard b{font-size:24px}.sum b{font-size:22px}.ex b{font-size:20px}
+.xc-ev b{font-size:21px}.xc-n{font-size:18px}.xc-ph span{font-size:24px}.xc-av span{font-size:20px}.xc-nm b{font-size:13px}
+.lu-t b{font-size:15px}.sp-name{font-size:30px;letter-spacing:-.02em}
+.simfx b{font-size:42px}.sim-sc b{font-size:28px}.simbar b{font-size:20px}.motd-p b{font-size:21px}.motd-c i{font-size:24px}
+.duel span{font-size:18px}.xg b{font-size:18px}.lsr{font-size:15px}
+/* intestazione partita: cuore per seguire la squadra */
+.fav{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;color:var(--muted);background:var(--surface2);border:1px solid var(--line)}
+.fav .ic{width:15px;height:15px}
+.fav.on{color:#ff5c7a;border-color:rgba(255,92,122,.6);background:rgba(255,92,122,.12)}
+.fav.on .ic path{fill:currentColor}
+.mh{padding:16px 10px}
+/* riepilogo: gol */
+.gol4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.gol4>div{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;padding:9px 4px;border-radius:12px;text-align:center}
+.gol4 small{font-size:11.5px;font-weight:600;color:var(--muted);line-height:1.15}
+.gol4 b{font:800 18px/1 var(--num);letter-spacing:-.02em}
+.hero-more{display:flex;align-items:center;gap:8px;width:100%;margin-top:12px;padding:12px 2px 0;border-top:1px solid var(--line);color:var(--accent-ink);font-weight:600;font-size:14px}
+.hero-more span{flex:1}
+/* schede della partita: restano in alto mentre scorri */
+.mtabs{position:sticky;top:calc(61px + env(safe-area-inset-top,0px));z-index:4;display:flex;overflow-x:auto;scrollbar-width:none;box-shadow:0 8px 18px rgba(0,0,0,.45)}
+.mtabs::-webkit-scrollbar{display:none}
+.mtabs button{flex:1 0 auto;padding:11px 13px}
+.tabc{display:flex;flex-direction:column;gap:12px}
+.an-p{margin:0 0 8px;color:var(--fg)}
+.whyl{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+/* Schedina IA */
+.sl{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:4px 14px}
+.sl-r{display:flex;flex-direction:column;gap:9px;padding:13px 0;border-bottom:1px solid var(--line)}
+.sl-r:last-child{border-bottom:0}
+.sl-l{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sl-o{display:flex;flex-wrap:wrap;gap:8px}
+.sl-b{font-weight:600;font-size:14px;padding:9px 14px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);color:var(--fg)}
+.sl-b.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent-ink)}
+.slr{background:var(--surface);border:1px solid var(--accent);border-radius:18px;padding:16px 14px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--glow)}
+.slr-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.slr-h small{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.slr-h b{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.slr-p{text-align:right}.slr-p b{font-size:30px}
+.legs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.leg{width:100%;display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--surface2);border:1px solid var(--line);text-align:left}
+.leg-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.leg-m small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.leg-m b{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.leg-m em{font-style:normal;font-weight:600;color:var(--accent-ink);font-size:14px}
+.leg-p{flex:none;font:800 17px/1 var(--num);padding:9px 8px;border-radius:10px;min-width:56px;text-align:center}
+.slr-a{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lot{color:var(--lo)}
+
+/* testi grandi in minuscolo: con Inter i maiuscoli grandi pesano troppo */
+.vh h1,.hero-p b,.motd-p b,.lgh b,.psel select,.cmp thead td b,.lastl h3,.sp-name,.xc-nm b,.lu-t b,.simbar span,.sim-sc span,.pill{text-transform:none;letter-spacing:-.01em}
+.lgh b{font-size:14px;font-weight:700}
+.psel select{font-size:14px}
+.vh h1{font-weight:800}
+.naz span{text-transform:none;letter-spacing:0;font-weight:600}
 </style>
 </head>
 <body>

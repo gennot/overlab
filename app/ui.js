@@ -173,17 +173,19 @@
     var have = {}; (S.up || []).forEach(function (m) { have[m.lg] = 1; });
     var csAll = SNAP && S.up ? Core.COMPS.filter(function (c) { return have[c.id]; }) : Core.COMPS;
     var grp = [], seen = {}; csAll.forEach(function (c) { if (!seen[c.grp]) { seen[c.grp] = 1; grp.push(c.grp); } });
+    var PRI = ['Coppe europee', 'Nazionali', 'Nazionali giovanili', 'Italia', 'Inghilterra', 'Spagna', 'Germania', 'Francia', 'Calcio femminile'];
+    grp = grp.map(function (g, i) { return [g, i]; }).sort(function (a, b) { var x = PRI.indexOf(a[0]), y = PRI.indexOf(b[0]); return (x < 0 ? 99 : x) - (y < 0 ? 99 : y) || a[1] - b[1]; }).map(function (x) { return x[0]; });
     if (S.naz && !seen[S.naz]) S.naz = '';
     var cs = S.naz ? csAll.filter(function (c) { return c.grp === S.naz; }) : csAll, grpSel = S.naz ? [S.naz] : grp;
-    var nazHtml = '<div class="nazs" role="group" aria-label="Nazione">' + [''].concat(grp).map(function (g) { return '<button class="naz' + ((S.naz || '') === g ? ' on' : '') + '" data-naz="' + esc(g) + '" aria-pressed="' + ((S.naz || '') === g) + '">' + flag(g) + '<span>' + esc(g ? g.toUpperCase() : 'Tutte') + '</span></button>'; }).join('') + '</div>';
-    var VH = { list: ['trophy', 'Partite', 'Tocca una partita per l\'analisi completa'], sure: Core.bookInfo() ? ['target', 'Occasioni', 'Quote da 1,40 in su che secondo il modello pagano bene'] : ['target', 'In evidenza', 'Il pronostico principale di ogni partita'], slip: ['spark', 'Schedina IA', (PLAY ? 'Scegli la probabilità minima: l\'IA compone la schedina' : 'Scegli obiettivo e budget: l\'IA compone la schedina')] }[S.hv] || ['trophy', 'Partite', ''];
+    var nazHtml = '<div class="nazs" role="group" aria-label="Nazione">' + [''].concat(grp).map(function (g) { return '<button class="naz' + ((S.naz || '') === g ? ' on' : '') + '" data-naz="' + esc(g) + '" aria-pressed="' + ((S.naz || '') === g) + '">' + flag(g) + '<span>' + esc(g || 'Tutte') + '</span></button>'; }).join('') + '</div>';
+    var VH = { list: ['trophy', 'Partite', 'Tocca una partita per l\'analisi completa'], sure: Core.bookInfo() ? ['target', 'Occasioni', 'Quote da 1,40 in su che secondo il modello pagano bene'] : ['target', 'In evidenza', 'Il pronostico principale di ogni partita'], slip: ['spark', 'Schedina IA', 'Scegli quando, quante partite e lo stile: l\'IA trova le giocate più probabili, senza quelle scontate'] }[S.hv] || ['trophy', 'Partite', ''];
     var h = '<div class="vh"><h1>' + ic(VH[0]) + esc(VH[1]) + '</h1><p>' + esc(VH[2]) + '</p></div>';
     if (+window.OVERLAB_EXPIRES) h += '<div class="note">Versione di prova: funziona fino a <b>' + esc(expTxt(true)) + '</b>.</div>';
-    h += dateStrip() + nazHtml;
+    h += (S.hv === 'slip' ? '' : dateStrip()) + nazHtml;
     var sel = '<label class="psel">' + ic('filter') + '<select id="compsel" aria-label="Competizione"><option value="all"' + (S.comp === 'all' ? ' selected' : '') + '>' + (S.naz ? 'Tutte (' + esc(S.naz) + ')' : 'Tutte le competizioni') + '</option>' + grpSel.map(function (g) {
       return '<optgroup label="' + esc(g) + '">' + cs.filter(function (c) { return c.grp === g; }).map(function (c) { return '<option value="' + c.id + '"' + (S.comp === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</optgroup>';
     }).join('') + '</select></label>';
-    h += '<div class="pills">' + sel + [['od', 'Oggi e domani'], ['weekend', 'Fino a domenica'], ['tutte', 'Tutte']].map(function (x) { return '<button class="pill' + (S.slip.when === x[0] ? ' on' : '') + '" data-swhen="' + x[0] + '">' + (x[0] === 'tutte' ? '' : ic('clock')) + x[1] + '</button>'; }).concat(S.hv === 'sure' ? ['<button class="pill' + (S.hi70 ? ' on' : '') + '" data-act="hi70" aria-pressed="' + S.hi70 + '">Solo sopra il 70%</button>'] : []).join('') + '</div>';
+    h += '<div class="pills">' + sel + (S.hv === 'slip' ? [] : [['od', 'Oggi e domani'], ['weekend', 'Fino a domenica'], ['tutte', 'Tutte']]).map(function (x) { return '<button class="pill' + (S.slip.when === x[0] ? ' on' : '') + '" data-swhen="' + x[0] + '">' + (x[0] === 'tutte' ? '' : ic('clock')) + x[1] + '</button>'; }).concat(S.hv === 'sure' ? ['<button class="pill' + (S.hi70 ? ' on' : '') + '" data-act="hi70" aria-pressed="' + S.hi70 + '">Solo sopra il 70%</button>'] : []).join('') + '</div>';
     if (S.err) return h + '<div class="note err">' + esc(S.err) + ' <button class="btn" data-act="reload">Riprova</button></div>';
     if (!S.up) return h + '<div class="note">Carico le prossime partite…</div>' + skel(5);
     var list = S.up.filter(inSel);
@@ -263,77 +265,47 @@
   var THEMES = [['gol', 'Gol', { res: 1, tg: 1, mg: 1, combo: 1, ht: 1 }], ['corner', 'Corner', { co: 1, coT: 1, cx: 1 }], ['tiri', 'Tiri', { sot: 1, sotT: 1, sh: 1, shT: 1, psot: 1, psh: 1 }],
     ['cart', 'Cartellini', { yc: 1, ycT: 1 }], ['amm', 'Ammoniti', { pyc: 1 }, 0.12], ['marc', 'Marcatori', { pgl: 1 }, 0.12], ['falli', 'Falli', { fo: 1, foT: 1, pfc: 1, pfs: 1 }]];
   /* ---------- schedina composta dall'app ---------- */
+  /* Schedina IA: quando, quante partite, stile e tipi di giocata. Le partite si analizzano una alla volta con l'avanzamento a schermo
+     (il telefono non si blocca) e al massimo 60, prima quelle delle competizioni principali. Niente giocate scontate. */
+  // stile: [nome, probabilità minima e massima di ogni giocata, probabilità tipica di ogni giocata (la schedina deve arrivare a questa^N)]
+  var STYLES = { pru: ['Prudente', 0.70, 0.86, 0.80], eq: ['Equilibrata', 0.60, 0.82, 0.70], cor: ['Coraggiosa', 0.52, 0.78, 0.60] };
+  var SGRP = [['res', 'Esito', ['res']], ['tg', 'Gol', ['tg', 'mg']], ['co', 'Corner', ['co', 'coT', 'cx']], ['sh', 'Tiri', ['sh', 'shT', 'sot', 'sotT']], ['fo', 'Falli', ['fo', 'foT']], ['yc', 'Cartellini', ['yc', 'ycT']], ['pl', 'Giocatori', ['psot', 'psh', 'pfc', 'pfs']]];
+  var SLW = [['oggi', 'Oggi'], ['domani', 'Domani'], ['od', 'Oggi e domani'], ['weekend', 'Fino a domenica']];
+  function slipPri(m) { var c = Core.comp(m.lg) || {}; return c.auto ? 2 : MINOR[m.lg] || /\.[2-9]$/.test(m.lg) ? 1 : 0; }
+  function tra(n) { return /^(8|11)/.test(String(n)) ? 'l\'' + n : 'il ' + n; }
   function slipHtml(list) {
-    var bi = Core.bookInfo(), FAIR = !bi;
-    var ms = list.filter(function (m) { return (FAIR || Core.bookOf(m)) && m.d > Date.now(); });
-    if (!ms.length) return '<div class="note">Nessuna partita ancora da giocare tra quelle in programma.</div>';
-    var key = S.comp + ':' + (S.naz || '') + ':' + ms.length + ':' + ms[0].id + ':' + (bi ? bi.t : window.OVERLAB_T || 0);
+    var o = S.slip; if (!STYLES[o.style]) o.style = 'eq'; if (!(o.N >= 2)) o.N = 3; if (!o.grp) o.grp = { res: 1, tg: 1, co: 1, sh: 1 };
+    if (!SLW.some(function (x) { return x[0] === o.when; })) o.when = 'od';
+    var W = winOf(o.when), now = Date.now();
+    var ms = list.filter(function (m) { return m.d > now && m.d >= W[0] && m.d <= W[1]; }).sort(function (a, b) { return slipPri(a) - slipPri(b) || a.d - b.d; }).slice(0, 60);
+    var opt = function (items, cur, attr) { return items.map(function (x) { var on = String(cur) === String(x[0]); return '<button class="sl-b' + (on ? ' on' : '') + '" data-' + attr + '="' + x[0] + '" aria-pressed="' + on + '">' + x[1] + '</button>'; }).join(''); };
+    var h = '<section class="sl"><div class="sl-r"><span class="sl-l">Quando</span><div class="sl-o">' + opt(SLW, o.when, 'swhen') + '</div></div>' +
+      '<div class="sl-r"><span class="sl-l">Partite</span><div class="sl-o">' + opt([[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], o.N, 'sn') + '</div></div>' +
+      '<div class="sl-r"><span class="sl-l">Stile</span><div class="sl-o">' + opt(Object.keys(STYLES).map(function (k) { return [k, STYLES[k][0]]; }), o.style, 'sstyle') + '</div></div>' +
+      '<div class="sl-r"><span class="sl-l">Giocate</span><div class="sl-o">' + SGRP.map(function (g) { return '<button class="sl-b' + (o.grp[g[0]] ? ' on' : '') + '" data-sgrp="' + g[0] + '" aria-pressed="' + !!o.grp[g[0]] + '">' + g[1] + '</button>'; }).join('') + '</div></div></section>';
+    if (!ms.length) return h + '<div class="note">Nessuna partita ancora da giocare in questo periodo' + (S.naz || S.comp !== 'all' ? ' con il filtro scelto' : '') + '.</div>';
+    var wantPl = !!o.grp.pl && ms.length <= 25;
+    var key = o.when + ':' + (S.naz || '') + ':' + S.comp + ':' + ms.length + ':' + ms[0].id + ':' + wantPl + ':' + (window.OVERLAB_T || 0);
     if (!S.cands || S.cands.key !== key) {
-      var job = S.cands = { key: key, items: null };
-      Core.slipCandidates(ms, true).then(function (it) { job.items = it; if (S.cands === job && S.hv === 'slip' && cur() === '') rerender(); }, function () { job.items = []; if (S.cands === job) rerender(); });
+      var job = S.cands = { key: key, items: null, done: 0, tot: ms.length };
+      Core.slipCandidates(ms, wantPl, function (d, t) { job.done = d; job.tot = t; if (S.cands !== job) return; var b = document.getElementById('slprog'), tx = document.getElementById('sltxt'); if (b) b.style.width = Math.round(100 * d / Math.max(1, t)) + '%'; if (tx) tx.textContent = 'Analizzo le partite: ' + d + ' di ' + t; })
+        .then(function (it) { job.items = it; if (S.cands === job && S.hv === 'slip' && cur() === '') rerender(); }, function () { job.items = []; if (S.cands === job) rerender(); });
     }
-    var o = S.slip, auto = o.mode !== 'man', W = winOf(o.when);
-    if (PLAY && o.goal !== 'prob') o.goal = 'prob';   // sito pubblico: solo probabilità, niente quote né importi
-    var seg = function (items, cur, attr) { return items.map(function (x) { return '<button class="' + (cur === x[0] ? 'on' : '') + '" data-' + attr + '="' + x[0] + '">' + x[1] + '</button>'; }).join(''); };
-    var chips = function (items, cur, attr) { return '<div class="wrapc">' + items.map(function (x) { return '<button class="chip' + (cur === x[0] ? ' on' : '') + '" data-' + attr + '="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>'; };
-    var top = '<div class="seg">' + seg([['auto', ic('spark') + '<span>Sceglie l\'IA</span>'], ['man', ic('pick') + '<span>Scelgo io</span>']], auto ? 'auto' : 'man', 'smode') + '</div>' +
-      '<div class="wrapc themes"><span class="th-l">Tema</span>' + THEMES.map(function (x) { return '<button class="chip' + (o.theme === x[0] ? ' on' : '') + '" data-stheme="' + x[0] + '" aria-pressed="' + (o.theme === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>';
-    var whenHtml = '';
-    var info = '';
-    if (!S.cands.items) return top + '<div class="note">Preparo la schedina con ' + ms.length + ' partite…</div>' + skel(4) + whenHtml;
-    var have = {}, inWin = {}; S.cands.items.forEach(function (c) { if (c.m.d > Date.now() && c.m.d >= W[0] && c.m.d <= W[1]) { have[c.o.cat] = 1; if (o.cats[c.o.cat]) inWin[c.m.id] = c.m; } });
-    var wms = Object.keys(inWin).map(function (k) { return inWin[k]; }).sort(function (a, b) { return a.d - b.d; });
-    var catsHtml = '<h2 class="day">Tipo di giocata</h2><div class="wrapc">' + Object.keys(Core.CAT_IT).filter(function (c) { return have[c]; }).map(function (c) { return '<button class="chip' + (o.cats[c] ? ' on' : '') + '" data-scat="' + c + '" aria-pressed="' + !!o.cats[c] + '">' + esc(Core.CAT_IT[c]) + '</button>'; }).join('') + '</div>';
-    if (!wms.length) return top + '<div class="note">' + (Object.keys(have).length ? 'Nessuna partita di questo periodo ha giocate dei tipi scelti. Aggiungi un tipo di giocata qui sotto.' : 'Nessuna partita in questo periodo. Scegli un altro giorno qui sopra.') + '</div>' + whenHtml + (Object.keys(have).length ? catsHtml : '');
-    // ---- impostazioni (vanno sotto la schedina) ----
-    var nsel = 0, selHtml = '';
-    if (!auto) {
-      var curd = ''; nsel = wms.filter(function (m) { return o.sel[m.id]; }).length;
-      selHtml = '<h2 class="day" id="msel">Partite (' + nsel + ' scelte)</h2><div class="wrapc"><button class="chip" data-ssel="__all">Tutte</button><button class="chip" data-ssel="__none">Nessuna</button></div><div class="list">';
-      wms.forEach(function (m) {
-        var dl = dayLabel(m.d); if (dl !== curd) { curd = dl; selHtml += '<div class="sday">' + esc(dl) + '</div>'; }
-        selHtml += '<button class="msel' + (o.sel[m.id] ? ' on' : '') + '" data-ssel="' + esc(m.id) + '" aria-pressed="' + !!o.sel[m.id] + '"><span class="ck" aria-hidden="true">' + (o.sel[m.id] ? '✓' : '') + '</span><span class="msel-n">' + esc(tn(m.h) + ' - ' + tn(m.a)) + '</span><span class="msel-t">' + hm(m.d) + '</span></button>';
-      });
-      selHtml += '</div>';
-    }
-    var QS = [2, 5, 10, 20, 50], QV = [2, 3, 5, 10, 20, 30, 50, 100];
-    var ctl = '<h2 class="day sett">Imposta la schedina</h2>' + whenHtml + catsHtml + selHtml;
-    ctl += PLAY ? '<h2 class="day">Probabilità minima della schedina</h2>' : '<h2 class="day">Obiettivo</h2><div class="seg small">' + seg([['quota', 'Quota da raggiungere'], ['prob', 'Probabilità minima']], o.goal, 'sgoal') + '</div>';
-    if (o.goal === 'quota') ctl += '<div class="wrapc">' + QV.map(function (v) { return '<button class="chip' + (o.Q === v ? ' on' : '') + '" data-sq="' + v + '">' + v + '</button>'; }).join('') + '<label class="stkin qin"><span>Altra</span><input id="qin" type="number" inputmode="decimal" min="1.1" max="10000" step="0.5" value="' + (QV.indexOf(o.Q) < 0 ? o.Q : '') + '" placeholder="quota"></label></div>';
-    else ctl += '<div class="wrapc">' + [30, 40, 50, 60, 70, 80].map(function (v) { return '<button class="chip' + (Math.round(o.P * 100) === v ? ' on' : '') + '" data-sp="' + v + '">' + v + ' su 100</button>'; }).join('') + '</div>';
-    if (auto) ctl += '<h2 class="day">Quante partite</h2>' + chips([[0, 'Decide l\'IA'], [3, '3'], [5, '5'], [8, '8'], [10, '10'], [15, '15']], o.N, 'sn');
-    ctl += '<div class="wrapc"><button class="chip' + (o.combo ? ' on' : '') + '" data-scombo="1" aria-pressed="' + !!o.combo + '">MyCombo: fino a 2 giocate nella stessa partita</button></div>';
-    if (!PLAY) ctl += '<h2 class="day">Budget</h2><div class="stk"><div class="seg small" id="stq">' + QS.map(function (v) { return '<button class="' + (o.stake === v ? 'on' : '') + '" data-stake="' + v + '">' + v + ' €</button>'; }).join('') + '</div><label class="stkin"><span>Altra cifra</span><input id="stakein" type="number" inputmode="decimal" min="1" max="10000" step="1" value="' + (QS.indexOf(o.stake) < 0 ? o.stake : '') + '" placeholder="€"></label></div>';
-    ctl += info + (PLAY ? '<p class="foot">L\'IA cerca la combinazione con la probabilità più alta che rispetta la soglia scelta, usando solo giocate che secondo il modello escono almeno 6 volte su 10. A parità preferisce meno partite. Nessuna schedina è sicura.</p>' : '<p class="foot">Per raggiungere l\'obiettivo l\'IA cerca la combinazione con la probabilità più alta (o la quota più alta), ' + (FAIR ? 'usando solo giocate che secondo il modello escono almeno ' + (o.minP ? Math.round(o.minP * 100) + ' volte su 100' : '6 volte su 10') + '. A parità preferisce meno partite: dal bookmaker ogni giocata in più toglie un po\' di quota.' : 'usando solo giocate che secondo modello e quote escono almeno una volta su due.') + ' Nessuna schedina è sicura.</p>');
-    // riepilogo delle scelte, in alto
-    var goalTxt = o.goal === 'quota' ? 'quota ' + q2(o.Q) : 'almeno ' + Math.round(o.P * 100) + ' su 100';
-    var whenTxt = DAYS_TXT[o.when] || 'tutte le date';
-    var recap = '<p class="foot recap">' + esc(whenTxt) + ' · ' + esc(goalTxt) + (auto && o.N ? ' · ' + o.N + ' partite' : '') + (o.combo ? ' · MyCombo' : '') + (PLAY ? '' : ' · <span class="st-rc">' + esc(stakeTxt()) + '</span>') + ' — <a href="#" data-act="slipset">cambia</a></p>';
-    if (!auto && !nsel) { S.slipNow = null; return top + '<div class="note">Scegli le partite qui sotto: l\'IA trova in ognuna la giocata migliore per il tuo obiettivo.</div>' + ctl; }
-    var opt = { cats: o.cats, from: W[0], to: W[1], goal: o.goal, Q: o.Q, P: o.P, N: auto ? o.N : 0, combo: o.combo, ban: o.ban, ids: auto ? null : o.sel, all: !auto, minLegP: o.minP != null ? o.minP : undefined };
-    var s = Core.optSlip(S.cands.items, opt);
+    if (!S.cands.items) return h + '<div class="note"><span id="sltxt">Analizzo le partite: ' + S.cands.done + ' di ' + S.cands.tot + '</span><div class="bar"><i id="slprog" style="width:' + Math.round(100 * S.cands.done / Math.max(1, S.cands.tot)) + '%"></i></div></div>';
+    var cats = {}; SGRP.forEach(function (g) { if (o.grp[g[0]]) g[2].forEach(function (c) { cats[c] = 1; }); });
+    if (!Object.keys(cats).length) return h + '<div class="note">Scegli almeno un tipo di giocata.</div>';
+    var st = STYLES[o.style];
+    var s = Core.optSlip(S.cands.items, { cats: cats, from: W[0], to: W[1], goal: 'prob', P: Math.pow(st[3], o.N), N: o.N, combo: false, ban: o.ban, ids: null, all: false, minLegP: st[1], maxLegP: st[2] });
     S.slipNow = s.items.length ? s : null;
-    if (!s.items.length) {
-      var why = s.impossible === 'poche' ? 'Ci sono solo ' + s.avail + ' partite con giocate adatte: scegli meno partite, un periodo più lungo o più tipi di giocata.'
-        : o.goal === 'quota' ? 'Con queste partite e questi tipi di giocata non arrivo a quota ' + q2(o.Q) + (s.maxOdds > 1 ? ' (al massimo circa ' + q2(s.maxOdds) + ')' : '') + ' usando giocate che escono almeno ' + (FAIR ? (o.minP ? Math.round(o.minP * 100) + ' volte su 100' : '6 volte su 10') : 'una volta su due') + '. Aggiungi partite o tipi di giocata, attiva MyCombo o abbassa la quota.'
-        : 'Con queste partite non arrivo a ' + Math.round(o.P * 100) + ' su 100. Togli qualche partita o abbassa la probabilità minima.';
-      return top + recap + '<div class="note">' + why + '</div>' + (Object.keys(o.ban).length ? '<button class="btn wide" data-act="slipfirst">Torna alla prima</button>' : '') + ctl;
-    }
-    var res = '<h2 class="day">La tua schedina</h2>' + recap + '<div class="list">' + s.items.map(function (x) {
-      var m = x.m, combo = x.legs.length > 1;
-      return '<div class="pick' + (combo ? ' combo' : '') + '"><button class="pick-b" data-nav="m/' + m.lg + '/' + esc(m.id) + '"><span class="pick-l">' + (combo ? '<span class="tag">MyCombo</span>' : '') + x.legs.map(function (p) { return '<b>' + esc(p.label) + (combo && !PLAY ? ' <span class="lq">' + q2(p.odds) + '</span>' : '') + '</b>'; }).join('') + '<small>' + esc(tn(m.h) + ' - ' + tn(m.a)) + ' · ' + esc(dayLabel(m.d).toLowerCase()) + ' ' + hm(m.d) + (PLAY ? '' : ' · stima ' + pct(x.p)) + '</small></span>' + (PLAY ? '<span class="pp ' + cls(x.p) + '">' + pct(x.p) + '</span>' : '<span class="pp od2">' + q2(x.odds) + '</span>') + '</button></div>';
-    }).join('') + '</div>';
-    var ev = s.p * s.odds, ncombo = s.items.filter(function (x) { return x.legs.length > 1; }).length;
-    res += PLAY ? '<div class="sum"><div><small>Probabilità stimata</small><b>' + pct(s.p) + '</b></div><div><small>Partite</small><b>' + s.items.length + '</b></div></div>' : '<div class="sum"><div><small>' + (FAIR ? 'Quota giusta' : 'Quota totale') + '</small><b>' + q2(s.odds) + '</b></div><div><small>Probabilità stimata</small><b>' + pct(s.p) + '</b></div><div><small id="st-lab">' + stakeLab() + '</small><b id="st-win">' + eur(o.stake * s.odds) + '</b></div></div>';
-    if (!PLAY) res += '<div class="note" id="st-note">' + stakeNote(s) + '</div>';
-    res += '<div class="note">' + s.items.length + ' partite, ' + s.items.reduce(function (t, x) { return t + x.legs.length; }, 0) + ' giocate. Esce tutta circa ' + chance(s.p) + (Math.abs(s.ps - s.p) > 0.005 ? ' (stima prudente ' + chance(s.ps) + ')' : '') + '. ' + (PLAY ? 'Nessuna schedina è sicura.' : FAIR ? 'Sono le quote giuste del modello: dal bookmaker saranno un po\' più basse, e così la vincita.' : ev >= 1 ? 'Secondo la stima la quota paga più del rischio.' : 'La quota paga meno del rischio, come quasi sempre: è il margine del bookmaker.') + (ncombo && !PLAY ? ' Nei MyCombo la quota viene ricalcolata, di solito un po\' più bassa del prodotto.' : '') + '</div>';
-    if (auto && o.N && s.items.length < o.N) res += '<div class="note">Ho trovato solo ' + s.items.length + ' partite adatte.</div>';
-    if (!auto) { var used = {}; s.items.forEach(function (x) { used[x.m.id] = 1; }); var miss = wms.filter(function (m) { return o.sel[m.id] && !used[m.id]; });
-      if (miss.length) res += '<div class="note">Senza giocate adatte ai tipi scelti (o che escono almeno una volta su due): ' + esc(miss.map(function (m) { return tn(m.h) + ' - ' + tn(m.a); }).join(', ')) + '. Aggiungi un tipo di giocata per usarle.</div>'; }
-    res += '<button class="btn wide pri" data-act="slipnext">' + ic('spark') + 'Dammene un\'altra</button>' + (Object.keys(o.ban).length ? '<button class="btn wide" data-act="slipfirst">Torna alla prima</button>' : '');
-    res += '<p class="foot">Tocca una giocata per aprire la partita e leggere la spiegazione.</p>';
-    var bar = PLAY ? '<button class="sbar" data-act="slipup">' + ic('ticket') + '<span>Probabilità <b>' + pct(s.p) + '</b> · ' + s.items.length + ' partite</span>' + ic('up') + '</button>' : '<button class="sbar" data-act="slipup">' + ic('ticket') + '<span>Quota <b>' + q2(s.odds) + '</b> · ' + pct(s.p) + ' · ' + '<span class="st-rc">' + esc(stakeTxt()) + '</span> → <b id="st-win2">' + eur(o.stake * s.odds) + '</b></span>' + ic('up') + '</button>';
-    return top + '<div id="slipres">' + res + '</div>' + ctl + bar;
+    if (!s.items.length) return h + '<div class="note">' + (s.impossible === 'poche' ? 'Solo ' + s.avail + ' partite hanno giocate adatte: scegli meno partite, un periodo più lungo, lo stile Coraggiosa o più tipi di giocata.' : 'Non trovo giocate adatte: prova un periodo più lungo o più tipi di giocata.') + '</div>' + (Object.keys(o.ban).length ? '<button class="btn wide" data-act="slipfirst">Torna alla prima</button>' : '');
+    var legs = s.items.map(function (x) {
+      var m = x.m, c = Core.comp(m.lg);
+      return '<li><button class="leg" data-nav="m/' + m.lg + '/' + esc(m.id) + '"><span class="leg-m"><small>' + esc(dayLabel(m.d) + ' ' + hm(m.d) + (c ? ' · ' + c.name : '')) + '</small><b>' + esc(tn(m.h) + ' - ' + tn(m.a)) + '</b><em>' + esc(x.legs.map(function (p) { return p.label; }).join(' + ')) + '</em></span><span class="leg-p ' + cls(x.p) + '">' + pct(x.p) + '</span></button></li>';
+    }).join('');
+    h += '<section class="slr" id="slipres"><div class="slr-h"><div><small>Schedina IA · ' + esc(st[0].toLowerCase()) + '</small><b>' + s.items.length + ' partite</b></div><div class="slr-p"><small>Probabilità</small><b class="' + cls(s.p) + 't">' + pct(s.p) + '</b></div></div><ol class="legs">' + legs + '</ol>' +
+      '<div class="slr-a"><button class="btn pri" data-act="slipnext">' + ic('spark') + 'Un\'altra</button><button class="btn" data-act="slipcopy">' + ic('share') + '<span>Copia</span></button></div>' +
+      '<p class="foot">Esce tutta circa ' + chance(s.p) + '. Ogni giocata è tra ' + tra(Math.round(st[1] * 100)) + '% e ' + tra(Math.round(st[2] * 100)) + '%: niente giocate scontate. Nessuna schedina è sicura.</p>' + (Object.keys(o.ban).length ? '<button class="btn wide" data-act="slipfirst">Torna alla prima</button>' : '') + '</section>';
+    return h;
   }
   var DAYS_TXT = { oggi: 'oggi', domani: 'domani', od: 'oggi e domani', weekend: 'fino a domenica', tutte: '' };
   function dayKey(n) { return n === 0 ? 'oggi' : n === 1 ? 'domani' : 'd' + n; }
@@ -429,7 +401,7 @@
       var fair = !Core.bookInfo(), hasQ = ob && Core.bookOf(S.m), gc = {}, sure = hasQ || fair ? Core.occasions(S.m, S.tf, S.pf).filter(function (p) { if (S.hi70 && p.p < 0.7) return false; if (!fair) return true; if (p.kind === 'player' && p.dir === 'U') return false; var g = Core.grpOf(p.cat); gc[g] = (gc[g] || 0) + 1; return gc[g] <= 2; }).slice(0, 6) : Core.surePicks(S.m, S.tf, S.pf, ob).slice(0, 6);
       h += sec(PLAY ? 'Le più solide' : fair ? 'Le più solide (quota giusta da 1,40)' : hasQ ? 'Occasioni (quota da 1,40)' : 'Più probabili (85% e oltre)', sure, 's');
       if (sure.length) h += '<p class="foot">' + (PLAY ? 'Le più probabili tra quelle non scontate, al massimo due per tipo di giocata. Nessuna è sicura.' : fair ? 'Le più probabili con quota giusta da 1,40 in su, al massimo due per tipo di giocata. Nessuna è sicura.' : hasQ ? 'Ordinate dalla più conveniente. Il bordo dorato segna quelle che secondo il modello pagano più del rischio. Nessuna è sicura.' : 'Nei test quelle sopra il 90% sono uscite circa 9 volte su 10. Pagano poco e nessuna è sicura.') + '</p>';
-      h += sec('Esito e gol', kind('res', 6), 'k') + sec('Squadre', kind('team', 6), 'k') + sec('Giocatori', kind('player', 8), 'k') + extraHtml();
+      h += sec('Esito e gol', kind('res', 5), 'k') + sec('Squadre', kind('team', 5), 'k') + sec('Giocatori', kind('player', 6), 'k');
       if (list.length) h += '<button class="btn wide" data-act="more">Mostra tutte (' + list.length + ')</button>';
       else if (!sure.length) h += '<div class="note">Nessuna giocata sopra il 60% per questa partita.</div>';
     } else {
@@ -510,22 +482,33 @@
     return h + '<p class="foot">Percentuali per ' + Core.PST_IT[k] + ' del singolo giocatore in questa partita' + (ob ? ', con la quota sotto. Il trattino indica una giocata senza quota' : '') + '. Basate sulle ultime ' + S.pd.loaded + ' partite delle due squadre.</p>';
   }
 
+  /* Pagina della partita: in alto il riepilogo (pronostico principale, gol), sotto le schede fisse: niente più scorrimento infinito */
   function matchHtml() {
     var m = S.m, h = '<button class="back" data-nav="">' + ic('back') + 'Partite</button>';
     if (S.merr) return h + '<div class="note err">' + esc(S.merr) + ' <button class="btn" data-act="retry">Riprova</button></div>';
     if (!m) return h + '<div class="note">Carico la partita…</div>' + skel(4);
     var c = Core.comp(m.lg);
     LVM[m.id] = m; if (LV.d === null || !liveOf(m)) pollLive();
-    if (m.d > Date.now() && m.d - Date.now() < 7 * 864e5 && !liveOf(m)) h += '<div class="kob">' + ic('clock') + '<span>Calcio d\'inizio tra <b data-ko="' + m.d + '">' + koTxt(m.d - Date.now()) + '</b></span></div>';
-    h += '<div class="favs">' + [m.h, m.a].map(function (t) { return '<button class="chip' + (FAV[t] ? ' on' : '') + '" data-act="fav" data-team="' + esc(t) + '" aria-pressed="' + !!FAV[t] + '">' + ic('heart') + (FAV[t] ? 'Segui già ' : 'Segui ') + esc(tn(t)) + '</button>'; }).join('') + '</div>';
     h += otherMatches(m, c);
-    h += '<header class="mh"><div class="mh-t">' + logo(m.h) + '<b>' + esc(tn(m.h)) + '</b></div><div class="mh-c" data-lvh="' + esc(m.id) + '">' + mhC(m, c) + '</div><div class="mh-t">' + logo(m.a) + '<b>' + esc(tn(m.a)) + '</b></div></header>';
+    var heart = function (t) { return '<button class="fav' + (FAV[t] ? ' on' : '') + '" data-act="fav" data-team="' + esc(t) + '" aria-pressed="' + !!FAV[t] + '" aria-label="' + (FAV[t] ? 'Smetti di seguire ' : 'Segui ') + esc(tn(t)) + '">' + ic('heart') + '</button>'; };
+    var ko = m.d > Date.now() && m.d - Date.now() < 7 * 864e5 && !liveOf(m) ? '<div class="kob">' + ic('clock') + '<span>Inizia tra <b data-ko="' + m.d + '">' + koTxt(m.d - Date.now()) + '</b></span></div>' : '';
+    h += '<header class="mh"><div class="mh-t">' + logo(m.h) + '<b>' + esc(tn(m.h)) + '</b>' + heart(m.h) + '</div><div class="mh-c" data-lvh="' + esc(m.id) + '">' + mhC(m, c) + '</div><div class="mh-t">' + logo(m.a) + '<b>' + esc(tn(m.a)) + '</b>' + heart(m.a) + '</div></header>' + ko;
     if (!S.tf) return h + '<div class="note">Analizzo lo storico della competizione…</div>' + skel(5);
-    if (c && c.nat) h += '<div class="note">Nazionali: poche partite all\'anno, quindi stime più incerte rispetto ai campionati.</div>';
-    h += bar1x2() + '<h2 class="sec-h">' + ic('trend') + 'Analisi di OverLab</h2>' + heroHtml() + pitchHtml();
-    h += '<nav class="tabs">' + [['top', 'Pronostici'], ['an', 'Analisi'], ['teams', 'Squadre'], ['players', 'Giocatori']].map(function (x) { return '<button class="' + (S.tab === x[0] ? 'on' : '') + '" data-tab="' + x[0] + '"><span>' + x[1] + '</span></button>'; }).join('') + '</nav>';
-    h += S.tab === 'top' ? topHtml() : S.tab === 'an' ? anHtml() : S.tab === 'teams' ? teamsHtml() : playersHtml();
+    h += bar1x2() + heroHtml();
+    var tabs = [['top', 'Pronostici'], ['mk', 'Mercati']];
+    if (!noPlayers() && !gonly()) tabs.push(['lu', 'Formazioni'], ['players', 'Giocatori']);
+    tabs.push(['teams', 'Squadre'], ['an', 'Analisi']);
+    if (!tabs.some(function (x) { return x[0] === S.tab; })) S.tab = 'top';
+    h += '<nav class="tabs mtabs" id="mtabs" aria-label="Sezioni della partita">' + tabs.map(function (x) { return '<button class="' + (S.tab === x[0] ? 'on' : '') + '" data-tab="' + x[0] + '" aria-pressed="' + (S.tab === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</nav>';
+    h += '<div class="tabc">' + (S.tab === 'top' ? topHtml() : S.tab === 'mk' ? mkHtml() : S.tab === 'lu' ? pitchHtml() : S.tab === 'players' ? playersHtml() : S.tab === 'teams' ? teamsHtml() : anTab()) + '</div>';
+    if (c && c.nat) h += '<p class="foot">Nazionali: poche partite all\'anno, quindi stime più incerte rispetto ai campionati.</p>';
     return h;
+  }
+  function mkHtml() { var x = ''; try { x = extraHtml(); } catch (e) { x = ''; } return x || '<div class="note">Per questa partita non ci sono altri mercati.</div>'; }
+  function anTab() {
+    var p = mainP(), lines = whyLines(p);
+    var h = lines.length ? '<section class="an"><h2 class="an-h">' + ic('spark') + 'Perché il pronostico principale</h2><p class="an-p"><b>' + esc(p.label) + '</b> · stima ' + pct(p.p) + '</p><ul class="whyl">' + lines.slice(0, 6).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul></section>' : '';
+    return h + anHtml() + '<button class="btn wide shbtn" data-act="share">' + ic('share') + 'Crea la card da condividere</button>';
   }
 
   /* Altre partite della stessa competizione (stessa giornata, entro 3 giorni): si passa dall'una all'altra senza tornare all'elenco */
@@ -712,9 +695,9 @@
     var m = S.m, tf = S.tf; if (!m || !tf) return;
     var p = null; try { p = Core.mainPick(m, tf, S.pf) || Core.picks(m, tf, S.pf, false)[0]; } catch (e) { p = null; }
     var W = 1080, H = 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H; var c = cv.getContext('2d');
-    var ready = document.fonts && document.fonts.load ? Promise.all(['800 64px "Saira Condensed"', '700 40px "Saira Semi Condensed"', '600 30px "Public Sans"'].map(function (f) { return document.fonts.load(f).catch(function () {}); })) : Promise.resolve();
+    var ready = document.fonts && document.fonts.load ? Promise.all(['800 64px "Inter"', '700 40px "Inter"', '600 30px "Inter"'].map(function (f) { return document.fonts.load(f).catch(function () {}); })) : Promise.resolve();
     ready.then(function () {
-      var D = '"Saira Condensed", "Arial Narrow", sans-serif', NUM = '"Saira Semi Condensed", "Arial Narrow", sans-serif', B = '"Public Sans", system-ui, sans-serif';
+      var D = '"Inter", sans-serif', NUM = '"Inter", sans-serif', B = '"Inter", system-ui, sans-serif';
       var rr = function (x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
       var fit = function (txt, max, size, weight, fam) { var sz = size; do { c.font = weight + ' ' + sz + 'px ' + fam; sz -= 2; } while (c.measureText(txt).width > max && sz > 20); };
       var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0d1114'); g.addColorStop(1, '#0c1b15'); c.fillStyle = g; c.fillRect(0, 0, W, H);
@@ -867,24 +850,40 @@
   }
   setInterval(function () { if (!document.hidden && document.querySelector('.xc')) xcStep(); }, 3400);
   // il pronostico principale della partita, con fiducia, rischio e analisi
-  function heroHtml() {
+  function mainP() {
     var ob = obOn(), has = ob && Core.bookOf(S.m), p = null;
     try { p = (has || !Core.bookOf(S.m) ? Core.mainPick(S.m, S.tf, S.pf) : null) || (has ? Core.occasions(S.m, S.tf, S.pf)[0] : null) || Core.picks(S.m, S.tf, S.pf, ob)[0] || null; } catch (e) { p = null; }
-    if (!p) return '';
-    var lines = [];
+    return p;
+  }
+  function whyLines(p) {
+    if (!p) return [];
     try {
-      if (p.kind === 'team') lines = Core.explainTeam(S.cd, S.m, S.tf, p.stat, p.side);
-      else if (p.kind === 'res') lines = Core.explainRes(S.cd, S.m, S.tf);
-      else { var f = findPF(p.pid); lines = f && S.pd ? Core.explainPlayer(S.m, S.tf, f, p.stat, S.pd.lu[p.team].src) : []; }
-    } catch (e) { lines = []; }
-    var fid = p.p >= 0.72 ? ['Alta', 'hit', 'Basso', 'hit'] : p.p >= 0.58 ? ['Media', 'okt', 'Medio', 'midt'] : ['Bassa', 'midt', 'Alto', 'midt'];
-    var story = ''; try { story = Core.analysis(S.cd, S.m, S.tf).text[0] || ''; } catch (e) { story = ''; }
-    var xc = heroCards(S.m);
-    return '<section class="hero">' + (xc ? '<div class="hero-top">' : '') + '<div class="hero-p"><small>Pronostico</small><b class="' + (p.label.length > 18 ? 'lng' : '') + '">' + esc(p.label) + '</b><span>stima ' + pct(p.p) + (p.occ ? ' · occasione' : '') + '</span></div>' + (xc ? xc + '</div>' : '') +
-      '<div class="hero-k"><div><small>Fiducia</small><b class="' + fid[1] + '">' + fid[0] + '</b></div><div><small>Rischio</small><b class="' + fid[3] + '">' + fid[2] + '</b></div><div><small>' + (PLAY ? 'Probabilità' : p.odds && !p.fair ? 'Quota' : 'Quota giusta') + '</small><b>' + (PLAY ? pct(p.p) : p.odds && !p.fair ? q2(p.odds) : quota(p.p)) + '</b></div></div>' +
-      (story ? '<div class="hero-a"><h2>' + ic('star') + 'Analisi</h2><p class="story">' + esc(story) + '</p></div>' : '') +
-      (lines.length ? '<div class="hero-a"><h2>' + ic('spark') + 'Perché questa giocata</h2><ul>' + lines.slice(0, 5).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul></div>' : '') +
-      '<button class="btn wide shbtn" data-act="share">' + ic('share') + 'Crea la card da condividere</button>' + (S.tab !== 'an' ? '<button class="btn wide pri" data-tab="an">' + ic('chart') + 'Analisi completa della partita</button>' : '') + '</section>';
+      if (p.kind === 'team') return Core.explainTeam(S.cd, S.m, S.tf, p.stat, p.side);
+      if (p.kind === 'res') return Core.explainRes(S.cd, S.m, S.tf);
+      var f = findPF(p.pid); return f && S.pd ? Core.explainPlayer(S.m, S.tf, f, p.stat, S.pd.lu[p.team].src) : [];
+    } catch (e) { return []; }
+  }
+  // gol: over 1,5 e 2,5, goal (segnano entrambe) e over 2,5 + goal, calcolati sui punteggi
+  function goalStats() {
+    var r = S.tf && S.tf.res; if (!r || !r.over) return null;
+    var og = 0; (r.grid || []).forEach(function (row, i) { row.forEach(function (x, j) { if (i >= 1 && j >= 1 && i + j >= 3) og += x; }); });
+    return { o15: r.over[1], o25: r.over[2], gg: r.gg, og: og };
+  }
+  function goalRow() {
+    var g = goalStats(); if (!g) return '';
+    return '<div class="gol4" role="group" aria-label="Gol">' + [['Over 1,5', g.o15], ['Over 2,5', g.o25], ['Goal', g.gg], ['Over 2,5 + Goal', g.og]].map(function (x) { return '<div class="' + cls(x[1]) + '"><small>' + x[0] + '</small><b>' + pct(x[1]) + '</b></div>'; }).join('') + '</div>';
+  }
+  // riepilogo in alto: pronostico principale, card dei giocatori, gol
+  function heroHtml() {
+    var p = mainP(), xc = heroCards(S.m), h = '<section class="hero">';
+    if (p) {
+      var fid = p.p >= 0.72 ? ['Alta', 'hit', 'Basso', 'hit'] : p.p >= 0.58 ? ['Media', 'okt', 'Medio', 'midt'] : ['Bassa', 'midt', 'Alto', 'midt'];
+      h += (xc ? '<div class="hero-top">' : '') + '<div class="hero-p"><small>Pronostico principale</small><b class="' + (p.label.length > 18 ? 'lng' : '') + '">' + esc(p.label) + '</b><span>stima ' + pct(p.p) + (p.occ ? ' · occasione' : '') + '</span></div>' + (xc ? xc + '</div>' : '') +
+        '<div class="hero-k"><div><small>Fiducia</small><b class="' + fid[1] + '">' + fid[0] + '</b></div><div><small>Rischio</small><b class="' + fid[3] + '">' + fid[2] + '</b></div><div><small>' + (PLAY ? 'Probabilità' : p.odds && !p.fair ? 'Quota' : 'Quota giusta') + '</small><b>' + (PLAY ? pct(p.p) : q2(p.odds || 1 / p.p)) + '</b></div></div>';
+    }
+    h += goalRow();
+    if (p) h += '<button class="hero-more" data-tab="an">' + ic('spark') + '<span>Perché questo pronostico</span>' + ic('chev') + '</button>';
+    return h + '</section>';
   }
   // analisi completa: racconto, confronto tra le squadre, ultime partite, precedenti, numeri attesi, giocate
   function anHtml() {
@@ -982,7 +981,7 @@
   }
 
   document.addEventListener('click', function (e) {
-    var t = e.target.closest('[data-naz],[data-nav],[data-hv],[data-smode],[data-swhen],[data-sgoal],[data-sq],[data-sp],[data-scombo],[data-ssel],[data-stake],[data-scat],[data-sn],[data-smin],[data-comp],[data-act],[data-tab],[data-exp],[data-pfil],[data-pteam],[data-pst],[data-cyc],[data-ptap],[data-stheme]'); if (!t) return;
+    var t = e.target.closest('[data-naz],[data-nav],[data-hv],[data-smode],[data-swhen],[data-sgoal],[data-sq],[data-sp],[data-scombo],[data-ssel],[data-stake],[data-scat],[data-sn],[data-smin],[data-comp],[data-act],[data-tab],[data-exp],[data-pfil],[data-pteam],[data-pst],[data-cyc],[data-ptap],[data-stheme],[data-sstyle],[data-sgrp]'); if (!t) return;
     var d = t.dataset;
     if ('nav' in d) { nav(d.nav); return; }
     if (d.hv) { S.hv = d.hv; if (cur() !== '') nav(''); else { window.scrollTo(0, 0); render(); } return; }
@@ -990,6 +989,14 @@
     if (d.stheme) { var th = THEMES.filter(function (x) { return x[0] === d.stheme; })[0]; if (!th) return; if (S.slip.theme === th[0]) { S.slip.theme = null; S.slip.minP = null; S.slip.cats = { sot: 1, sotT: 1, sh: 1, shT: 1, co: 1, coT: 1, res: 1, tg: 1 }; } else { S.slip.theme = th[0]; S.slip.cats = Object.assign({}, th[2]); S.slip.minP = th[3] || null; } S.slip.ban = {}; rerender(); return; }
     if (d.smode) { S.slip.mode = d.smode; S.slip.ban = {}; rerender(); return; }
     if (d.swhen) { S.slip.when = d.swhen; S.slip.ban = {}; rerender(); return; }
+    if (d.sstyle) { S.slip.style = d.sstyle; S.slip.ban = {}; rerender(); return; }
+    if (d.sgrp) { S.slip.grp = S.slip.grp || {}; S.slip.grp[d.sgrp] = S.slip.grp[d.sgrp] ? 0 : 1; S.slip.ban = {}; rerender(); return; }
+    if (d.act === 'slipcopy') {
+      var sn = S.slipNow; if (!sn) return;
+      var txt = sn.items.map(function (x) { return tn(x.m.h) + ' - ' + tn(x.m.a) + ': ' + x.legs.map(function (p) { return p.label; }).join(' + ') + ' (' + pct(x.p) + ')'; }).join('\n') + '\nProbabilità totale: ' + pct(sn.p) + ' (OverLab)';
+      var done = function () { var sp = t.querySelector('span'); if (sp) sp.textContent = 'Copiata'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function () {}); return;
+    }
     if (d.sgoal) { S.slip.goal = d.sgoal; S.slip.ban = {}; rerender(); return; }
     if (d.sq) { S.slip.Q = +d.sq; S.slip.ban = {}; rerender(); return; }
     if (d.sp) { S.slip.P = +d.sp / 100; S.slip.ban = {}; rerender(); return; }
@@ -1017,7 +1024,7 @@
     else if (d.act === 'reload') loadHome(true);
     else if (d.act === 'retry') route();
     else if (d.act === 'more') { S.more = true; rerender(); }
-    else if (d.tab) { S.tab = d.tab; S.open = null; S.more = false; rerender(); }
+    else if (d.tab) { S.tab = d.tab; S.open = null; S.more = false; rerender(); var tb = document.getElementById('mtabs'); if (tb) { var y = tb.getBoundingClientRect().top + window.scrollY - (document.querySelector('.top') || { offsetHeight: 0 }).offsetHeight - 4; if (window.scrollY > y) window.scrollTo(0, y); } }
     else if (d.exp) { S.open = S.open === d.exp ? null : d.exp; rerender(); }
     else if (d.pfil) { S.pfil = d.pfil; S.more = false; rerender(); }
     else if (d.pteam) { S.pteam = d.pteam; S.more = false; S.open = null; rerender(); }

@@ -101,7 +101,7 @@ var Core = (function () {
     { id: 'usa.2', name: 'USL Championship (Stati Uniti)', grp: 'Stati Uniti', pool: ['usa.2'] },
     { id: 'usa.3', name: 'USL League One (Stati Uniti)', grp: 'Stati Uniti', pool: ['usa.3'] },
     { id: 'usa.4', name: 'MLS Next Pro (Stati Uniti)', grp: 'Stati Uniti', pool: ['usa.4'] },
-    { id: 'uefa.nations', name: 'Nations League', grp: 'Nazionali', nat: true, pool: ['uefa.nations', 'fifa.worldq.uefa', 'fifa.world', 'fifa.friendly'] }
+    { id: 'uefa.nations', name: 'Nations League', grp: 'Coppe europee', nat: true, pool: ['uefa.nations', 'fifa.worldq.uefa', 'fifa.world', 'fifa.friendly'] }
   ];
   var STAT_IT = { sh: 'Tiri', sot: 'Tiri in porta', co: 'Corner', fo: 'Falli commessi', yc: 'Cartellini gialli' };
   var PST = ['sh', 'sot', 'fc', 'fs'];
@@ -230,12 +230,17 @@ var Core = (function () {
       // senza tiri in porta i gol attesi vengono solo dai gol. Test in avanti su 11.306 partite di serie minori (ott 2025 - ott 2026):
       // divario non allargato (gStretch 1) e stime più vicine alla media per chi ha poche partite (k 8) erano più precise e meno ottimiste
       if (c.gonly) { par = JSON.parse(JSON.stringify(Model.PAR)); par.gMix = 1; par.gStretch = 1; par.k.g = 8; }
-      if (c.nat) { par = JSON.parse(JSON.stringify(Model.PAR)); Model.STATS.forEach(function (s) { par.half[s] = 540; par.k[s] = Math.max(par.k[s], 6); }); par.half.g = 700; par.k.g = 6; par.newTeam = { att: 1, def: 1 }; }
+      if (c.nat) { par = JSON.parse(JSON.stringify(Model.PAR)); Model.STATS.forEach(function (s) { par.half[s] = 540; par.k[s] = Math.max(par.k[s], 6); }); par.half.g = 700; par.k.g = 6; par.newTeam = { att: 1, def: 1 }; par.hs = 0.6; }
+      // Nations League: con il fattore campo ridotto (test in avanti su 113 partite) l'esito più probabile passa dal 48% al 54% (logloss 0,985 -> 0,965)
       if (c.nat && c.gonly) { par.gMix = 1; par.gStretch = 1; }   // nazionali con i soli risultati
       // competizioni trovate da sole: test in avanti su 11.622 partite di 203 competizioni (ultime 8 settimane, stima fatta solo con i dati
       // di prima). Peso maggiore ai risultati di ogni squadra (k 5), memoria più corta (emivita 250 giorni) e gol +3,5%: logloss da 0,989
       // a 0,986, esito più probabile stimato 51,3% contro il 52,3% vero (prima 49,8%), gol attesi 3,08 come quelli veri (prima 2,97)
       if (c.auto) { par = JSON.parse(JSON.stringify(par)); par.k.g = 5; par.half.g = 250; par.gLvl = 1.035; }
+      // nazionali: test in avanti su 2.581 partite (ultimo anno). Memoria lunga (emivita 700 giorni: poche partite l'anno), fattore campo
+      // ridotto (tante partite in campo neutro), gol: maggiori x1,00, giovanili x1,08. Logloss da 0,985 a 0,977, esito più probabile
+      // stimato 53% e vero 53% (prima 52/53), gol attesi 2,92 contro 2,94 veri nelle maggiori e 3,53 contro 3,52 nelle giovanili
+      if (c.auto && c.nat) { par.half.g = 700; par.k.g = 4; par.hs = 0.6; par.gLvl = /\bU-?(1[5-9]|2[0-3])\b/i.test(c.name || '') ? 1.08 : 1.0; }
       // campionati (con statistiche e con i soli risultati): test in avanti su 11.917 partite di 83 campionati (ultime 20 settimane) davano
       // 2,63 gol attesi contro 2,76 veri. Con i gol +5% coincidono (2,76 / 2,89 nei campionati con statistiche, 2,65 / 2,65 negli altri)
       // e l'over/under è più preciso (brier 0,2438 -> 0,2426); l'esito resta uguale
@@ -244,6 +249,8 @@ var Core = (function () {
       if (!played.length) throw new Error('Partita senza dati: lo storico di questa competizione è in arrivo, riprova tra qualche ora.');
       var now = Date.now(), fit = Model.fitAll(played, now, par);
       if (c.tiers) tierAdj(fit, all, c);
+      // fattore campo ridotto (hs < 1): partite spesso in campo neutro
+      if (par.hs != null && fit.g && fit.g.muH > 0 && fit.g.muA > 0) { var gg0 = fit.g, mm0 = Math.sqrt(gg0.muH * gg0.muA); gg0.muH = mm0 * Math.pow(gg0.muH / mm0, par.hs); gg0.muA = mm0 * Math.pow(gg0.muA / mm0, par.hs); }
       return (compCache[id] = { t: Date.now(), comp: c, played: played, all: all, fit: fit, par: par });
     });
   }
@@ -508,7 +515,8 @@ var Core = (function () {
   }
 
   /* ---------- giocate in evidenza ---------- */
-  var LO = 0.6, HI = 0.9, SURE = 0.85, MINQ_TOP = 1.2, MINQ_OCC = 1.4;
+  // HI: le giocate oltre l'82% sono scontate (es. 10 tiri per una squadra fortissima, quota da 1,10): nei pronostici non si mostrano
+  var LO = 0.6, HI = 0.82, SURE = 0.85, MINQ_TOP = 1.2, MINQ_OCC = 1.4;
   // niente under tra i pronostici, tranne falli e cartellini di squadra e totali: gol, tiri, tiri in porta, corner e giocatori
   // si propongono solo come over / "almeno". Nelle coppe del 13-15/10/2026 gli under sui gol uscivano il 66% contro il 76%
   // stimato, quelli su falli e cartellini l'83-92%.
@@ -694,16 +702,18 @@ var Core = (function () {
     return Object.keys(best).map(function (k) { return best[k]; }).sort(function (a, b) { return b.p - a.p; });
   }
   // schedina: una giocata per partita, le più probabili tra quelle che rispettano i filtri
-  function slipCandidates(matches, withPlayers) {
+  // onProg(fatte, totali): avanzamento; tra una partita e l'altra si lascia respirare la pagina (niente blocchi sul telefono)
+  function slipCandidates(matches, withPlayers, onProg) {
     var res = [], i = 0;
     function next() {
+      if (onProg) try { onProg(i, matches.length); } catch (e) { }
       if (i >= matches.length) return Promise.resolve(res);
       var m = matches[i++];
       return loadComp(m.lg, false).then(function (cd) {
         var tf = teamForecast(cd, m), go = function (pf) { allOffers(m, tf, pf).forEach(function (o) { res.push({ m: m, o: o }); }); };
         if (!withPlayers) { go(null); return; }
         return loadPlayers(cd, m).then(function (pd) { go(playersForecast(pd, tf, m, {})); }, function () { go(null); });
-      }, function () {}).then(next);
+      }, function () {}).then(function () { return new Promise(function (r) { setTimeout(r, 0); }); }).then(next);
     }
     return next();
   }
@@ -761,6 +771,7 @@ var Core = (function () {
       if (!opt.cats[o.cat] || (opt.ids && !opt.ids[m.id]) || !(m.d > now) || m.d > (opt.to || Infinity) || m.d < (opt.from || 0)) return;
       if (o.kind === 'player' && o.status !== 'tit') return;
       if (o.odds < 1.04 || o.p > 0.985) return;
+      if (opt.maxLegP && o.p > opt.maxLegP) return;   // niente giocate scontate
       var minP = o.fair ? (opt.minLegP != null ? opt.minLegP : 0.6) : minP0, ps = o.pk > 0 ? Math.min(o.p, o.pk) : o.p; if (ps < minP) return;
       var k = legKey(m, o); if (opt.ban && opt.ban[k]) return;
       (per[m.id] || (per[m.id] = [])).push({ m: m, legs: [o], ps: ps, p: o.p, odds: o.odds, pen: o.fair ? PEN : 0 });
