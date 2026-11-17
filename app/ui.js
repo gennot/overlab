@@ -56,7 +56,9 @@
     star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
     trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
     share: '<path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/>',
-    heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/>'
+    heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/>',
+    ok: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    x: '<path d="M6 6l12 12M18 6L6 18"/>'
   };
   function ic(n) { return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (ICO[n] || '') + '</svg>'; }
   function cls(p) { return p >= 0.75 ? 'hi' : p >= 0.6 ? 'ok' : p >= 0.45 ? 'mid' : 'lo'; }
@@ -213,13 +215,22 @@
         h += '<section class="lgrp' + (closed ? ' closed' : '') + '"><button class="lgh" data-act="coll" data-k="' + esc(k) + '" aria-expanded="' + !closed + '">' + (c ? flag(c.grp) : '') + '<b>' + esc(c ? c.name : lg) + '</b><span>' + byLg[lg].length + '</span>' + ic('down') + '</button>';
         byLg[lg].forEach(function (m) {
           LVM[m.id] = m;
-          h += '<button class="mrow" data-nav="m/' + m.lg + '/' + esc(m.id) + '"><span class="tm" data-lvt="' + esc(m.id) + '">' + rowTm(m) + '</span><span class="tn"><span class="row">' + logo(m.h) + '<span>' + esc(tn(m.h)) + '</span></span><span class="row">' + logo(m.a) + '<span>' + esc(tn(m.a)) + '</span></span></span><span class="lsr" data-lvs="' + esc(m.id) + '">' + rowSc(m) + '</span>' + ic('chev') + '</button>';
+          var can = m.d > Date.now(), pk = can && !!S.slip.sel[m.id];
+          h += '<div class="mrw' + (pk ? ' on' : '') + '">' + (can ? '<button class="mck' + (pk ? ' on' : '') + '" data-pick="' + esc(m.id) + '" aria-pressed="' + pk + '" aria-label="Scegli ' + esc(tn(m.h) + ' - ' + tn(m.a)) + ' per la schedina IA">' + ic('ok') + '</button>' : '<span class="mck off" aria-hidden="true"></span>') + '<button class="mrow" data-nav="m/' + m.lg + '/' + esc(m.id) + '"><span class="tm" data-lvt="' + esc(m.id) + '">' + rowTm(m) + '</span><span class="tn"><span class="row">' + logo(m.h) + '<span>' + esc(tn(m.h)) + '</span></span><span class="row">' + logo(m.a) + '<span>' + esc(tn(m.a)) + '</span></span></span><span class="lsr" data-lvs="' + esc(m.id) + '">' + rowSc(m) + '</span>' + ic('chev') + '</button></div>';
         });
         h += '</section>';
       });
     });
     var when = SNAP && window.OVERLAB_T ? 'Dati aggiornati ' + new Date(window.OVERLAB_T).toLocaleString('it-IT', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) + '.' : 'Dati in diretta.';
-    return h + '<p class="foot">' + when + '' + '</p>';
+    return h + '<p class="foot">' + when + '' + '</p>' + pickBar();
+  }
+  // partite scelte dall'elenco per la schedina IA
+  function picked() { var now = Date.now(); return (S.up || []).filter(function (m) { return S.slip.sel[m.id] && m.d > now; }); }
+  function pbTxt(n) { return '<b>' + n + '</b> ' + (n === 1 ? 'partita scelta' : 'partite scelte'); }
+  function pickBar() {
+    var n = picked().length;
+    if (!n) return '<div id="pickbar" class="pickbar" hidden></div>';
+    return '<div id="pickbar" class="pickbar"><div class="pickbar-in"><button class="pb-x" data-act="pickclr" aria-label="Togli tutte le partite scelte">' + ic('x') + '</button><span class="pb-n">' + pbTxt(n) + '</span><button class="btn pri pb-go" data-act="mkslip">' + ic('spark') + 'Crea schedina IA</button></div></div>';
   }
   // le giocate più probabili delle prossime partite (finestra di 36 ore dalla prima in programma)
   // occasioni: giocate con quota da 1,40 in su che secondo la stima pagano bene rispetto al rischio
@@ -280,7 +291,7 @@
     var W = winOf(o.when), now = Date.now();
     var inW = list.filter(function (m) { return m.d > now && m.d >= W[0] && m.d <= W[1]; });
     // scelgo io: si analizzano solo le partite scelte; sceglie l'IA: al massimo 60, prima le competizioni principali
-    var ms = man ? inW.filter(function (m) { return o.sel[m.id]; }).sort(function (a, b) { return a.d - b.d; }) : inW.slice().sort(function (a, b) { return slipPri(a) - slipPri(b) || a.d - b.d; }).slice(0, 60);
+    var ms = man ? picked().sort(function (a, b) { return a.d - b.d; }) : inW.slice().sort(function (a, b) { return slipPri(a) - slipPri(b) || a.d - b.d; }).slice(0, 60);
     var opt = function (items, cur, attr) { return items.map(function (x) { var on = String(cur) === String(x[0]); return '<button class="sl-b' + (on ? ' on' : '') + '" data-' + attr + '="' + x[0] + '" aria-pressed="' + on + '">' + x[1] + '</button>'; }).join(''); };
     var h = '<section class="sl"><div class="sl-r"><div class="sl-m">' + opt([['auto', ic('spark') + 'Sceglie l\'IA'], ['man', ic('pick') + 'Scelgo io le partite']], man ? 'man' : 'auto', 'smode') + '</div></div>' +
       '<div class="sl-r"><span class="sl-l">Quando</span><div class="sl-o">' + opt(SLW, o.when, 'swhen') + '</div></div>' +
@@ -289,12 +300,12 @@
       '<div class="sl-r"><span class="sl-l">Giocate</span><div class="sl-o">' + SGRP.map(function (g) { return '<button class="sl-b' + (o.grp[g[0]] ? ' on' : '') + '" data-sgrp="' + g[0] + '" aria-pressed="' + !!o.grp[g[0]] + '">' + g[1] + '</button>'; }).join('') + '</div></div></section>';
     var nsel = man ? ms.length : 0, pickList = '';
     if (man) {
-      var shown = inW.slice().sort(function (a, b) { return a.d - b.d; }).slice(0, 150), curd = '';
+      var seen = {}, shown = ms.concat(inW).filter(function (m) { if (seen[m.id]) return false; seen[m.id] = 1; return true; }).sort(function (a, b) { return a.d - b.d; }).slice(0, 150), curd = '';
       pickList = '<h2 class="day" id="msel">Scegli le partite (' + nsel + ' scelte)</h2>' + (nsel ? '<div class="wrapc"><button class="chip" data-ssel="__none">Togli tutte</button></div>' : '') + '<div class="list">' + shown.map(function (m) {
         var dl = dayLabel(m.d), c = Core.comp(m.lg), on = !!o.sel[m.id], hd = dl !== curd ? '<div class="sday">' + esc(dl) + '</div>' : ''; curd = dl;
         return hd + '<button class="msel' + (on ? ' on' : '') + '" data-ssel="' + esc(m.id) + '" aria-pressed="' + on + '"><span class="ck" aria-hidden="true">' + (on ? '✓' : '') + '</span><span class="msel-n"><small>' + esc(hm(m.d) + (c ? ' · ' + c.name : '')) + '</small>' + esc(tn(m.h) + ' - ' + tn(m.a)) + '</span></button>';
       }).join('') + '</div>' + (inW.length > shown.length ? '<p class="foot">Mostro le prime ' + shown.length + ' partite: per trovare le altre scegli la nazione o la competizione in alto.</p>' : '');
-      if (!inW.length) return h + '<div class="note">Nessuna partita ancora da giocare in questo periodo' + (S.naz || S.comp !== 'all' ? ' con il filtro scelto' : '') + '.</div>';
+      if (!shown.length) return h + '<div class="note">Nessuna partita ancora da giocare in questo periodo' + (S.naz || S.comp !== 'all' ? ' con il filtro scelto' : '') + '.</div>';
       if (!nsel) return h + '<div class="note">Tocca le partite qui sotto: per ognuna l\'IA trova la giocata migliore e compone la schedina.</div>' + pickList;
     }
     if (!ms.length) return h + '<div class="note">Nessuna partita ancora da giocare in questo periodo' + (S.naz || S.comp !== 'all' ? ' con il filtro scelto' : '') + '.</div>';
@@ -309,7 +320,7 @@
     var cats = {}; SGRP.forEach(function (g) { if (o.grp[g[0]]) g[2].forEach(function (c) { cats[c] = 1; }); });
     if (!Object.keys(cats).length) return h + '<div class="note">Scegli almeno un tipo di giocata.</div>' + pickList;
     var st = STYLES[o.style];
-    var s = Core.optSlip(S.cands.items, { cats: cats, from: W[0], to: W[1], goal: 'prob', P: Math.pow(st[3], man ? nsel : o.N), N: man ? 0 : o.N, combo: false, ban: o.ban, ids: man ? o.sel : null, all: man, minLegP: st[1], maxLegP: st[2] });
+    var s = Core.optSlip(S.cands.items, { cats: cats, from: man ? 0 : W[0], to: man ? Infinity : W[1], goal: 'prob', P: Math.pow(st[3], man ? nsel : o.N), N: man ? 0 : o.N, combo: false, ban: o.ban, ids: man ? o.sel : null, all: man, minLegP: st[1], maxLegP: st[2] });
     S.slipNow = s.items.length ? s : null;
     if (!s.items.length) return h + '<div class="note">' + (man ? 'Per le partite scelte non trovo giocate adatte: prova lo stile Coraggiosa o aggiungi altri tipi di giocata.' : s.impossible === 'poche' ? 'Solo ' + s.avail + ' partite hanno giocate adatte: scegli meno partite, un periodo più lungo, lo stile Coraggiosa o più tipi di giocata.' : 'Non trovo giocate adatte: prova un periodo più lungo o più tipi di giocata.') + '</div>' + (Object.keys(o.ban).length ? '<button class="btn wide" data-act="slipfirst">Torna alla prima</button>' : '') + pickList;
     var legs = s.items.map(function (x) {
@@ -711,26 +722,26 @@
     var m = S.m, tf = S.tf; if (!m || !tf) return;
     var p = null; try { p = Core.mainPick(m, tf, S.pf) || Core.picks(m, tf, S.pf, false)[0]; } catch (e) { p = null; }
     var W = 1080, H = 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H; var c = cv.getContext('2d');
-    var ready = document.fonts && document.fonts.load ? Promise.all(['800 64px "Inter"', '700 40px "Inter"', '600 30px "Inter"'].map(function (f) { return document.fonts.load(f).catch(function () {}); })) : Promise.resolve();
+    var ready = document.fonts && document.fonts.load ? Promise.all(['800 64px "Plus Jakarta Sans"', '700 40px "Plus Jakarta Sans"', '600 30px "Plus Jakarta Sans"'].map(function (f) { return document.fonts.load(f).catch(function () {}); })) : Promise.resolve();
     ready.then(function () {
-      var D = '"Inter", sans-serif', NUM = '"Inter", sans-serif', B = '"Inter", system-ui, sans-serif';
+      var D = '"Plus Jakarta Sans", sans-serif', NUM = '"Plus Jakarta Sans", sans-serif', B = '"Plus Jakarta Sans", system-ui, sans-serif';
       var rr = function (x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
       var fit = function (txt, max, size, weight, fam) { var sz = size; do { c.font = weight + ' ' + sz + 'px ' + fam; sz -= 2; } while (c.measureText(txt).width > max && sz > 20); };
-      var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0d1114'); g.addColorStop(1, '#0c1b15'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0c0a1c'); g.addColorStop(1, '#1d1240'); c.fillStyle = g; c.fillRect(0, 0, W, H);
       var rg = c.createRadialGradient(W / 2, 640, 40, W / 2, 640, 620); rg.addColorStop(0, 'rgba(243,182,63,.16)'); rg.addColorStop(1, 'rgba(243,182,63,0)'); c.fillStyle = rg; c.fillRect(0, 0, W, H);
       // logo
-      var lg = c.createLinearGradient(80, 70, 170, 160); lg.addColorStop(0, '#2fd47f'); lg.addColorStop(1, '#16b5c6'); c.fillStyle = lg; rr(80, 70, 92, 92, 24); c.fill();
-      c.fillStyle = 'rgba(4,35,26,.9)'; [[96, 128, 14, 22], [116, 114, 14, 36], [136, 100, 14, 50]].forEach(function (b) { rr(b[0], b[1], b[2], b[3], 4); c.fill(); }); c.beginPath(); c.arc(155, 92, 9, 0, 7); c.fill();
-      c.font = '800 76px ' + D; c.textBaseline = 'middle'; c.fillStyle = '#f2f4f5'; c.fillText('OVER', 196, 118); var ow = c.measureText('OVER').width; var tg = c.createLinearGradient(196 + ow, 0, 196 + ow + 140, 0); tg.addColorStop(0, '#2fd47f'); tg.addColorStop(1, '#16b5c6'); c.fillStyle = tg; c.fillText('LAB', 196 + ow, 118);
-      var comp = Core.comp(m.lg); c.textAlign = 'center'; c.font = '600 32px ' + B; c.fillStyle = '#8b9299'; c.fillText((comp ? comp.name + ' · ' : '') + dayLabel(m.d) + ' · ' + hm(m.d), W / 2, 236);
+      var lg = c.createLinearGradient(80, 70, 170, 160); lg.addColorStop(0, '#8b5cf6'); lg.addColorStop(1, '#ec4899'); c.fillStyle = lg; rr(80, 70, 92, 92, 24); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.92)'; [[96, 128, 14, 22], [116, 114, 14, 36], [136, 100, 14, 50]].forEach(function (b) { rr(b[0], b[1], b[2], b[3], 4); c.fill(); }); c.beginPath(); c.arc(155, 92, 9, 0, 7); c.fill();
+      c.font = '800 76px ' + D; c.textBaseline = 'middle'; c.fillStyle = '#f7f6ff'; c.fillText('OVER', 196, 118); var ow = c.measureText('OVER').width; var tg = c.createLinearGradient(196 + ow, 0, 196 + ow + 140, 0); tg.addColorStop(0, '#a78bfa'); tg.addColorStop(1, '#f472b6'); c.fillStyle = tg; c.fillText('LAB', 196 + ow, 118);
+      var comp = Core.comp(m.lg); c.textAlign = 'center'; c.font = '600 32px ' + B; c.fillStyle = '#a7a3cf'; c.fillText((comp ? comp.name + ' · ' : '') + dayLabel(m.d) + ' · ' + hm(m.d), W / 2, 236);
       // squadre
-      c.fillStyle = '#4fd8e6'; fit(tn(m.h).toUpperCase(), 400, 70, 800, D); c.textAlign = 'right'; c.fillText(tn(m.h).toUpperCase(), W / 2 - 70, 330);
-      c.fillStyle = '#ff8f63'; fit(tn(m.a).toUpperCase(), 400, 70, 800, D); c.textAlign = 'left'; c.fillText(tn(m.a).toUpperCase(), W / 2 + 70, 330);
-      c.textAlign = 'center'; c.font = '800 54px ' + D; c.fillStyle = '#5d646b'; c.fillText('VS', W / 2, 332);
+      c.fillStyle = '#6fdcff'; fit(tn(m.h).toUpperCase(), 400, 70, 800, D); c.textAlign = 'right'; c.fillText(tn(m.h).toUpperCase(), W / 2 - 70, 330);
+      c.fillStyle = '#ffab7d'; fit(tn(m.a).toUpperCase(), 400, 70, 800, D); c.textAlign = 'left'; c.fillText(tn(m.a).toUpperCase(), W / 2 + 70, 330);
+      c.textAlign = 'center'; c.font = '800 54px ' + D; c.fillStyle = '#5d5890'; c.fillText('VS', W / 2, 332);
       // barra 1X2
-      var r = tf.res; if (r) { var x0 = 80, bw = W - 160, y0 = 400, parts = [[r.h, '#16b5c6'], [r.d, '#858d98'], [r.a, '#ff6a3d']], xx = x0;
+      var r = tf.res; if (r) { var x0 = 80, bw = W - 160, y0 = 400, parts = [[r.h, '#2fc6f0'], [r.d, '#908cb8'], [r.a, '#ff8a4c']], xx = x0;
         parts.forEach(function (q) { var w = Math.max(10, q[0] * (bw - 12)); c.fillStyle = q[1]; rr(xx, y0, w, 22, 11); c.fill(); xx += w + 6; });
-        c.font = '700 34px ' + NUM; c.textAlign = 'left'; c.fillStyle = '#4fd8e6'; c.fillText('1  ' + pct(r.h), x0, 462); c.textAlign = 'center'; c.fillStyle = '#c9cdd1'; c.fillText('X  ' + pct(r.d), W / 2, 462); c.textAlign = 'right'; c.fillStyle = '#ff8f63'; c.fillText('2  ' + pct(r.a), W - x0, 462); }
+        c.font = '700 34px ' + NUM; c.textAlign = 'left'; c.fillStyle = '#6fdcff'; c.fillText('1  ' + pct(r.h), x0, 462); c.textAlign = 'center'; c.fillStyle = '#c9cdd1'; c.fillText('X  ' + pct(r.d), W / 2, 462); c.textAlign = 'right'; c.fillStyle = '#ffab7d'; c.fillText('2  ' + pct(r.a), W - x0, 462); }
       // pronostico
       c.textAlign = 'center'; c.fillStyle = 'rgba(36,39,43,.92)'; rr(80, 520, W - 160, 400, 36); c.fill(); c.lineWidth = 3; c.strokeStyle = 'rgba(243,182,63,.55)'; c.stroke();
       c.font = '700 30px ' + B; c.fillStyle = '#f3b63f'; c.fillText('P R O N O S T I C O', W / 2, 580);
@@ -752,7 +763,7 @@
         var mark = {}, best = function (t, kk) { var b0 = null; (S.pf[t] || []).forEach(function (f) { if (f.status === 'tit' && f.p.pos !== 'G' && (!b0 || f.st[kk].p1 > b0.st[kk].p1)) b0 = f; }); return b0; };
         [m.h, m.a].forEach(function (t) { var a = best(t, 'yc'), s2 = best(t, 'gl'); if (a) (mark[a.p.id] = mark[a.p.id] || {}).yc = 1; if (s2) (mark[s2.p.id] = mark[s2.p.id] || {}).gl = 1; });
         var Y = { H: { G: 6, D: 18.5, M: 31, M2: 38, F: 43.5 }, A: { G: 90.5, D: 79.5, M: 68.5, M2: 62, F: 56.5 } };
-        [[m.h, 'H', '#16b5c6'], [m.a, 'A', '#ff6a3d']].forEach(function (x) {
+        [[m.h, 'H', '#2fc6f0'], [m.a, 'A', '#ff8a4c']].forEach(function (x) {
           var rows = xiRows(x[0]), ln2 = [['G', rows.G], ['D', rows.D]]; if (rows.M.length >= 6) { var h1 = Math.ceil(rows.M.length / 2); ln2.push(['M', rows.M.slice(0, h1)], ['M2', rows.M.slice(h1)]); } else ln2.push(['M', rows.M]); ln2.push(['F', rows.F]);
           ln2.forEach(function (L) { var n = L[1].length; L[1].forEach(function (f, i) {
             var cx = px + pw * (i + 1) / (n + 1), cy = py + ph * Y[x[1]][L[0]] / 100;
@@ -997,12 +1008,23 @@
   }
 
   document.addEventListener('click', function (e) {
-    var t = e.target.closest('[data-naz],[data-nav],[data-hv],[data-smode],[data-swhen],[data-sgoal],[data-sq],[data-sp],[data-scombo],[data-ssel],[data-stake],[data-scat],[data-sn],[data-smin],[data-comp],[data-act],[data-tab],[data-exp],[data-pfil],[data-pteam],[data-pst],[data-cyc],[data-ptap],[data-stheme],[data-sstyle],[data-sgrp]'); if (!t) return;
+    var t = e.target.closest('[data-naz],[data-nav],[data-hv],[data-smode],[data-swhen],[data-sgoal],[data-sq],[data-sp],[data-scombo],[data-ssel],[data-stake],[data-scat],[data-sn],[data-smin],[data-comp],[data-act],[data-tab],[data-exp],[data-pfil],[data-pteam],[data-pst],[data-cyc],[data-ptap],[data-stheme],[data-sstyle],[data-sgrp],[data-pick]'); if (!t) return;
     var d = t.dataset;
     if ('nav' in d) { nav(d.nav); return; }
     if (d.hv) { S.hv = d.hv; if (cur() !== '') nav(''); else { window.scrollTo(0, 0); render(); } return; }
     if (d.scat) { S.slip.cats[d.scat] = S.slip.cats[d.scat] ? 0 : 1; S.slip.ban = {}; S.slip.theme = null; S.slip.minP = null; rerender(); return; }
     if (d.stheme) { var th = THEMES.filter(function (x) { return x[0] === d.stheme; })[0]; if (!th) return; if (S.slip.theme === th[0]) { S.slip.theme = null; S.slip.minP = null; S.slip.cats = { sot: 1, sotT: 1, sh: 1, shT: 1, co: 1, coT: 1, res: 1, tg: 1 }; } else { S.slip.theme = th[0]; S.slip.cats = Object.assign({}, th[2]); S.slip.minP = th[3] || null; } S.slip.ban = {}; rerender(); return; }
+    if (d.pick) {
+      if (S.slip.sel[d.pick]) delete S.slip.sel[d.pick]; else S.slip.sel[d.pick] = 1;
+      var on = !!S.slip.sel[d.pick]; S.slip.ban = {};
+      t.classList.toggle('on', on); t.setAttribute('aria-pressed', on); if (t.parentNode) t.parentNode.classList.toggle('on', on);
+      var pb = document.getElementById('pickbar'), pn = picked().length, pt = pb && pb.querySelector('.pb-n');
+      if (pt && pn) pt.innerHTML = pbTxt(pn); else if (pb) pb.outerHTML = pickBar();
+      if (on && navigator.vibrate) try { navigator.vibrate(8); } catch (x) {}
+      return;
+    }
+    if (d.act === 'pickclr') { S.slip.sel = {}; S.slip.ban = {}; rerender(); return; }
+    if (d.act === 'mkslip') { S.slip.mode = 'man'; S.slip.ban = {}; S.hv = 'slip'; window.scrollTo(0, 0); render(); return; }
     if (d.smode) { S.slip.mode = d.smode; S.slip.ban = {}; rerender(); return; }
     if (d.swhen) { S.slip.when = d.swhen; S.slip.ban = {}; rerender(); return; }
     if (d.sstyle) { S.slip.style = d.sstyle; S.slip.ban = {}; rerender(); return; }

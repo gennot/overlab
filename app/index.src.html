@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>OverLab</title>
 <meta name="description" content="Pronostici statistici su tiri, tiri in porta, corner, falli e cartellini per squadre e giocatori.">
-<meta name="theme-color" content="#06080c">
+<meta name="theme-color" content="#0c0a1c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,20 +14,20 @@
 <link rel="icon" href="data:image/png;base64,/*ICON*/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
 /* Impianto: app da telefono con barra di navigazione in basso, striscia dei giorni e partite raggruppate per campionato.
    Grafite scura, accento "erba" che sfuma dal verde all'acqua, oro solo per le occasioni. Titoli stretti e pesanti da tabellone. */
 :root{
-  --bg:#06080c;--surface:#0d1218;--surface2:#151c25;--line:#1d2632;--fg:#eef3f7;--muted:#8593a3;
-  --g1:#34e3a0;--g2:#1ec3ea;--on-grad:#04231a;--grad:linear-gradient(120deg,var(--g1),var(--g2));
-  --accent:#2bd893;--accent-fg:#04231a;--accent-ink:#5cf0b2;--accent-bg:rgba(43,216,147,.12);--gold:#f5bb45;
-  --hi:#3ddc93;--ok:#a6d66e;--mid:#f1b648;--lo:#858d98;--err:#ff8a78;
-  --hi-bg:rgba(60,207,138,.13);--ok-bg:rgba(166,214,110,.11);--mid-bg:rgba(241,182,72,.11);--lo-bg:rgba(133,141,152,.10);
-  --pitch:rgba(82,227,160,.07);--shadow:0 14px 34px rgba(0,0,0,.6);--glow:0 8px 26px rgba(43,216,147,.32);
-  --pro1:#ffd77f;--pro2:#f5a524;--home:#16b5c6;--home-ink:#4fd8e6;--away:#ff6a3d;--away-ink:#ff8f63;
-  --disp:"Inter",system-ui,sans-serif;--num:"Inter",system-ui,sans-serif;
-  --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --bg:#0c0a1c;--surface:#16132e;--surface2:#211d42;--line:#2e2957;--fg:#f7f6ff;--muted:#a7a3cf;
+  --g1:#8b5cf6;--g2:#ec4899;--on-grad:#ffffff;--grad:linear-gradient(120deg,var(--g1),var(--g2));
+  --accent:#a07cff;--accent-fg:#ffffff;--accent-ink:#c4b0ff;--accent-bg:rgba(139,92,246,.17);--gold:#ffc94d;
+  --hi:#34e6a0;--ok:#b9e64c;--mid:#ffb547;--lo:#908cb8;--err:#ff7a90;
+  --hi-bg:rgba(52,230,160,.14);--ok-bg:rgba(185,230,76,.12);--mid-bg:rgba(255,181,71,.13);--lo-bg:rgba(144,140,184,.12);
+  --pitch:rgba(139,92,246,.08);--shadow:0 14px 34px rgba(5,3,20,.65);--glow:0 10px 28px rgba(168,85,247,.38);
+  --pro1:#ffe08a;--pro2:#ffab2e;--home:#2fc6f0;--home-ink:#6fdcff;--away:#ff8a4c;--away-ink:#ffab7d;
+  --disp:"Plus Jakarta Sans",system-ui,sans-serif;--num:"Plus Jakarta Sans",system-ui,sans-serif;
+  --body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   color-scheme:dark;
 }
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--pro1:#c47a00;--pro2:#9a5a00;--home-ink:#0b8796;--away-ink:#d4461e;
@@ -399,7 +399,7 @@ a{color:inherit;text-decoration:none}
 @media (prefers-reduced-motion:reduce){.xcc.on,.xcc.off,.xcc.on .xc-sh,.xcc.on .xc-ev small,.xcc.on .xc-ev b{animation:none}.xcc{transition:opacity .3s}}
 @media (max-width:340px){.hero-top{grid-template-columns:1fr}.xc{margin:0 auto}}
 .hero-a .story{margin:0;font-size:15px;line-height:1.6}
-.lu{margin-top:16px;border:1px solid rgba(82,227,160,.25);border-radius:22px;padding:16px 14px;background:linear-gradient(180deg,rgba(22,181,198,.07),transparent 45%),var(--surface)}
+.lu{margin-top:16px;border:1px solid rgba(139,92,246,.25);border-radius:22px;padding:16px 14px;background:linear-gradient(180deg,rgba(22,181,198,.07),transparent 45%),var(--surface)}
 .lu-h{display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:8px;margin:2px 4px 12px}
 .lu-srcw{display:flex;justify-content:center;margin:0 0 14px}
 .lu-t{display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -410,7 +410,7 @@ a{color:inherit;text-decoration:none}
 .lu-t.home i{background:var(--home)} .lu-t.away i{background:var(--away)}
 .lu-t small{color:var(--muted);font:600 14px/1 var(--num)}
 .lu-src{padding:7px 16px;border-radius:999px;border:1px solid rgba(243,182,63,.5);color:var(--gold);font:700 11.5px/1 var(--body);letter-spacing:.14em;text-transform:uppercase}
-.lu-src.off{border-color:rgba(82,227,160,.5);color:var(--accent-ink)}
+.lu-src.off{border-color:rgba(139,92,246,.5);color:var(--accent-ink)}
 .pitch{position:relative;aspect-ratio:10/18;border-radius:16px;overflow:hidden;border:2px solid rgba(255,255,255,.1);background:repeating-linear-gradient(180deg,#1c7a3d 0 8.333%,#22884a 8.333% 16.666%)}
 .pl-lines{position:absolute;inset:3% 3.5%;border:2px solid rgba(255,255,255,.7);pointer-events:none}
 .pl-lines i{position:absolute;border:2px solid rgba(255,255,255,.7)}
@@ -548,25 +548,20 @@ a{color:inherit;text-decoration:none}
 .tgt.big,.shot.big,.foul.big{width:40px;height:40px}
 @media (prefers-reduced-motion:reduce){.pop{animation:none}.sball{transition:none}}
 
-/* Tema notte: lo stadio di sera. Fondo blu notte con la luce dei riflettori in alto e le linee del campo appena accennate,
-   barre in alto e in basso in vetro, pannelli con il bordo superiore illuminato come sotto i fari. */
+/* Tema serata: blu notte con due luci (viola e rosa) in alto, barre in vetro, pannelli con il bordo alto illuminato. */
 body{background:
-  radial-gradient(60% 34% at 8% -4%,rgba(52,227,160,.15),transparent 70%),
-  radial-gradient(60% 34% at 92% -4%,rgba(30,195,234,.13),transparent 70%),
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 760 560' fill='none' stroke='%23fff' stroke-opacity='.05' stroke-width='2'%3E%3Crect x='20' y='-2' width='720' height='560'/%3E%3Crect x='220' y='-2' width='320' height='120'/%3E%3Crect x='300' y='-2' width='160' height='48'/%3E%3Cpath d='M300 118a80 50 0 0 0 160 0'/%3E%3Cpath d='M20 520H740'/%3E%3Ccircle cx='380' cy='520' r='110'/%3E%3C/svg%3E") center 0/min(760px,190vw) auto no-repeat,
-  var(--bg)}
-:root:not([data-theme="light"]) .top{background:rgba(6,8,12,.72);-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);border-bottom-color:rgba(255,255,255,.06)}
-:root:not([data-theme="light"]) .bnav{background:rgba(8,11,16,.8);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);border-top-color:rgba(255,255,255,.06)}
-.bnav button.on .ic{filter:drop-shadow(0 0 8px rgba(52,227,160,.55))}
-:root:not([data-theme="light"]) :is(.card,.lgrp,.hero,.mt,.tabs,.seg,.dcard,.naz,.pill,.psel,.mnc,.an,.legal-b){background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0) 55%),var(--surface)}
-:root:not([data-theme="light"]) :is(.card,.lgrp,.hero,.mt,.mh,.motd,.dcard,.naz,.mnc,.an){box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 16px 34px -20px rgba(0,0,0,.9)}
-:root:not([data-theme="light"]) .hero-p,:root:not([data-theme="light"]) .hero-a{box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-.lgh{background:linear-gradient(90deg,rgba(52,227,160,.07),transparent 60%)}
-.mrow:active,.mrow:hover{background:rgba(255,255,255,.03)}
+  radial-gradient(70% 38% at 0% -6%,rgba(139,92,246,.26),transparent 70%),
+  radial-gradient(60% 34% at 100% -6%,rgba(236,72,153,.16),transparent 70%),
+  var(--bg);background-attachment:fixed}
+:root:not([data-theme="light"]) .top{background:rgba(12,10,28,.74);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);border-bottom-color:rgba(255,255,255,.06)}
+:root:not([data-theme="light"]) .bnav{background:rgba(14,12,32,.86);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);border-top-color:rgba(255,255,255,.07)}
+:root:not([data-theme="light"]) :is(.card,.lgrp,.hero,.mt,.tabs,.seg,.dcard,.naz,.pill,.psel,.mnc,.an,.legal-b,.sl){background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0) 60%),var(--surface)}
+:root:not([data-theme="light"]) :is(.card,.lgrp,.hero,.mt,.mh,.motd,.mnc,.an,.sl){box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 18px 36px -22px rgba(4,2,18,.95)}
+:root:not([data-theme="light"]) .hero-p,:root:not([data-theme="light"]) .hero-a{box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.mrow:active,.mrow:hover{background:rgba(255,255,255,.035)}
 
-/* ===== Carattere Inter (più leggibile) e pagine più ordinate ===== */
-:root{--disp:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--num:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-body{letter-spacing:-.006em}
+/* ===== Misure dei testi ===== */
+body{letter-spacing:-.003em}
 .brand{font-size:21px;letter-spacing:-.03em;text-transform:none}
 .selw span,.day,.why>b,.qt th,.phead,.sday,.tag,.sum small,.info th,.mt-c,.xc-ev small,.motd-k,.tp-pill{letter-spacing:.04em}
 .day{font-size:12px;font-weight:700}
@@ -628,7 +623,7 @@ body{letter-spacing:-.006em}
 .slr-a{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .lot{color:var(--lo)}
 
-/* testi grandi in minuscolo: con Inter i maiuscoli grandi pesano troppo */
+/* testi grandi in minuscolo: si leggono meglio */
 .vh h1,.hero-p b,.motd-p b,.lgh b,.psel select,.cmp thead td b,.lastl h3,.sp-name,.xc-nm b,.lu-t b,.simbar span,.sim-sc span,.pill{text-transform:none;letter-spacing:-.01em}
 .lgh b{font-size:14px;font-weight:700}
 .psel select{font-size:14px}
@@ -640,6 +635,83 @@ body{letter-spacing:-.006em}
 .sl-m .sl-b .ic{width:16px;height:16px}
 .sl-m .sl-b.on{background:var(--grad);color:var(--on-grad)}
 .msel-n small{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== Impianto 3: viola e rosa su blu notte, carattere Plus Jakarta Sans, comandi più grandi e chiari ===== */
+.top{padding:calc(9px + env(safe-area-inset-top,0px)) 16px 9px}
+.brand{font:800 21px/1 var(--disp);letter-spacing:-.035em}
+.ib{border-radius:14px;background:var(--surface2);border-color:var(--line)}
+.vh{gap:6px}
+.vh h1{font-size:23px;letter-spacing:-.03em;gap:11px}
+.vh h1 .ic{width:32px;height:32px;padding:6px;border-radius:11px;color:#fff;background:var(--grad);box-shadow:var(--glow)}
+.vh p{font-size:13.5px;line-height:1.45}
+.day{color:var(--accent-ink);font-size:12px;letter-spacing:.08em;margin-top:14px}
+/* giorni */
+.dstrip{gap:8px}
+.dcard{width:64px;padding:10px 4px 9px;border-radius:16px;gap:5px;box-shadow:none}
+.dcard small{font-size:11px;letter-spacing:.05em;font-weight:700}
+.dcard b{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.dcard i{font-size:10.5px;font-weight:600}
+:root:not([data-theme="light"]) .dcard.on{background:var(--grad);border-color:transparent;box-shadow:var(--glow)}
+/* nazioni e filtri */
+.naz{border-radius:999px;padding:8px 15px 8px 9px;font-size:13.5px;box-shadow:none}
+.naz:first-child{padding-left:15px}
+:root:not([data-theme="light"]) .naz.on{background:var(--grad);border-color:transparent;color:#fff;box-shadow:var(--glow)}
+.naz.on span{color:#fff}
+.pill,.psel{border-radius:12px}
+.pill{font-size:13px;letter-spacing:0;font-weight:600}
+:root:not([data-theme="light"]) .pill.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent-ink)}
+.psel .ic{color:var(--accent)}
+/* competizioni */
+.lgrp{border-radius:20px}
+.lgh{padding:13px 14px;background:linear-gradient(90deg,rgba(139,92,246,.16),transparent 72%)}
+.lgh b{color:var(--fg);font-size:14.5px;font-weight:700}
+.lgh span{min-width:26px;height:22px;display:inline-grid;place-items:center;padding:0 8px;border-radius:999px;background:var(--surface2);color:var(--accent-ink);font-size:12px;font-weight:700}
+/* riga partita con la casella per sceglierla */
+.mrw{display:flex;align-items:stretch;border-top:1px solid var(--line)}
+.mrw .mrow{border-top:0;flex:1;min-width:0}
+.mrw.on{background:linear-gradient(90deg,rgba(139,92,246,.2),rgba(236,72,153,.04) 80%)}
+.lgrp.closed .mrw{display:none}
+.mck{flex:none;width:48px;display:grid;place-items:center;padding-left:4px}
+.mck .ic{width:26px;height:26px;padding:3px;border-radius:9px;border:2px solid #4b4585;color:transparent;stroke-width:3;transition:background .15s,border-color .15s,transform .12s}
+.mck:hover .ic{border-color:var(--accent)}
+.mck.on .ic{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(168,85,247,.5)}
+.mck:active .ic{transform:scale(.86)}
+.mrow{grid-template-columns:44px 1fr auto 16px;gap:10px;padding:12px 14px 12px 16px}
+.mrw .mrow{padding-left:2px}
+.mrow .tm{font-size:14px;font-weight:700;color:var(--accent-ink)}
+.mrow .tn{font-size:15px;font-weight:600;gap:8px}
+.mrow>.ic{width:16px;height:16px}
+/* barra delle partite scelte */
+.pickbar{position:fixed;left:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:6;padding:0 12px;pointer-events:none}
+.pickbar[hidden]{display:none}
+.pickbar-in{pointer-events:auto;max-width:656px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:8px;border-radius:18px;background:rgba(33,29,66,.94);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(160,124,255,.5);box-shadow:0 16px 40px rgba(4,2,18,.75);animation:pbin .22s ease-out}
+.pb-x{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:var(--surface);color:var(--muted)}
+.pb-n{flex:1;min-width:0;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb-n b{color:var(--fg);font-size:19px;font-weight:800;margin-right:3px}
+.pb-go{flex:none;padding:12px 15px;border-radius:13px;font-weight:700;font-size:14.5px}
+@keyframes pbin{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.pickbar-in{animation:none}}
+.wrap:has(.pickbar:not([hidden])){padding-bottom:calc(160px + env(safe-area-inset-bottom,0px))}
+/* barra in basso: la sezione attiva ha la pillola colorata */
+.bnav button{font-size:11px;letter-spacing:.01em;text-transform:none;font-weight:600;gap:4px;padding-top:6px}
+.bnav button .ic{width:52px;height:30px;padding:4px 14px;border-radius:999px;transition:background .18s}
+.bnav button.on{color:#fff}
+.bnav button.on::before{display:none}
+.bnav button.on .ic{background:var(--grad);box-shadow:0 6px 18px rgba(168,85,247,.5);filter:none}
+/* pulsanti e schede */
+.btn{border-radius:14px;font-weight:700}
+.btn.pri{background:var(--grad);color:#fff}
+.tabs button.on,.seg.main button.on{background:var(--grad);color:#fff}
+:root:not([data-theme="light"]) .mtabs{background:rgba(22,19,46,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.card h3 .ic{color:#fff;background:var(--grad)}
+.back{color:var(--accent-ink);font-weight:700}
+/* schedina */
+.slr{border-color:rgba(160,124,255,.6);background:radial-gradient(120% 60% at 50% 0%,rgba(139,92,246,.22),transparent 70%),var(--surface)}
+.leg-m em{color:var(--accent-ink)}
+.sl-m .sl-b.on{background:var(--grad);color:#fff}
+:root:not([data-theme="light"]) .msel.on{border-color:var(--accent);background:linear-gradient(90deg,rgba(139,92,246,.16),transparent 80%),var(--surface)}
+.msel.on .ck{background:var(--grad);border-color:transparent;color:#fff}
+.slsel{display:flex;flex-wrap:wrap;gap:6px}
 </style>
 </head>
 <body>

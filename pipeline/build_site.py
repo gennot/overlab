@@ -28,13 +28,13 @@ CODE_ON = bool(os.environ.get('OVERLAB_VIP', '').strip())
 LOCK = bool(ACC.get('chiuso')) or CODE_ON
 if LOCK:
     css += """<style>
-.vip{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto;background:radial-gradient(120% 70% at 50% 0%,rgba(52,227,160,.10),transparent 62%),var(--bg)}
+.vip{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto;background:radial-gradient(120% 70% at 50% 0%,rgba(139,92,246,.10),transparent 62%),var(--bg)}
 .vip[hidden],.vip [hidden]{display:none!important}
 body.vip-on{overflow:hidden}
 .vip-card{width:100%;max-width:380px;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:30px 22px 22px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
 .vip-ic{width:60px;height:60px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,#ffd36e,#e08a1e);color:#2a1a04;box-shadow:0 8px 28px rgba(245,187,69,.35)}
 .vip-ic.off{background:var(--surface2);color:var(--muted);box-shadow:none;border:1px solid var(--line)}
-.vip-ic.dev{background:linear-gradient(135deg,var(--g1),var(--g2));color:#04140e;box-shadow:0 8px 28px rgba(52,227,160,.3)}
+.vip-ic.dev{background:linear-gradient(135deg,var(--g1),var(--g2));color:#ffffff;box-shadow:0 8px 28px rgba(139,92,246,.3)}
 .vip h1{font-size:26px;margin:0 0 8px;letter-spacing:-.02em;color:var(--fg)}
 .vip h1 span{background:linear-gradient(135deg,#ffd36e,#f5a623);-webkit-background-clip:text;background-clip:text;color:transparent}
 .vip p{color:var(--muted);margin:0 0 18px;line-height:1.5;font-size:15px}
@@ -273,9 +273,9 @@ EMAIL = os.environ.get('OVERLAB_EMAIL', 'offesia@gmail.com')   # indirizzo di co
 AGG = '14 ottobre 2026'
 def page(title, body):
     return ('<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + ' · OverLab</title>'
-            '<link rel="stylesheet" href="fonts/fonts.css"><style>body{margin:0;background:#111214;color:#e9ecee;font:16px/1.65 "Inter",system-ui,sans-serif}'
-            'main{max-width:720px;margin:0 auto;padding:28px 16px 48px}h1{font:800 30px/1.1 "Inter",sans-serif;letter-spacing:.02em;text-transform:uppercase;margin:0 0 6px}'
-            'h2{font:700 20px/1.2 "Inter",sans-serif;letter-spacing:-.01em;margin:28px 0 6px;color:#fff}p,li{color:#c9cdd1}a{color:#52e3a0}small{color:#8a9096}'
+            '<link rel="stylesheet" href="fonts/fonts.css"><style>body{margin:0;background:#0c0a1c;color:#ecebfa;font:16px/1.65 "Plus Jakarta Sans",system-ui,sans-serif}'
+            'main{max-width:720px;margin:0 auto;padding:28px 16px 48px}h1{font:800 30px/1.1 "Plus Jakarta Sans",sans-serif;letter-spacing:.02em;text-transform:uppercase;margin:0 0 6px}'
+            'h2{font:700 20px/1.2 "Plus Jakarta Sans",sans-serif;letter-spacing:-.01em;margin:28px 0 6px;color:#fff}p,li{color:#c9cdd1}a{color:#c4b0ff}small{color:#a7a3cf}'
             'nav{display:flex;gap:16px;margin-bottom:22px;font-weight:600}</style></head><body><main><nav><a href="./">← OverLab</a><a href="privacy.html">Privacy</a><a href="termini.html">Termini</a></nav>'
             + body + '<p><small>Ultimo aggiornamento: ' + AGG + '</small></p></main></body></html>\n')
 MAIL = ('<a href="mailto:' + EMAIL + '">' + EMAIL + '</a>') if EMAIL else 'indirizzo in pubblicazione a breve'
@@ -315,7 +315,7 @@ TERM = page('Termini', f"""<h1>Termini d'uso e note legali</h1>
 {SUP_TERM}<h2>Dati, nomi e marchi</h2>
 <p>Dati delle partite forniti da API-Football (API-Sports). Nomi, loghi e marchi di squadre, campionati e competizioni e le foto dei giocatori appartengono ai rispettivi titolari e sono usati solo per identificare partite e giocatori. Chi ne detiene i diritti può chiederne la rimozione scrivendo all'indirizzo indicato sopra. OverLab non è affiliato, sponsorizzato o approvato da UEFA, leghe, federazioni o club.</p>
 <h2>Contenuti di OverLab</h2>
-<p>Testi, grafica, codice e modello di OverLab appartengono al gestore. Il carattere Inter è usato secondo la licenza SIL Open Font License 1.1.</p>
+<p>Testi, grafica, codice e modello di OverLab appartengono al gestore. Il carattere Plus Jakarta Sans è usato secondo la licenza SIL Open Font License 1.1.</p>
 <h2>Modifiche e disponibilità</h2>
 <p>Il servizio e questi termini possono cambiare o essere sospesi in qualsiasi momento; la versione aggiornata è sempre su questa pagina.</p>
 <h2>Legge applicabile</h2>
@@ -325,7 +325,7 @@ open(os.path.join(OUT, 'termini.html'), 'w', encoding='utf-8').write(TERM)
 import shutil
 FD = os.path.join(ROOT, 'pipeline', 'fonts'); os.makedirs(os.path.join(OUT, 'fonts'), exist_ok=True)
 css = []
-for fam, name, ws in [('inter', 'Inter', (400, 500, 600, 700, 800))]:
+for fam, name, ws in [('plus-jakarta-sans', 'Plus Jakarta Sans', (400, 500, 600, 700, 800))]:
     for w in ws:
         for sub, rng in (('latin', 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'), ('latin-ext', 'U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF')):
             fn = '%s-%s-%d-normal.woff2' % (fam, sub, w); shutil.copy(os.path.join(FD, fn), os.path.join(OUT, 'fonts', fn))
@@ -336,7 +336,7 @@ open(os.path.join(OUT, '.nojekyll'), 'w').write('')
 
 # icone PNG disegnate a mano (senza librerie): quadrato con sfumatura verde-azzurro, tre barre e un pallone
 def png(path, S, pad=0.0):
-    g1, g2, ink = (0x2f, 0xd4, 0x7f), (0x16, 0xb5, 0xc6), (0x04, 0x23, 0x1a)
+    g1, g2, ink = (0x8b, 0x5c, 0xf6), (0xec, 0x48, 0x99), (0xff, 0xff, 0xff)
     def inside_round(x, y, x0, y0, x1, y1, r):
         if x < x0 or x > x1 or y < y0 or y > y1: return False
         cx = min(max(x, x0 + r), x1 - r); cy = min(max(y, y0 + r), y1 - r)
