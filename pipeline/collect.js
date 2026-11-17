@@ -78,6 +78,7 @@ function base(f) {
     h: String(f.teams.home.id), a: String(f.teams.away.id), s: s,
     sc: f.goals && f.goals.home != null ? [f.goals.home, f.goals.away] : old.sc || null
   });
+  if (f.league && f.league.season != null) m.se = f.league.season;
   fx[lgDef.lg][m.id] = m;
   return m;
 }
@@ -180,6 +181,35 @@ async function byIds(ids) {
   }
   let nMiss = 0; Object.values(upIdx).forEach(m => { if (!daysOk[romeYmd(m.d)]) return; if (missNew[m.id]) { m.miss = missNew[m.id]; nMiss += m.miss.length; } else delete m.miss; });
   if (Object.keys(daysOk).length) note('assenti (squalificati e infortunati) nelle prossime partite: ' + nMiss);
+  // 3c) classifiche (con le zone: qualificazione, promozione, retrocessione) delle competizioni con partite nei prossimi 4 giorni:
+  //     una volta al giorno e di nuovo dopo ogni giornata giocata. Servono per capire chi ha ancora qualcosa in palio.
+  {
+    const lastDone = {}; allFx().forEach(m => { if (DONE[m.s] && m.d > now - 20 * DAY) lastDone[m.lg] = Math.max(lastDone[m.lg] || 0, m.d); });
+    const want = {}; Object.values(upIdx).forEach(m => { if (m.d <= now) return; const w = want[m.lg] = want[m.lg] || { d: Infinity, se: null }; w.d = Math.min(w.d, m.d); if (m.se != null) w.se = Math.max(w.se || 0, m.se); });
+    let nSt = 0; const MAXST = +(process.env.MAX_STAND || 180);
+    for (const lg of Object.keys(want).sort((a, b) => want[a].d - want[b].d)) {
+      if (stop || nSt >= MAXST) break;
+      const old = readJ('stand/' + lg + '.json', null), ld = lastDone[lg] || 0;
+      const stale = !old || (old.none ? now - old.t > 3 * DAY : now - old.t > 20 * 36e5 || (old.t < ld + 2 * 36e5 && now > ld + 2 * 36e5));
+      if (!stale) continue;
+      const defs = ACTIVE.filter(l => l.lg === lg); if (!defs.length) continue;
+      const out = { t: now, g: [] }; let ok = false;
+      for (const l of defs) {
+        const se = want[lg].se || seasonsOf(l, now).slice(-1)[0];
+        const r = await api('/standings?league=' + l.id + '&season=' + se); nSt++; if (!r) break; if (r.err) continue; ok = true; out.se = se;
+        ((r.res[0] && r.res[0].league && r.res[0].league.standings) || []).forEach(gr => {
+          const rows = (gr || []).filter(x => x && x.team && x.team.id != null); if (!rows.length) return;
+          rows.forEach(x => keepTeam(x.team));
+          const d = [], di = t => { if (!t) return -1; let i = d.indexOf(t); if (i < 0) { d.push(t); i = d.length - 1; } return i; };
+          out.g.push({ n: rows[0].group || '', d: d, r: rows.map(x => { const a = x.all || {}, g = a.goals || {}; return [String(x.team.id), x.rank, x.points, a.played || 0, a.win || 0, a.draw || 0, a.lose || 0, g.for || 0, g.against || 0, di(x.description), x.form || '']; }) });
+        });
+      }
+      if (!ok) continue;
+      if (!out.g.length) out.none = 1;
+      writeJ('stand/' + lg + '.json', out);
+    }
+    if (nSt) note('classifiche aggiornate: ' + nSt + ' richieste');
+  }
   await byIds(need().filter(m => m.d > now - 10 * DAY).map(m => m.id));
   // 4) storico: elenco partite per stagione, poi i dettagli un po' alla volta
   for (const l of ACTIVE) {
