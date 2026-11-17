@@ -181,7 +181,7 @@
     var cs = S.naz ? csAll.filter(function (c) { return c.grp === S.naz; }) : csAll, grpSel = S.naz ? [S.naz] : grp;
     var nazHtml = '<div class="nazs" role="group" aria-label="Nazione">' + [''].concat(grp).map(function (g) { return '<button class="naz' + ((S.naz || '') === g ? ' on' : '') + '" data-naz="' + esc(g) + '" aria-pressed="' + ((S.naz || '') === g) + '">' + flag(g) + '<span>' + esc(g || 'Tutte') + '</span></button>'; }).join('') + '</div>';
     var VH = { list: ['trophy', 'Partite', 'Tocca una partita per l\'analisi completa'], sure: Core.bookInfo() ? ['target', 'Occasioni', 'Quote da 1,40 in su che secondo il modello pagano bene'] : ['target', 'In evidenza', 'Il pronostico principale di ogni partita'], slip: ['spark', 'Schedina IA', 'Scegli quando, quante partite e lo stile: l\'IA trova le giocate più probabili, senza quelle scontate'] }[S.hv] || ['trophy', 'Partite', ''];
-    var h = '<div class="vh"><h1>' + ic(VH[0]) + esc(VH[1]) + '</h1><p>' + esc(VH[2]) + '</p></div>';
+    var h = S.hv === 'list' ? '' : '<div class="vh"><h1>' + ic(VH[0]) + esc(VH[1]) + '</h1><p>' + esc(VH[2]) + '</p></div>';
     if (+window.OVERLAB_EXPIRES) h += '<div class="note">Versione di prova: funziona fino a <b>' + esc(expTxt(true)) + '</b>.</div>';
     h += (S.hv === 'slip' ? '' : dateStrip()) + nazHtml;
     var sel = '<label class="psel">' + ic('filter') + '<select id="compsel" aria-label="Competizione"><option value="all"' + (S.comp === 'all' ? ' selected' : '') + '>' + (S.naz ? 'Tutte (' + esc(S.naz) + ')' : 'Tutte le competizioni') + '</option>' + grpSel.map(function (g) {
@@ -263,9 +263,10 @@
       Core.loadComp(m.lg, false).then(function (cd) { var tf = Core.teamForecast(cd, m); job.res = tf.res; job.pick = Core.mainPick(m, tf, null); if (S.motd === job && cur() === '' && S.hv === 'list') rerender(); }, function () {});
     }
     var j = S.motd, c = Core.comp(m.lg), r = j.res, p = j.pick;
-    return '<button class="motd" data-nav="m/' + m.lg + '/' + esc(m.id) + '"><span class="motd-k">' + ic('star') + 'Partita del giorno</span><span class="motd-t"><span class="motd-s">' + logo(m.h) + '<b>' + esc(tn(m.h)) + '</b></span><span class="motd-c"><i>VS</i><small>' + esc(dayLabel(m.d)) + ' · ' + hm(m.d) + '</small><small>' + esc(c ? c.name : '') + '</small></span><span class="motd-s">' + logo(m.a) + '<b>' + esc(tn(m.a)) + '</b></span></span>' +
+    return '<button class="motd mc" data-nav="m/' + m.lg + '/' + esc(m.id) + '"><span class="motd-k">' + ic('star') + 'Partita del giorno<em>' + esc(dayLabel(m.d) + ' ' + hm(m.d) + (c ? ' · ' + c.name : '')) + '</em></span>' +
+      '<span class="mc-t"><span class="mc-s">' + logo(m.h) + '<b>' + esc(tn(m.h)) + '</b></span><i>vs</i><span class="mc-s r"><b>' + esc(tn(m.a)) + '</b>' + logo(m.a) + '</span></span>' +
       (r ? '<span class="x12-b motd-b"><i class="h" style="flex:' + r.h.toFixed(3) + '"></i><i class="d" style="flex:' + r.d.toFixed(3) + '"></i><i class="a" style="flex:' + r.a.toFixed(3) + '"></i></span>' : '') +
-      (p ? '<span class="motd-p"><small>Pronostico</small><b>' + esc(p.label) + '</b><span>stima ' + pct(p.p) + (PLAY ? '' : ' · quota giusta ' + quota(p.p)) + '</span></span>' : '<span class="motd-p"><small>Preparo il pronostico…</small></span>') + '</button>';
+      (p ? '<span class="mc-p"><span><small>Pronostico</small><b>' + esc(p.label) + '</b></span><em class="pp ' + cls(p.p) + '">' + pct(p.p) + '</em></span>' : '<span class="mc-p"><span><small>Preparo il pronostico…</small></span></span>') + '</button>';
   }
   // le partite delle squadre che segui
   function favHtml(list) {
@@ -521,13 +522,12 @@
     var ko = m.d > Date.now() && m.d - Date.now() < 7 * 864e5 && !liveOf(m) ? '<div class="kob">' + ic('clock') + '<span>Inizia tra <b data-ko="' + m.d + '">' + koTxt(m.d - Date.now()) + '</b></span></div>' : '';
     h += '<header class="mh"><div class="mh-t">' + logo(m.h) + '<b>' + esc(tn(m.h)) + '</b>' + heart(m.h) + '</div><div class="mh-c" data-lvh="' + esc(m.id) + '">' + mhC(m, c) + '</div><div class="mh-t">' + logo(m.a) + '<b>' + esc(tn(m.a)) + '</b>' + heart(m.a) + '</div></header>' + ko;
     if (!S.tf) return h + '<div class="note">Analizzo lo storico della competizione…</div>' + skel(5);
-    h += bar1x2() + heroHtml() + stakeHtml(m);
     var tabs = [['top', 'Pronostici'], ['mk', 'Mercati']];
     if (!noPlayers() && !gonly()) tabs.push(['lu', 'Formazioni'], ['players', 'Giocatori']);
     tabs.push(['teams', 'Squadre'], ['an', 'Analisi']);
     if (!tabs.some(function (x) { return x[0] === S.tab; })) S.tab = 'top';
     h += '<nav class="tabs mtabs" id="mtabs" aria-label="Sezioni della partita">' + tabs.map(function (x) { return '<button class="' + (S.tab === x[0] ? 'on' : '') + '" data-tab="' + x[0] + '" aria-pressed="' + (S.tab === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</nav>';
-    h += '<div class="tabc">' + (S.tab === 'top' ? topHtml() : S.tab === 'mk' ? mkHtml() : S.tab === 'lu' ? pitchHtml() : S.tab === 'players' ? playersHtml() : S.tab === 'teams' ? teamsHtml() : anTab()) + '</div>';
+    h += '<div class="tabc">' + (S.tab === 'top' ? bar1x2() + heroHtml() + stakeHtml(m) + topHtml() : S.tab === 'mk' ? mkHtml() : S.tab === 'lu' ? pitchHtml() : S.tab === 'players' ? playersHtml() : S.tab === 'teams' ? teamsHtml() : anTab()) + '</div>';
     if (c && c.nat) h += '<p class="foot">Nazionali: poche partite all\'anno, quindi stime più incerte rispetto ai campionati.</p>';
     return h;
   }

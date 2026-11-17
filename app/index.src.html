@@ -747,6 +747,94 @@ body{letter-spacing:-.003em}
 .zleg span{display:inline-flex;align-items:center;gap:6px}
 .zleg i{width:10px;height:10px;border-radius:3px}
 .zleg .zg i{background:var(--hi)}.zleg .zb i{background:var(--err)}
+/* ===== Impianto compatto: meno da scorrere, le cose importanti subito in vista ===== */
+.wrap{gap:10px;padding-top:10px}
+.vh p{display:none}
+.vh h1{font-size:20px;gap:9px}
+.vh h1 .ic{width:28px;height:28px;padding:5px;border-radius:9px}
+/* giorni in una striscia bassa */
+.dstrip{gap:6px;padding:2px 16px 4px}
+.dcard{width:54px;padding:7px 2px 6px;gap:3px;border-radius:13px}
+.dcard small{font-size:10px}
+.dcard b{font-size:17px}
+.dcard i{font-size:9.5px}
+.naz{padding:6px 12px 6px 7px;font-size:13px;gap:6px}
+.naz:first-child{padding-left:12px}
+.naz .flg,.naz img{width:18px;height:18px}
+.nazs{padding:0 16px 2px}
+.pill{padding:8px 12px}
+.psel select{padding:8px 18px 8px 0}
+.count{font-size:12px}
+.day{margin-top:6px;font-size:11.5px}
+/* partita del giorno in poco spazio */
+.mc{gap:9px;margin:2px 0 6px;padding:11px 13px 12px;border-radius:18px;text-align:left}
+.mc .motd-k{align-self:stretch;justify-content:flex-start;gap:6px;font-size:11.5px;letter-spacing:.08em}
+.mc .motd-k .ic{width:15px;height:15px}
+.mc .motd-k em{margin-left:auto;font-style:normal;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mc-t{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px}
+.mc-t>i{font:800 12px/1 var(--disp);font-style:normal;color:var(--muted)}
+.mc-s{display:flex;align-items:center;gap:8px;min-width:0}
+.mc-s.r{justify-content:flex-end;text-align:right}
+.mc-s b{font-size:15.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-s .lg{width:28px;height:28px}
+.mc .motd-b{height:5px}
+.mc-p{display:flex;align-items:center;gap:10px}
+.mc-p>span{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.mc-p small{font:700 10.5px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.mc-p b{font:800 17px/1.15 var(--disp);color:var(--pro1)}
+.mc-p em{font-style:normal;font-size:17px;padding:7px 9px;min-width:58px}
+/* elenco più fitto */
+.lgh{padding:10px 12px;gap:8px}
+.lgh b{font-size:14px}
+.mrow{padding:9px 12px 9px 14px;gap:9px;grid-template-columns:42px 1fr auto 14px}
+.mrw .mrow{padding-left:0}
+.mck{width:42px;padding-left:2px}
+.mck .ic{width:24px;height:24px;border-radius:8px}
+.mrow .tn{gap:5px;font-size:14.5px;line-height:1.1}
+.mrow .tn .lg{width:19px;height:19px}
+.mrow .tm{font-size:13px}
+.lsr{gap:5px;font-size:14px}
+/* pagina partita: intestazione bassa, schede subito sotto */
+.back{padding:2px 0;font-size:14px}
+.mnx-w{gap:4px}
+.mnc{padding:6px 9px;min-width:140px}
+.mh{padding:10px 8px;gap:6px;border-radius:16px}
+.mh-t{gap:5px}
+.mh-t .lg{width:42px;height:42px}
+.mh-t b{font-size:14px}
+.mh-c b{font-size:24px}
+.vs{font-size:18px}
+.fav{width:26px;height:26px}
+.kob{margin:0 auto;padding:6px 12px;font-size:13px}
+.kob b{font-size:14px}
+.mtabs{margin-top:2px}
+.mtabs button{padding:10px 12px;font-size:13.5px}
+.x12{margin:2px 0 0}
+.hero{gap:10px;padding:12px;border-radius:18px}
+.hero-p{padding:12px 10px;gap:6px}
+.hero-top .hero-p{padding:12px 8px}
+.hero-p b,.hero-top .hero-p b{font-size:21px}.hero-p b.lng,.hero-top .hero-p b.lng{font-size:18px}
+.hero-k{gap:6px}.hero-k small{font-size:10.5px}.hero-k b{font-size:15px}
+.gol4{margin-top:4px;gap:5px}.gol4>div{padding:7px 3px}.gol4 b{font-size:16px}.gol4 small{font-size:11px}
+.hero-more{margin-top:4px;padding-top:9px}
+.stk{padding:10px 12px}
+.stk-r{padding:8px 0;row-gap:5px}
+.card{padding-top:12px}
+/* schedina: impostazioni su righe singole che scorrono di lato */
+.sl{padding:2px 12px}
+.sl-r{flex-direction:row;align-items:center;gap:10px;padding:8px 0}
+.sl-r .sl-l{flex:none;width:58px;font-size:11px}
+.sl-r .sl-o{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px;margin-right:-12px;padding-right:12px}
+.sl-r .sl-o::-webkit-scrollbar{display:none}
+.sl-b{flex:none;padding:7px 11px;font-size:13px}
+.sl-r:first-child{padding:8px 0}
+.sl-m{flex:1}
+.sl-m .sl-b{padding:9px 6px;font-size:13.5px}
+.slr{padding:12px;gap:10px}
+.leg{padding:9px 10px;gap:10px}
+.leg-m b{font-size:14.5px}.leg-m em{font-size:13.5px}
+.leg-p{font-size:15px;padding:7px 6px;min-width:50px}
+.msel{padding:9px 12px}
 </style>
 </head>
 <body>
