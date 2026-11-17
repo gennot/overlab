@@ -344,7 +344,7 @@
     for (var n = 0; n < 7; n++) {
       var dt = new Date(s0 + n * 864e5 + 3 * 36e5), k = dayKey(n);
       DAYS_TXT[k] = n < 2 ? DAYS_TXT[k] : dt.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric' });
-      h += '<button class="dcard' + (S.slip.when === k ? ' on' : '') + '" data-swhen="' + k + '" aria-pressed="' + (S.slip.when === k) + '"><small>' + (n === 0 ? 'Oggi' : n === 1 ? 'Domani' : esc(dt.toLocaleDateString('it-IT', { weekday: 'short' }).replace('.', ''))) + '</small><b>' + dt.getDate() + '</b><i>' + (cnt[n] ? cnt[n] + ' partite' : '—') + '</i></button>';
+      h += '<button class="dcard' + (S.slip.when === k ? ' on' : '') + '" data-swhen="' + k + '" aria-pressed="' + (S.slip.when === k) + '"><small>' + (n === 0 ? 'Oggi' : n === 1 ? 'Domani' : esc(dt.toLocaleDateString('it-IT', { weekday: 'short' }).replace('.', ''))) + '</small><b>' + dt.getDate() + '</b><i>' + (cnt[n] ? cnt[n] + (cnt[n] < 100 ? ' part.' : '') : '—') + '</i></button>';
     }
     return h + '</div>';
   }
