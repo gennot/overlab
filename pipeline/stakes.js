@@ -78,14 +78,16 @@ function analyse(rows, rem, z, h, a) {
     const good = Z(zb).pol > 0 ? Z(zb) : null, bad = Z(zw).pol < 0 ? Z(zw) : null;
     const rd = range(T, draw.P, draw.M), rw = range(T, win.P, win.M);
     const zbD = zoneAt(z, rd[0]), zwD = zoneAt(z, rd[1]), zwW = zoneAt(z, rw[1]);
-    // deve vincere: col pareggio il traguardo migliore non è più raggiungibile
-    if (good && zbD !== zb) { out.code = 'win'; out.txt = 'Deve vincere per sperare: ' + good.lab; return out; }
-    if (bad && Z(zbD).pol < 0 && Z(zoneAt(z, rw[0])).pol >= 0) { out.code = 'win'; out.txt = 'Deve vincere per evitare: ' + bad.lab; return out; }
-    // le basta un pareggio / vincendo si assicura
-    if (zwD !== zw && Z(zwD).pol > 0) { out.code = 'draw'; out.txt = 'Le basta un pareggio: ' + Z(zwD).lab; return out; }
-    if (bad && zwD !== zw && Z(zwD).pol >= 0) { out.code = 'draw'; out.txt = bad.lab === 'retrocessione' ? 'Le basta un pareggio per salvarsi' : 'Le basta un pareggio per evitare: ' + bad.lab; return out; }
-    if (zwW !== zw && Z(zwW).pol > 0) { out.code = 'clinch'; out.txt = 'Vincendo si assicura: ' + Z(zwW).lab; return out; }
-    if (bad && zwW !== zw && Z(zwW).pol >= 0) { out.code = 'clinch'; out.txt = bad.lab === 'retrocessione' ? 'Vincendo si salva' : 'Vincendo evita: ' + bad.lab; return out; }
+    // deve vincere: col pareggio il traguardo migliore ancora possibile sfuma (verso l'alto o, in fondo, il posto meno peggio)
+    if (zbD !== zb) { out.code = 'win'; out.txt = good ? 'Deve vincere per sperare: ' + good.lab : 'Deve vincere per evitare: ' + (bad ? bad.lab : Z(zw).lab); return out; }
+    // le basta un pareggio / vincendo si assicura: il caso peggiore migliora di zona
+    const sure = (zz, how) => {
+      if (zz === zw) return false;
+      if (Z(zz).pol > 0) { out.txt = (how === 'draw' ? 'Le basta un pareggio: ' : 'Vincendo si assicura: ') + Z(zz).lab; }
+      else { const lb = Z(zw).lab, safe = Z(zz).pol >= 0 && lb === 'retrocessione'; out.txt = how === 'draw' ? (safe ? 'Le basta un pareggio per salvarsi' : 'Le basta un pareggio per evitare: ' + lb) : (safe ? 'Vincendo si salva' : 'Vincendo evita: ' + lb); }
+      out.code = how === 'draw' ? 'draw' : 'clinch'; return true;
+    };
+    if (sure(zwD, 'draw') || sure(zwW, 'win')) return out;
     out.code = 'race';
     if (R[T] <= 6 || (r0[1] - r0[0] < n - 1)) out.txt = good && bad ? 'In corsa per: ' + good.lab + ' · deve evitare: ' + bad.lab : good ? 'In corsa per: ' + good.lab : bad ? 'Lotta per evitare: ' + bad.lab : '';
     return out;

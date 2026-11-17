@@ -548,7 +548,7 @@
     var leg = G.z.map(function (z) { return '<span class="' + (z[3] > 0 ? 'zg' : 'zb') + '"><i></i>' + (z[0] === z[1] ? z[0] + 'ª' : z[0] + 'ª-' + z[1] + 'ª') + ': ' + esc(z[2]) + '</span>'; }).join('');
     var nm = G.n && !/regular season|^league$/i.test(G.n) ? G.n.replace(/^Group /i, 'Girone ').replace(/^League [A-D]\s*-\s*/i, '') : '';
     return '<section class="stk"><div class="stk-h">' + ic('trophy') + '<b>Classifica e posta in palio</b>' + (nm ? '<small>' + esc(nm) + '</small>' : '') + '</div>' + oneT(m.h, k.h) + oneT(m.a, k.a) +
-      '<details class="stk-t"' + (G.r.length <= 6 ? ' open' : '') + '><summary>' + (G.r.length <= 6 ? 'Classifica' : 'Classifica completa') + ic('down') + '</summary>' + tab + (leg ? '<div class="zleg">' + leg + '</div>' : '') + '</details></section>';
+      '<details class="stk-t"' + (G.r.length <= 6 ? ' open' : '') + '><summary>' + (G.r.length <= 6 ? 'Classifica' : 'Classifica completa') + ic('down') + '</summary>' + tab + (leg ? '<div class="zleg">' + leg + '</div>' : '') + '</details>' + (k.h[0] === 'out' || k.a[0] === 'out' ? '<p class="foot">Le stime tengono conto che ' + esc(tn(k.h[0] === 'out' ? m.h : m.a)) + ' non ha più niente da giocarsi: nei test chi è già retrocesso o eliminato segna meno e subisce di più.</p>' : '') + '</section>';
   }
   function mkHtml() { var x = ''; try { x = extraHtml(); } catch (e) { x = ''; } return x || '<div class="note">Per questa partita non ci sono altri mercati.</div>'; }
   function anTab() {

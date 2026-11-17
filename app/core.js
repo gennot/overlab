@@ -285,6 +285,16 @@ var Core = (function () {
   }
   function teamForecast(cd, m) {
     var pr = Model.predict(cd.fit, m.h, m.a, {}, cd.par), out = { pr: pr, stats: {}, par: cd.par };
+    // motivazione: chi è già retrocesso o eliminato segna meno e subisce di più. Test sulle partite di fine stagione di 29 campionati
+    // (classifica ricostruita al momento della partita): gol fatti x0,90 e subiti x1,12 rispetto al modello; qui si usa metà strada.
+    // Per "deve vincere" e "niente in palio" (metà classifica) il test non ha trovato differenze: nessuna correzione.
+    var sk = m.stk, isOut = function (x) { return x && x[0] === 'out'; };
+    if (sk && isFinite(pr.H.g) && isFinite(pr.A.g) && (isOut(sk.h) || isOut(sk.a))) {
+      if (isOut(sk.h)) { pr.H.g *= 0.93; pr.A.g *= 1.08; }
+      if (isOut(sk.a)) { pr.A.g *= 0.93; pr.H.g *= 1.08; }
+      if (pr.T && pr.T.g != null) pr.T.g = pr.H.g + pr.A.g;
+      out.motiv = true;
+    }
     // se ci sono le quote su esito e over 2,5: i gol che il mercato si aspetta correggono tiri e tiri in porta attesi
     // (nel test su 13.200 partite migliora la previsione; su corner, falli e cartellini no, quindi lì non si applica)
     var bk = bookOf(m), x = bk && bk.mk && bk.mk.x12, u = bk && bk.mk && bk.mk.uo && bk.mk.uo['2.5'];
