@@ -521,7 +521,7 @@
     var ko = m.d > Date.now() && m.d - Date.now() < 7 * 864e5 && !liveOf(m) ? '<div class="kob">' + ic('clock') + '<span>Inizia tra <b data-ko="' + m.d + '">' + koTxt(m.d - Date.now()) + '</b></span></div>' : '';
     h += '<header class="mh"><div class="mh-t">' + logo(m.h) + '<b>' + esc(tn(m.h)) + '</b>' + heart(m.h) + '</div><div class="mh-c" data-lvh="' + esc(m.id) + '">' + mhC(m, c) + '</div><div class="mh-t">' + logo(m.a) + '<b>' + esc(tn(m.a)) + '</b>' + heart(m.a) + '</div></header>' + ko;
     if (!S.tf) return h + '<div class="note">Analizzo lo storico della competizione…</div>' + skel(5);
-    h += bar1x2() + heroHtml();
+    h += bar1x2() + heroHtml() + stakeHtml(m);
     var tabs = [['top', 'Pronostici'], ['mk', 'Mercati']];
     if (!noPlayers() && !gonly()) tabs.push(['lu', 'Formazioni'], ['players', 'Giocatori']);
     tabs.push(['teams', 'Squadre'], ['an', 'Analisi']);
@@ -530,6 +530,25 @@
     h += '<div class="tabc">' + (S.tab === 'top' ? topHtml() : S.tab === 'mk' ? mkHtml() : S.tab === 'lu' ? pitchHtml() : S.tab === 'players' ? playersHtml() : S.tab === 'teams' ? teamsHtml() : anTab()) + '</div>';
     if (c && c.nat) h += '<p class="foot">Nazionali: poche partite all\'anno, quindi stime più incerte rispetto ai campionati.</p>';
     return h;
+  }
+  // classifica e posta in palio (dati di collect.js/stakes.js): chi deve vincere, chi è già qualificato, chi non ha più niente da giocarsi
+  var STK_C = { ok: 'hi', draw: 'ok', clinch: 'mid', win: 'hot', race: 'acc', out: 'lo', none: 'lo', end: 'lo' };
+  function stakeHtml(m) {
+    var k = m.stk, G = k && window.OVERLAB_ST && window.OVERLAB_ST[k.g]; if (!G) return '';
+    var oneT = function (t, x) {
+      var row = G.r.filter(function (r) { return r[0] === t; })[0], pl = row ? row[3] : 0;
+      var txt = x[1] || (x[0] === 'end' ? 'Ultima partita già giocata' : x[0] === 'race' ? 'Ancora tutto aperto' : '');
+      return '<div class="stk-r"><span class="stk-p">' + x[2] + '</span>' + logo(t) + '<span class="stk-n"><b>' + esc(tn(t)) + '</b><small>' + (row ? row[2] + (row[2] === 1 ? ' punto' : ' punti') + ' in ' + pl + (pl === 1 ? ' partita' : ' partite') : '') + (x[3] ? ' · ne restano ' + x[3] : '') + '</small></span>' + (txt ? '<em class="stk-' + (STK_C[x[0]] || 'acc') + '">' + esc(txt) + '</em>' : '') + '</div>';
+    };
+    var zc = function (pos) { for (var i = 0; i < G.z.length; i++) if (pos >= G.z[i][0] && pos <= G.z[i][1]) return G.z[i][3] > 0 ? 'zg' : 'zb'; return ''; };
+    var tab = '<table class="stab"><thead><tr><th></th><th>Squadra</th><th>G</th><th>DR</th><th>Pt</th></tr></thead><tbody>' + G.r.map(function (r, i) {
+      var me = r[0] === m.h || r[0] === m.a, dr = r[7] - r[8];
+      return '<tr class="' + (me ? 'me ' : '') + zc(i + 1) + '"><td>' + (i + 1) + '</td><td><span class="row">' + logo(r[0]) + '<span>' + esc(T[r[0]] ? tn(r[0]) : r[1]) + '</span></span></td><td>' + r[3] + '</td><td>' + (dr > 0 ? '+' : '') + dr + '</td><td><b>' + r[2] + '</b></td></tr>';
+    }).join('') + '</tbody></table>';
+    var leg = G.z.map(function (z) { return '<span class="' + (z[3] > 0 ? 'zg' : 'zb') + '"><i></i>' + (z[0] === z[1] ? z[0] + 'ª' : z[0] + 'ª-' + z[1] + 'ª') + ': ' + esc(z[2]) + '</span>'; }).join('');
+    var nm = G.n && !/regular season|^league$/i.test(G.n) ? G.n.replace(/^Group /i, 'Girone ').replace(/^League [A-D]\s*-\s*/i, '') : '';
+    return '<section class="stk"><div class="stk-h">' + ic('trophy') + '<b>Classifica e posta in palio</b>' + (nm ? '<small>' + esc(nm) + '</small>' : '') + '</div>' + oneT(m.h, k.h) + oneT(m.a, k.a) +
+      '<details class="stk-t"' + (G.r.length <= 6 ? ' open' : '') + '><summary>' + (G.r.length <= 6 ? 'Classifica' : 'Classifica completa') + ic('down') + '</summary>' + tab + (leg ? '<div class="zleg">' + leg + '</div>' : '') + '</details></section>';
   }
   function mkHtml() { var x = ''; try { x = extraHtml(); } catch (e) { x = ''; } return x || '<div class="note">Per questa partita non ci sono altri mercati.</div>'; }
   function anTab() {

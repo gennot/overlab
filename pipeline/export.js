@@ -30,11 +30,34 @@ Object.keys(teamsRaw).forEach(id => { const f = path.join(STORE, 'logos', id + '
 function toApp(m) {
   const o = { id: m.id, d: m.d, lg: m.lg, h: m.h, a: m.a, st: DONE[m.s] ? 'post' : LIVE[m.s] ? 'in' : 'pre', done: !!DONE[m.s], nm: m.s };
   if (!o.done && m.miss && m.miss.length) o.miss = m.miss;
+  if (!o.done && STK[m.id]) o.stk = STK[m.id];
   if (o.done) { o.sc = m.sc || null; if (m.H && m.A) { o.H = m.H; o.A = m.A; } else { o.H = o.A = null; } }
   return o;
 }
 const fxBy = {}; ALL_L.forEach(l => { fxBy[l.lg] = Object.values(readJ('fx/' + l.lg + '.json', {})).filter(m => !GONE[m.s]).sort((a, b) => a.d - b.d); });
 const mem = {};
+// classifiche (scaricate da collect.js) e posta in palio delle partite dei prossimi 9 giorni
+const Stakes = require('./stakes'), ST = {}, STK = {};
+{
+  const soon = {}; Object.keys(fxBy).forEach(lg => fxBy[lg].forEach(m => { if (!DONE[m.s] && m.d > now - 3 * 36e5 && m.d < now + 9 * DAY) (soon[lg] = soon[lg] || []).push(m); }));
+  Object.keys(soon).forEach(lg => {
+    const sd = readJ('stand/' + lg + '.json', null); if (!sd || !sd.g || !sd.g.length || now - sd.t > 8 * DAY) return;
+    const upAll = fxBy[lg].filter(m => !DONE[m.s] && m.d > now - 3 * 36e5 && m.d < now + 300 * DAY);
+    sd.g.forEach((g, gi) => {
+      const rows = g.r.slice().sort((x, y) => x[1] - y[1]), set = {}; rows.forEach(r => { set[r[0]] = 1; });
+      const rem = {}; upAll.forEach(m => { if (set[m.h] && set[m.a]) { rem[m.h] = (rem[m.h] || 0) + 1; rem[m.a] = (rem[m.a] || 0) + 1; } });
+      const z = Stakes.zones(rows.map(r => r[9] >= 0 ? g.d[r[9]] : '')), key = lg + '|' + gi, tab = rows.map(x => ({ t: x[0], pts: x[2] }));
+      let used = false;
+      soon[lg].forEach(m => {
+        if (!set[m.h] || !set[m.a]) return;
+        const r = Stakes.analyse(tab, rem, z, m.h, m.a); if (!r) return;
+        STK[m.id] = { g: key, h: [r.h.code, r.h.txt || '', r.h.pos, r.h.rem], a: [r.a.code, r.a.txt || '', r.a.pos, r.a.rem] }; used = true;
+      });
+      if (used) ST[key] = { n: g.n, t: sd.t, z: z.filter(x => x.k).map(x => [x.from, x.to, x.lab, x.pol]), r: rows.map(x => [x[0], T[x[0]] ? T[x[0]].n : x[0], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[10] || '']) };
+    });
+  });
+  console.log('classifiche esportate: ' + Object.keys(ST).length + ', partite con la posta in palio: ' + Object.keys(STK).length);
+}
 const tmOf = list => { const tm = {}; list.forEach(m => { tm[m.h] = T[m.h] || { n: m.h, s: m.h, l: '' }; tm[m.a] = T[m.a] || { n: m.a, s: m.a, l: '' }; }); return tm; };
 // tabelloni per anno solare
 ALL_L.forEach(l => [Y - 1, Y].forEach(y => {
@@ -99,7 +122,7 @@ fs.readdirSync(OUT).filter(f => /^c-.*\.json$/.test(f)).forEach(f => fs.unlinkSy
 // sul sito vanno solo le foto dei giocatori delle squadre in programma (quelle che le card possono mostrare): il sito resta leggero
 { const need = {}; Object.keys(mem).forEach(k => { if (k.startsWith('sm:')) (mem[k].P || []).forEach(r => { if (r[4] === 1) need[r[1]] = 1; }); });
   Object.keys(need).forEach(id => { if (validPh[id]) { fs.copyFileSync(path.join(PHD, id + '.png'), path.join(OUT, 'players', id + '.png')); photos.push(id); } }); }
-fs.writeFileSync(path.join(OUT, 'data.json'), JSON.stringify({ t: state.t || now, mem: base, logos: logos, ph: photos.join(','), auto: autoC }));
+fs.writeFileSync(path.join(OUT, 'data.json'), JSON.stringify({ t: state.t || now, mem: base, logos: logos, ph: photos.join(','), auto: autoC, st: ST }));
 let tot = 0; Object.keys(comp).forEach(c => { const s = JSON.stringify({ mem: comp[c] }); fs.writeFileSync(path.join(OUT, 'c-' + c + '.json'), s); tot += s.length; });
 const nUp = Object.values(base).reduce((s, b) => s + b.m.length, 0) / 3;
 console.log('competizioni trovate da sole mostrate: ' + autoC.length);
