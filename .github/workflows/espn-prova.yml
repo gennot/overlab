@@ -15,21 +15,14 @@ jobs:
           mkdir -p out && cd out
           S=https://site.api.espn.com/apis/site/v2/sports/soccer
           g() { curl -sS -m 30 -A "Mozilla/5.0" -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> codes.txt; }
-          g all_20261121.json "$S/all/scoreboard?dates=20261121"
-          g all_20261122.json "$S/all/scoreboard?dates=20261122"
-          g eng1_sb.json "$S/eng.1/scoreboard?dates=20261122"
-          g eng1_range.json "$S/eng.1/scoreboard?dates=20261101-20261130&limit=200"
-          g ita1_sb.json "$S/ita.1/scoreboard?dates=20261122"
-          g nations_sb.json "$S/uefa.nations/scoreboard?dates=20261115-20261118"
-          EV=$(python3 -c "import json;d=json.load(open('eng1_range.json'));e=[x for x in d.get('events',[]) if x['status']['type'].get('completed')];print(e[-1]['id'] if e else '')")
-          echo "evento $EV" >> codes.txt
-          g eng1_summary.json "$S/eng.1/summary?event=$EV"
-          EV2=$(python3 -c "import json;d=json.load(open('ita1_sb.json'));e=d.get('events',[]);print(e[0]['id'] if e else '')")
-          g ita1_summary_next.json "$S/ita.1/summary?event=$EV2"
-          g nations_stand.json "https://site.api.espn.com/apis/v2/sports/soccer/uefa.nations/standings"
-          g eng1_stand.json "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings"
-          g leagues_core.json "https://sports.core.api.espn.com/v2/sports/soccer/leagues?limit=1000"
-          g eng1_teams.json "$S/eng.1/teams"
+          g all_lim_20261121.json "$S/all/scoreboard?dates=20261121&limit=1000"
+          g all_lim_20261108.json "$S/all/scoreboard?dates=20261108&limit=1000"
+          g all_summary.json "$S/all/summary?event=401879233"
+          g eng1_summary.json "$S/eng.1/summary?event=401879233"
+          g eng1_range.json "$S/eng.1/scoreboard?dates=20261101-20261130"
+          g eng6_sb.json "$S/eng.6/scoreboard?dates=20261122"
+          g ita3_sb.json "$S/ita.3/scoreboard?dates=20261122"
+          g eng1_cal.json "$S/eng.1/scoreboard"
           ls -la
       - name: Salva nel ramo espn-campioni
         run: |
