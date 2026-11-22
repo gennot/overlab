@@ -1,0 +1,40 @@
+# Prova della fonte ESPN (gratuita, senza chiave): scarica alcuni esempi e li salva nel ramo espn-campioni.
+name: Prova ESPN
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Scarica esempi
+        run: |
+          set +e
+          mkdir -p out && cd out
+          S=https://site.api.espn.com/apis/site/v2/sports/soccer
+          g() { curl -sS -m 30 -A "Mozilla/5.0" -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> codes.txt; }
+          g all_20261121.json "$S/all/scoreboard?dates=20261121"
+          g all_20261122.json "$S/all/scoreboard?dates=20261122"
+          g eng1_sb.json "$S/eng.1/scoreboard?dates=20261122"
+          g eng1_range.json "$S/eng.1/scoreboard?dates=20261101-20261130&limit=200"
+          g ita1_sb.json "$S/ita.1/scoreboard?dates=20261122"
+          g nations_sb.json "$S/uefa.nations/scoreboard?dates=20261115-20261118"
+          EV=$(python3 -c "import json;d=json.load(open('eng1_range.json'));e=[x for x in d.get('events',[]) if x['status']['type'].get('completed')];print(e[-1]['id'] if e else '')")
+          echo "evento $EV" >> codes.txt
+          g eng1_summary.json "$S/eng.1/summary?event=$EV"
+          EV2=$(python3 -c "import json;d=json.load(open('ita1_sb.json'));e=d.get('events',[]);print(e[0]['id'] if e else '')")
+          g ita1_summary_next.json "$S/ita.1/summary?event=$EV2"
+          g nations_stand.json "https://site.api.espn.com/apis/v2/sports/soccer/uefa.nations/standings"
+          g eng1_stand.json "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings"
+          g leagues_core.json "https://sports.core.api.espn.com/v2/sports/soccer/leagues?limit=1000"
+          g eng1_teams.json "$S/eng.1/teams"
+          ls -la
+      - name: Salva nel ramo espn-campioni
+        run: |
+          cd out
+          git init -q && git checkout -q -b espn-campioni
+          git config user.name "overlab-bot" && git config user.email "overlab-bot@users.noreply.github.com"
+          git add . && git commit -qm "Esempi ESPN"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" espn-campioni
