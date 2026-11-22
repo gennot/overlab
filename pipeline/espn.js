@@ -44,6 +44,7 @@ function sim(a, b) {
   let hit = 0; A.forEach(x => { if (B.some(y => y === x || (x.length >= 4 && y.length >= 4 && (x.startsWith(y) || y.startsWith(x))))) hit++; });
   return hit / Math.min(A.length, B.length);
 }
+const TBD = /^(tbd|tba)\b|to be (determined|confirmed)|^winner |^loser /i;
 const argmax = o => { let b = null, bv = 0; Object.keys(o || {}).forEach(k => { if (o[k] > bv) { bv = o[k]; b = k; } }); return b; };
 const ymd = t => new Date(t).toISOString().slice(0, 10).replace(/-/g, '');
 
@@ -111,6 +112,7 @@ function parseEvent(e) {
     const id = 'e' + t.id; if (!teams[id]) { teams[id] = { n: t.n, l: t.l ? 'https://a.espncdn.com/combiner/i?img=' + encodeURIComponent(t.l.replace(/^https?:\/\/a\.espncdn\.com/, '')) + '&w=80&h=80' : '' }; newLogos.push(id); }
     tmap[t.id] = id; return id;
   }
+  Object.keys(teams).forEach(id => { if (id.charAt(0) === 'e' && TBD.test(teams[id].n || '')) { delete teams[id]; Object.keys(fx).forEach(lg => Object.keys(fx[lg]).forEach(k => { const m = fx[lg][k]; if (m.h === id || m.a === id) { delete fx[lg][k]; touched[lg] = 1; } })); } });
   // 3) aggiornamento delle partite (solo dopo l'ultimo dato di API-Football: prima servono solo per gli abbinamenti)
   let apiLast = 0; Object.keys(fx).forEach(lg => Object.values(fx[lg]).forEach(m => { if (DONE[m.s] && String(m.id).charAt(0) !== 'e' && !m.ex && m.d > apiLast && m.d < now) apiLast = m.d; }));
   // una squadra non riconosciuta si ricava dalla partita in calendario con lo stesso avversario (o, se mancano tutte e due, alla stessa ora)
@@ -126,6 +128,7 @@ function parseEvent(e) {
   list.sort((x, y) => x.d - y.d).forEach(p => {
     const lg = lmap[p.L]; if (!lg || !fx[lg]) return;
     if (p.d < apiLast - 3 * 36e5) return;
+    if (TBD.test(p.h.n) || TBD.test(p.a.n)) return;   // squadre ancora da decidere
     inferTeams(p, lg);
     const h = teamOf(p.h, lg), a = teamOf(p.a, lg);
     let m = E.ev[p.id] && fx[lg][E.ev[p.id][1]];

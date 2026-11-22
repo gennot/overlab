@@ -36,6 +36,12 @@ function toApp(m) {
 }
 const fxBy = {}; ALL_L.forEach(l => { fxBy[l.lg] = Object.values(readJ('fx/' + l.lg + '.json', {})).filter(m => !GONE[m.s]).sort((a, b) => a.d - b.d); });
 const mem = {};
+// competizioni ferme: partite già giocate da giorni ma ancora senza risultato (fonte non disponibile); l'app lo segnala
+const STALE = {};
+Object.keys(fxBy).forEach(lg => { let last = 0, pend = 0; fxBy[lg].forEach(m => { if (DONE[m.s] && m.d > last) last = m.d; });
+  fxBy[lg].forEach(m => { if (!DONE[m.s] && !GONE[m.s] && m.d > last + DAY && m.d < now - 6 * 36e5) pend++; });
+  if (pend >= 2 && last && last < now - 3 * DAY) STALE[lg] = last; });
+console.log('competizioni senza risultati recenti: ' + Object.keys(STALE).length);
 // classifiche (scaricate da collect.js) e posta in palio delle partite dei prossimi 9 giorni
 const Stakes = require('./stakes'), ST = {}, STK = {};
 {
@@ -122,7 +128,7 @@ fs.readdirSync(OUT).filter(f => /^c-.*\.json$/.test(f)).forEach(f => fs.unlinkSy
 // sul sito vanno solo le foto dei giocatori delle squadre in programma (quelle che le card possono mostrare): il sito resta leggero
 { const need = {}; Object.keys(mem).forEach(k => { if (k.startsWith('sm:')) (mem[k].P || []).forEach(r => { if (r[4] === 1) need[r[1]] = 1; }); });
   Object.keys(need).forEach(id => { if (validPh[id]) { fs.copyFileSync(path.join(PHD, id + '.png'), path.join(OUT, 'players', id + '.png')); photos.push(id); } }); }
-fs.writeFileSync(path.join(OUT, 'data.json'), JSON.stringify({ t: state.t || now, mem: base, logos: logos, ph: photos.join(','), auto: autoC, st: ST }));
+fs.writeFileSync(path.join(OUT, 'data.json'), JSON.stringify({ t: state.t || now, mem: base, logos: logos, ph: photos.join(','), auto: autoC, st: ST, stale: STALE }));
 let tot = 0; Object.keys(comp).forEach(c => { const s = JSON.stringify({ mem: comp[c] }); fs.writeFileSync(path.join(OUT, 'c-' + c + '.json'), s); tot += s.length; });
 const nUp = Object.values(base).reduce((s, b) => s + b.m.length, 0) / 3;
 console.log('competizioni trovate da sole mostrate: ' + autoC.length);

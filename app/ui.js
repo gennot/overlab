@@ -215,7 +215,7 @@
       lgs.sort(function (a, b) { return (order[a] || 0) - (order[b] || 0); });
       lgs.forEach(function (lg) {
         var c = Core.comp(lg), k = dl + '|' + lg, closed = isClosed(k, lg);
-        h += '<section class="lgrp' + (closed ? ' closed' : '') + '"><button class="lgh" data-act="coll" data-k="' + esc(k) + '" aria-expanded="' + !closed + '">' + (c ? flag(c.grp) : '') + '<b>' + esc(c ? c.name : lg) + '</b><span>' + byLg[lg].length + '</span>' + ic('down') + '</button>';
+        h += '<section class="lgrp' + (closed ? ' closed' : '') + '"><button class="lgh" data-act="coll" data-k="' + esc(k) + '" aria-expanded="' + !closed + '">' + (c ? flag(c.grp) : '') + '<b>' + esc(c ? c.name : lg) + '</b>' + ((window.OVERLAB_STALE || {})[lg] ? '<em class="stl" title="Mancano i risultati più recenti: i pronostici usano i dati fino a questa data">dati al ' + new Date(window.OVERLAB_STALE[lg]).toLocaleDateString('it-IT', { day: 'numeric', month: 'numeric' }) + '</em>' : '') + '<span>' + byLg[lg].length + '</span>' + ic('down') + '</button>';
         byLg[lg].forEach(function (m) {
           LVM[m.id] = m;
           var fin = finOf(m), can = m.d > Date.now() && !fin, pk = can && !!S.slip.sel[m.id];
