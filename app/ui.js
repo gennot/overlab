@@ -86,6 +86,8 @@
   /* Risultati in diretta: live.json, aggiornato ogni 5 minuti circa da GitHub (ramo "live"), letto ogni minuto mentre ci sono
      partite in corso. Si aggiornano solo orario/minuto e punteggio nelle righe e nell'intestazione della partita, senza ridisegnare. */
   var LV = { d: null, busy: false }, LVM = {}, DONEST = { FT: 1, AET: 1, PEN: 1 };
+  function finOf(m) { if (!m) return false; if (m.done || (m.s && DONEST[m.s])) return true; var L = liveOf(m); return !!(L && L.fin); }
+  function finById(id) { var m = LVM[id] || (S.up || []).filter(function (x) { return x.id === id; })[0]; return finOf(m); }
   function liveOf(m) { var x = LV.d && LV.d.m && LV.d.m[m.id]; if (!x || x[0] == null) return null; return { g: [x[0], x[1]], s: x[2], el: x[3], ex: x[4], fin: !!DONEST[x[2]] }; }
   function liveMin(L) { return L.fin ? (L.s === 'PEN' ? 'Fin. rig.' : L.s === 'AET' ? 'Fin. supp.' : 'Finale') : L.s === 'HT' ? 'Intervallo' : L.s === 'BT' ? 'Pausa' : L.s === 'P' ? 'Rigori' : L.s === 'INT' || L.s === 'SUSP' ? 'Sospesa' : L.el ? L.el + (L.ex ? '+' + L.ex : '') + '\'' : 'LIVE'; }
   function rowTm(m) { var L = liveOf(m); return L ? '<span class="' + (L.fin ? 'fin' : 'live') + '">' + esc(liveMin(L)) + '</span>' : m.st === 'in' ? '<span class="live">LIVE</span>' : hm(m.d); }
@@ -98,7 +100,8 @@
   }
   function applyLive() {
     [].forEach.call(document.querySelectorAll('[data-lvt]'), function (el) { var m = LVM[el.getAttribute('data-lvt')]; if (m) el.innerHTML = rowTm(m); });
-    [].forEach.call(document.querySelectorAll('[data-lvs]'), function (el) { var m = LVM[el.getAttribute('data-lvs')]; if (m) el.innerHTML = rowSc(m); });
+    [].forEach.call(document.querySelectorAll('[data-lvs]'), function (el) { var m = LVM[el.getAttribute('data-lvs')]; if (m) el.innerHTML = rowSc(m);
+      var row = el.closest('.mrow'); if (m && row && finOf(m) && row.hasAttribute('data-nav')) { row.removeAttribute('data-nav'); row.classList.add('fin'); var cv = row.querySelector('.ic'); if (cv && cv.parentNode === row) cv.outerHTML = '<span class="finl">Finita</span>'; var ck = row.parentNode && row.parentNode.querySelector('.mck[data-pick]'); if (ck) { delete S.slip.sel[m.id]; ck.outerHTML = '<span class="mck off" aria-hidden="true"></span>'; } } });
     [].forEach.call(document.querySelectorAll('[data-lvg]'), function (el) { var m = LVM[el.getAttribute('data-lvg')]; if (m) el.textContent = scIn(m); });
     [].forEach.call(document.querySelectorAll('[data-lvh]'), function (el) { var m = LVM[el.getAttribute('data-lvh')]; if (m) el.innerHTML = mhC(m, Core.comp(m.lg)); });
     var kb = document.querySelector('.kob'); if (kb && S.m && liveOf(S.m)) kb.remove();
@@ -215,8 +218,8 @@
         h += '<section class="lgrp' + (closed ? ' closed' : '') + '"><button class="lgh" data-act="coll" data-k="' + esc(k) + '" aria-expanded="' + !closed + '">' + (c ? flag(c.grp) : '') + '<b>' + esc(c ? c.name : lg) + '</b><span>' + byLg[lg].length + '</span>' + ic('down') + '</button>';
         byLg[lg].forEach(function (m) {
           LVM[m.id] = m;
-          var can = m.d > Date.now(), pk = can && !!S.slip.sel[m.id];
-          h += '<div class="mrw' + (pk ? ' on' : '') + '">' + (can ? '<button class="mck' + (pk ? ' on' : '') + '" data-pick="' + esc(m.id) + '" aria-pressed="' + pk + '" aria-label="Scegli ' + esc(tn(m.h) + ' - ' + tn(m.a)) + ' per la schedina IA">' + ic('ok') + '</button>' : '<span class="mck off" aria-hidden="true"></span>') + '<button class="mrow" data-nav="m/' + m.lg + '/' + esc(m.id) + '"><span class="tm" data-lvt="' + esc(m.id) + '">' + rowTm(m) + '</span><span class="tn"><span class="row">' + logo(m.h) + '<span>' + esc(tn(m.h)) + '</span></span><span class="row">' + logo(m.a) + '<span>' + esc(tn(m.a)) + '</span></span></span><span class="lsr" data-lvs="' + esc(m.id) + '">' + rowSc(m) + '</span>' + ic('chev') + '</button></div>';
+          var fin = finOf(m), can = m.d > Date.now() && !fin, pk = can && !!S.slip.sel[m.id];
+          h += '<div class="mrw' + (pk ? ' on' : '') + '">' + (can ? '<button class="mck' + (pk ? ' on' : '') + '" data-pick="' + esc(m.id) + '" aria-pressed="' + pk + '" aria-label="Scegli ' + esc(tn(m.h) + ' - ' + tn(m.a)) + ' per la schedina IA">' + ic('ok') + '</button>' : '<span class="mck off" aria-hidden="true"></span>') + (fin ? '<div class="mrow fin">' : '<button class="mrow" data-nav="m/' + m.lg + '/' + esc(m.id) + '">') + '<span class="tm" data-lvt="' + esc(m.id) + '">' + rowTm(m) + '</span><span class="tn"><span class="row">' + logo(m.h) + '<span>' + esc(tn(m.h)) + '</span></span><span class="row">' + logo(m.a) + '<span>' + esc(tn(m.a)) + '</span></span></span><span class="lsr" data-lvs="' + esc(m.id) + '">' + rowSc(m) + '</span>' + (fin ? '<span class="finl">Finita</span></div></div>' : ic('chev') + '</button></div>');
         });
         h += '</section>';
       });
@@ -383,6 +386,7 @@
     p.then(function () {
       if (tok !== S.token) return;
       if (!S.m) throw new Error('Partita non trovata tra quelle in programma.');
+      if (finOf(S.m)) { nav(''); return; }
       S.pteam = S.m.h;
       return Core.loadComp(lg, false);
     }).then(function (cd) {
@@ -1029,7 +1033,7 @@
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-naz],[data-nav],[data-hv],[data-smode],[data-swhen],[data-sgoal],[data-sq],[data-sp],[data-scombo],[data-ssel],[data-stake],[data-scat],[data-sn],[data-smin],[data-comp],[data-act],[data-tab],[data-exp],[data-pfil],[data-pteam],[data-pst],[data-cyc],[data-ptap],[data-stheme],[data-sstyle],[data-sgrp],[data-pick]'); if (!t) return;
     var d = t.dataset;
-    if ('nav' in d) { nav(d.nav); return; }
+    if ('nav' in d) { var mm = /^m\/[^\/]+\/(.+)$/.exec(d.nav); if (mm && finById(mm[1])) return; nav(d.nav); return; }
     if (d.hv) { S.hv = d.hv; if (cur() !== '') nav(''); else { window.scrollTo(0, 0); render(); } return; }
     if (d.scat) { S.slip.cats[d.scat] = S.slip.cats[d.scat] ? 0 : 1; S.slip.ban = {}; S.slip.theme = null; S.slip.minP = null; rerender(); return; }
     if (d.stheme) { var th = THEMES.filter(function (x) { return x[0] === d.stheme; })[0]; if (!th) return; if (S.slip.theme === th[0]) { S.slip.theme = null; S.slip.minP = null; S.slip.cats = { sot: 1, sotT: 1, sh: 1, shT: 1, co: 1, coT: 1, res: 1, tg: 1 }; } else { S.slip.theme = th[0]; S.slip.cats = Object.assign({}, th[2]); S.slip.minP = th[3] || null; } S.slip.ban = {}; rerender(); return; }
