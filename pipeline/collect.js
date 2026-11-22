@@ -236,6 +236,9 @@ async function byIds(ids) {
     if (state.auto[id].added !== today && !ms.some(m => Math.abs(m.d - now) < 40 * DAY)) { delete state.auto[id]; delete fx[lg]; try { fs.unlinkSync(path.join(ROOT, 'fx', lg + '.json')); } catch (e) { } continue; }
     writeJ('fx/' + lg + '.json', fx[lg] || {});
   }
+  // partite create dalla fonte di riserva (ESPN, codice "e..."): quando API-Football ha la stessa partita, resta solo quella di API-Football
+  if (calls > 1 && stop !== 'chiave non valida') Object.keys(fx).forEach(lg => { const o = fx[lg] || {}, ids = Object.keys(o); ids.forEach(id => { if (id.charAt(0) !== 'e') return; const m = o[id];
+    if (ids.some(j => j.charAt(0) !== 'e' && o[j] && o[j].h === m.h && o[j].a === m.a && Math.abs(o[j].d - m.d) < 2 * DAY)) { delete o[id]; writeJ('fx/' + lg + '.json', o); } }); });
   writeJ('teams.json', teams);
   // stemmi: una copia sul sito, così chi apre OverLab non si collega ad altri server (le immagini non contano nel limite di richieste)
   const LOGOS = path.join(ROOT, 'logos'); fs.mkdirSync(LOGOS, { recursive: true }); let nl = 0;
@@ -268,5 +271,6 @@ async function byIds(ids) {
   const left = need().length;
   note('giro finito: ' + calls + ' richieste' + (remaining != null ? ', ne restano oggi ' + remaining : '') + (stop ? ' (stop: ' + stop + ')' : '') + ', partite senza dettagli ancora: ' + left);
   state.pending = left; state.t = now;
+  state.apiOk = stop !== 'chiave non valida' && calls > 1;
   writeJ('state.json', state);
 })().catch(e => { console.error(e); process.exit(1); });

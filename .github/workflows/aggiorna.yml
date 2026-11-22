@@ -34,6 +34,10 @@ jobs:
           APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
           MAX_CALLS: '40'
         run: node pipeline/collect.js
+      - name: Fonte di riserva ESPN (se API-Football non risponde)
+        continue-on-error: true
+        timeout-minutes: 15
+        run: node pipeline/espn.js
       - name: Prepara i file dell'app
         env:
           OVERLAB_VIP: ${{ secrets.OVERLAB_VIP }}   # codice di accesso VIP: se c'è, i dati del sito vengono cifrati
