@@ -15,14 +15,9 @@ jobs:
           mkdir -p out && cd out
           S=https://site.api.espn.com/apis/site/v2/sports/soccer
           g() { curl -sS -m 30 -A "Mozilla/5.0" -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> codes.txt; }
-          g all_lim_20261121.json "$S/all/scoreboard?dates=20261121&limit=1000"
-          g all_lim_20261108.json "$S/all/scoreboard?dates=20261108&limit=1000"
-          g all_summary.json "$S/all/summary?event=401879233"
-          g eng1_summary.json "$S/eng.1/summary?event=401879233"
-          g eng1_range.json "$S/eng.1/scoreboard?dates=20261101-20261130"
-          g eng6_sb.json "$S/eng.6/scoreboard?dates=20261122"
-          g ita3_sb.json "$S/ita.3/scoreboard?dates=20261122"
-          g eng1_cal.json "$S/eng.1/scoreboard"
+          curl -sS -m 20 -D cors_sb.txt -o /dev/null -H "Origin: https://gennot.github.io" "$S/all/scoreboard?dates=20261126&limit=1000"
+          curl -sS -m 20 -D cors_sum.txt -o /dev/null -H "Origin: https://gennot.github.io" "$S/all/summary?event=401879233"
+          curl -sS -m 20 -D cors_pre.txt -o /dev/null -X OPTIONS -H "Origin: https://gennot.github.io" -H "Access-Control-Request-Method: GET" "$S/all/scoreboard"
           ls -la
       - name: Salva nel ramo espn-campioni
         run: |
