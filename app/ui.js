@@ -107,11 +107,42 @@
     var kb = document.querySelector('.kob'); if (kb && S.m && liveOf(S.m)) kb.remove();
   }
   function liveWanted() { var now = Date.now(), near = function (m) { return m && m.d < now + 5 * 6e4 && m.d > now - 3.5 * 36e5; }; return near(S.m) || (S.up || []).some(near); }
+  // ESPN direttamente dal telefono (gratuito, permesso dai browser): punteggio e minuto ogni minuto, senza aspettare GitHub,
+  // che spesso fa partire il suo aggiornamento con ore di ritardo
+  function espnSt(t) {
+    var n = (t && t.name) || '', st = t && t.state;
+    if (t && t.completed) return /PEN|SHOOTOUT/.test(n) ? 'PEN' : /AET|OT/.test(n) ? 'AET' : /POSTPON|CANCEL|ABANDON/.test(n) ? '' : 'FT';
+    if (st === 'in') return /HALFTIME/.test(n) ? 'HT' : /SHOOTOUT/.test(n) ? 'P' : /EXTRA|OVERTIME/.test(n) ? 'ET' : /SECOND/.test(n) ? '2H' : '1H';
+    return '';
+  }
+  function espnLive() {
+    var now = Date.now(), ex = {}, n = 0;
+    (S.up || []).concat(S.m ? [S.m] : []).forEach(function (m) { if (m && m.ex && m.d < now + 5 * 6e4 && m.d > now - 4 * 36e5) { ex[m.ex] = m.id; n++; } });
+    if (!n) return Promise.resolve(null);
+    var days = {}; [now - 4 * 36e5, now].forEach(function (t) { days[new Date(t).toISOString().slice(0, 10).replace(/-/g, '')] = 1; });
+    return Promise.all(Object.keys(days).map(function (d) {
+      return fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard?dates=' + d + '&limit=1000').then(function (r) { return r.ok ? r.json() : null; }, function () { return null; });
+    })).then(function (all) {
+      var out = {};
+      all.forEach(function (j) { ((j && j.events) || []).forEach(function (e) {
+        var id = ex[String(e.id)], c = e.competitions && e.competitions[0]; if (!id || !c) return;
+        var s = espnSt(c.status && c.status.type); if (!s) return;
+        var H = c.competitors.filter(function (x) { return x.homeAway === 'home'; })[0], A = c.competitors.filter(function (x) { return x.homeAway === 'away'; })[0]; if (!H || !A) return;
+        var mm = String((c.status && c.status.displayClock) || '').match(/(\d+)'(?:\+(\d+))?/);
+        out[id] = [+H.score || 0, +A.score || 0, s, s === 'HT' ? 45 : mm ? +mm[1] : 0, mm && mm[2] ? +mm[2] : 0];
+      }); });
+      return out;
+    });
+  }
   function pollLive() {
-    var url = window.OVERLAB_LIVE; if (!url || LV.busy || document.hidden || !liveWanted() || Date.now() - (LV.last || 0) < 25000) return;
+    var url = window.OVERLAB_LIVE; if (LV.busy || document.hidden || !liveWanted() || Date.now() - (LV.last || 0) < 25000) return;
     LV.busy = true; LV.last = Date.now();
-    fetch(url + '?t=' + Math.floor(Date.now() / 6e4), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (d) { LV.busy = false; if (d && d.m) { LV.d = d; applyLive(); } }, function () { LV.busy = false; });
+    var gh = url ? fetch(url + '?t=' + Math.floor(Date.now() / 6e4), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(null, function () { return null; }) : Promise.resolve(null);
+    Promise.all([gh, espnLive().then(null, function () { return null; })]).then(function (r) {
+      LV.busy = false; var d = r[0] && r[0].m ? r[0] : null, es = r[1];
+      if (es && Object.keys(es).length) { d = d || { m: {} }; Object.keys(es).forEach(function (k) { d.m[k] = es[k]; }); d.t = Date.now(); }
+      if (d) { LV.d = d; applyLive(); }
+    }, function () { LV.busy = false; });
   }
   setInterval(pollLive, 60000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) pollLive(); });

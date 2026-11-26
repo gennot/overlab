@@ -30,6 +30,7 @@ Object.keys(teamsRaw).forEach(id => { const f = path.join(STORE, 'logos', id + '
 function toApp(m) {
   const o = { id: m.id, d: m.d, lg: m.lg, h: m.h, a: m.a, st: DONE[m.s] ? 'post' : LIVE[m.s] ? 'in' : 'pre', done: !!DONE[m.s], nm: m.s };
   if (!o.done && m.miss && m.miss.length) o.miss = m.miss;
+  if (!o.done && m.ex) o.ex = m.ex;   // codice ESPN: l'app legge i risultati in diretta direttamente da ESPN
   if (!o.done && STK[m.id]) o.stk = STK[m.id];
   if (o.done) { o.sc = m.sc || null; if (m.H && m.A) { o.H = m.H; o.A = m.A; } else { o.H = o.A = null; } }
   return o;
